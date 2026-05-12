@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brew Lab">
+<meta name="theme-color" content="#1a1612">
+<title>Brew Lab</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMWExNjEyIi8+PHRleHQgeD0iOTAiIHk9IjExNSIgZm9udC1zaXplPSI5MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2M4OTU2YyI+4piVPC90ZXh0Pjwvc3ZnPg==">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg: #1a1612; --card: #241f1a; --card-hover: #2e2722;
+  --accent: #c8956c; --accent-dim: #8b6544; --accent-glow: rgba(200,149,108,0.15);
+  --text: #e8ddd0; --text-dim: #9c8e7e; --text-muted: #6b5f53;
+  --border: #362f28; --danger: #c46b5c; --success: #7bad6e; --tag: #2c2520;
+  --blue: #7ea8c4;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', system-ui, sans-serif; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
+.screen { min-height: 100vh; min-height: 100dvh; padding-bottom: 40px; animation: fadeIn 0.25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.header { padding: 20px 20px 14px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, var(--card) 0%, var(--bg) 100%); position: sticky; top: 0; z-index: 10; }
+.header-inner { display: flex; align-items: center; gap: 12px; }
+.header h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.header .sub { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+
+.back-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; display: flex; align-items: center; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; transition: all 0.2s ease; }
+.card.tappable { cursor: pointer; }
+.card.tappable:active { background: var(--card-hover); transform: scale(0.98); }
+.card.highlight { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+.card.glow-bg { background: var(--accent-glow); }
+
+.card-row { display: flex; align-items: center; gap: 14px; }
+.card-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--accent-glow); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+.tag.accent { background: rgba(200,149,108,0.13); color: var(--accent); }
+.tag.green { background: rgba(123,173,110,0.13); color: var(--success); }
+.tag.blue { background: rgba(126,168,196,0.13); color: var(--blue); }
+
+.btn { display: block; width: 100%; padding: 13px 20px; border-radius: 10px; border: none; font-family: 'DM Sans', system-ui; font-size: 14px; cursor: pointer; transition: all 0.15s; text-align: center; }
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--accent); color: var(--bg); font-weight: 700; }
+.btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent-dim); }
+.btn.ghost { background: transparent; color: var(--text-dim); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-flex { display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 10px; }
+.section-label.accent { color: var(--accent); }
+.section-label.muted { color: var(--text-muted); }
+
+.mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+.display { font-family: 'Playfair Display', Georgia, serif; }
+
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.stack-sm { display: flex; flex-direction: column; gap: 8px; }
+.wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.pad { padding: 20px; }
+
+.chip { padding: 10px 18px; border-radius: 8px; border: none; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.chip:active { transform: scale(0.95); }
+.chip.active { background: var(--accent); color: var(--bg); }
+.chip.inactive { background: var(--card); color: var(--text); }
+
+.input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'DM Sans', system-ui; font-size: 14px; outline: none; }
+.input:focus { border-color: var(--accent-dim); }
+.input::placeholder { color: var(--text-muted); }
+
+.label { font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.step-num { width: 24px; height: 24px; border-radius: 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-num.accent { background: var(--accent); color: var(--bg); }
+.step-num.dim { background: var(--tag); color: var(--text); }
+
+.advice-card .advice-item { margin-bottom: 10px; }
+.advice-card .advice-label { font-size: 11px; font-weight: 700; color: var(--accent-dim); text-transform: uppercase; }
+.advice-card .advice-val { font-size: 13px; color: var(--text); line-height: 1.5; margin-top: 2px; }
+
+.settings-banner { padding: 12px 16px; border-radius: 8px; background: var(--accent-glow); font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+.tags-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+.recipe-meta { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.8; color: var(--text-dim); }
+.recipe-meta span { color: var(--text); }
+.recipe-meta .hl { color: var(--accent); font-weight: 700; }
+
+.home-hero { padding: 40px 20px; text-align: center; }
+.home-hero h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 700; margin: 8px 0 4px; letter-spacing: -0.03em; }
+.home-hero p { color: var(--text-dim); font-size: 14px; }
+
+.pour-time { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); flex-shrink: 0; text-align: right; }
+.pour-time .wait { font-size: 11px; color: var(--accent-dim); }
+
+.bean-ai-hint { font-size: 11px; color: var(--accent); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+
+.settings-gear { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ===== DATA =====
+const STORAGE_KEY = 'brewlab_data';
+const API_KEY_STORAGE = 'brewlab_api_key';
+
+const PRESET_BEANS = [
+  { id:"col-coferment", name:"Colombia Coferment", origin:"Colombia", variety:"Castillo", process:"Cofermentation", roast:"Light-Medium", notes:"Tropical fruit", v60:{hotTemp:93,icedTemp:93,grind:"Medium-fine",pourStyle:"Layered"}, brikka:null, caffeineLevel:"Moderate" },
+  { id:"aalamin-peach", name:"Aalamin Bener Meriah Peach", origin:"Indonesia (Sumatra)", variety:"Typica", process:"Cofermented with peach, wet-hulled", roast:"Light-Medium", notes:"Golden peach, osmanthus tea, fruity", v60:{hotTemp:91,icedTemp:91,grind:"Medium-coarse",pourStyle:"Layered"}, brikka:null, caffeineLevel:"Moderate" },
+  { id:"tacu-mexico", name:"Camel Step Tacu Mexico", origin:"Mexico", variety:"Unknown", process:"Unknown", roast:"Medium", notes:"Chocolate, nutty, caramel", v60:{hotTemp:94,icedTemp:null,grind:"Medium",pourStyle:"Even"}, brikka:null, caffeineLevel:"Moderate (highest caffeine extraction)" },
+  { id:"col-722", name:"Camel Step Colombia 722", origin:"Colombia", variety:"Caturra", process:"Cofermentation", roast:"Light-Medium", notes:"Berry, lemongrass, caramel, peach", v60:{hotTemp:92,icedTemp:92,grind:"Medium-fine",pourStyle:"Descending"}, brikka:null, caffeineLevel:"Moderate" },
+  { id:"col-pina", name:"Camel Step Colombia Piña Colada", origin:"Colombia", variety:"Caturra", process:"Cofermentation", roast:"Light-Medium", notes:"Tropical fruit, very fruity, acidic side", v60:{hotTemp:93,icedTemp:93,grind:"Medium-fine",pourStyle:"Descending"}, brikka:null, caffeineLevel:"Moderate-High (fast absorption)" },
+  { id:"4-origin-blend", name:"Guatemala/Ethiopia/Costa Rica/Kenya Blend", origin:"Multi-origin", variety:"Mixed", process:"Mixed", roast:"Medium", notes:"Balanced: fruit + chocolate + sweetness", v60:{hotTemp:93,icedTemp:null,grind:"Medium (coarsen 1 click if muddy)",pourStyle:"Even"}, brikka:null, caffeineLevel:"Moderate" },
+  { id:"png-istinye", name:"İstinye Kahvecisi Papua New Guinea", origin:"Papua New Guinea", variety:"Arabica", process:"Washed", roast:"Medium", notes:"Tropical fruit, citrus, chocolate, spices, jackfruit", v60:{hotTemp:null,icedTemp:91,grind:"Medium",pourStyle:"Descending"}, brikka:null, caffeineLevel:"Moderate" },
+  { id:"liberica-tobacco", name:"Malaysia Liberica Tobacco", origin:"Malaysia (Johor)", variety:"Liberica", process:"Unknown", roast:"Medium-Dark", notes:"Jackfruit, leather, bourbon, tobacco, smoky", v60:{hotTemp:90,icedTemp:91,grind:"Standard Arabica setting",pourStyle:"Even — gentle"}, brikka:{clicks:14,baseWaterTemp:"Boiling",americanoWater:"80-100ml at 85-90°C"}, caffeineLevel:"Low (Liberica — ~25% less caffeine)" },
+  { id:"brazil-catuai", name:"Brazil Cerrado Yellow Catuai Infused", origin:"Brazil (Cerrado)", variety:"Yellow Catuai", process:"Natural, infused", roast:"Medium", notes:"KitKat, chocolate, full sweetness", v60:null, brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100-120ml at 85-90°C"}, caffeineLevel:"Moderate" },
+  { id:"brazil-santos", name:"Camel Step Brazil Santos", origin:"Brazil", variety:"Mixed Arabica", process:"Natural", roast:"Medium", notes:"Chocolate, nutty, caramel, classic", v60:null, brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100-120ml at 85-90°C"}, caffeineLevel:"Moderate" },
+  { id:"ethiopia-chelbesa", name:"Ethiopia Chelbesa", origin:"Ethiopia (Yirgacheffe)", variety:"Heirloom", process:"Natural", roast:"Light-Medium", notes:"Dried mango, grapes, passion fruit, jasmine tea", v60:null, brikka:{clicks:14,baseWaterTemp:"~95°C (cool 30s)",americanoWater:"120-140ml at 80-85°C"}, caffeineLevel:"Moderate-High" },
+  { id:"brazil-parainema", name:"Brazil Parainema", origin:"Brazil", variety:"Parainema (Sarchimor)", process:"Unknown", roast:"Medium", notes:"Chocolate, toffee, nuts", v60:null, brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100-120ml at 85-90°C"}, caffeineLevel:"HIGH — Robusta heritage" },
+  { id:"indo-grapefruit", name:"Indonesia Grapefruit", origin:"Indonesia", variety:"Unknown", process:"Cofermented with grapefruit", roast:"Light-Medium", notes:"Grapefruit, citrus, fruity", v60:{hotTemp:null,icedTemp:91,grind:"Medium-coarse",pourStyle:"Descending"}, brikka:null, caffeineLevel:"Moderate" },
+  { id:"brazil-santa-ines", name:"Brazil Santa Ines", origin:"Brazil", variety:"Unknown", process:"Unknown", roast:"Medium", notes:"Classic Brazil profile", v60:null, brikka:null, caffeineLevel:"Moderate" },
+];
+
+// ===== STATE =====
+let state = {
+  screen: 'home', brewType: null, method: null, selectedBean: null,
+  recipe: null, beans: [...PRESET_BEANS], showAddBean: false,
+  showSettings: false, dose: 16, ratio: 15, aiAdvice: null, loadingAI: false,
+};
+
+function loadCustomBeans() {
+  try { const d = localStorage.getItem(STORAGE_KEY); if (d) { const custom = JSON.parse(d); state.beans = [...PRESET_BEANS, ...custom]; } } catch(e) {}
+}
+function saveCustomBeans() {
+  const custom = state.beans.filter(b => b.id.startsWith('custom-'));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(custom));
+}
+function getApiKey() { return localStorage.getItem(API_KEY_STORAGE) || ''; }
+function setApiKey(k) { localStorage.setItem(API_KEY_STORAGE, k); }
+
+// ===== ICONS =====
+const icons = {
+  coffee: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM6 2v2M10 2v2M14 2v2"/></svg>`,
+  filter: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l5 7v6l2 2V11l5-7z"/></svg>`,
+  flame: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c0 4-4 6-4 10a4 4 0 008 0c0-4-4-6-4-10z"/></svg>`,
+  ice: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>`,
+  hot: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M4 6l1.5 1.5M20 6l-1.5 1.5M8 14s1.5 2 4 2 4-2 4-2"/></svg>`,
+  back: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`,
+  spark: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 2L9 12l-7 1 5 5-1 7 6-4 6 4-1-7 5-5-7-1z"/></svg>`,
+  plus: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
+  gear: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
+  coffeeBig: `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM6 2v2M10 2v2M14 2v2"/></svg>`,
+};
+
+// ===== POUR SCHEDULES =====
+function layeredHot(tw) {
+  return [
+    {label:"Bloom",amount:50,time:"0:00",wait:"45s",note:"Gentle spiral, light swirl"},
+    {label:"Pour 2",amount:130,time:"0:45",wait:"25s",note:"Slow concentric circles"},
+    {label:"Pour 3",amount:200,time:"1:10",wait:"40s",note:"Steady circles"},
+    {label:"Pour 4",amount:tw,time:"1:50",wait:"drain",note:"Final pour, let drain"},
+  ];
+}
+function descendingIced(hw) {
+  return [
+    {label:"Bloom",amount:Math.round(hw*0.36),time:"0:00",wait:"40s",note:"Big bloom, gentle swirl"},
+    {label:"Pour 2",amount:Math.round(hw*0.6),time:"0:40",wait:"20s",note:"Moderate pour"},
+    {label:"Pour 3",amount:Math.round(hw*0.8),time:"1:00",wait:"20s",note:"Gentler, less agitation"},
+    {label:"Pour 4",amount:hw,time:"1:20",wait:"drain",note:"Very gentle center pour"},
+  ];
+}
+function evenHot(tw) {
+  const ps = Math.round((tw-50)/4);
+  return [
+    {label:"Bloom",amount:50,time:"0:00",wait:"35s",note:"Gentle spiral, light swirl"},
+    {label:"Pour 2",amount:50+ps,time:"0:35",wait:"20s",note:"Gentle center pour"},
+    {label:"Pour 3",amount:50+ps*2,time:"0:55",wait:"20s",note:"Same gentle pace"},
+    {label:"Pour 4",amount:50+ps*3,time:"1:15",wait:"20s",note:"Consistent"},
+    {label:"Pour 5",amount:tw,time:"1:35",wait:"drain",note:"Final gentle pour"},
+  ];
+}
+function descendingHot(tw) {
+  return [
+    {label:"Bloom",amount:Math.round(tw*0.22),time:"0:00",wait:"45s",note:"Big bloom for fruit"},
+    {label:"Pour 2",amount:Math.round(tw*0.39),time:"0:45",wait:"25s",note:"Moderate pour"},
+    {label:"Pour 3",amount:Math.round(tw*0.54),time:"1:10",wait:"25s",note:"Gentler pour"},
+    {label:"Pour 4",amount:tw,time:"1:35",wait:"drain",note:"Light final pour"},
+  ];
+}
+function defaultIced(hw) {
+  return [
+    {label:"Bloom",amount:Math.round(hw*0.35),time:"0:00",wait:"40s",note:"Gentle spiral, swirl"},
+    {label:"Pour 2",amount:Math.round(hw*0.65),time:"0:40",wait:"25s",note:"Slow circles"},
+    {label:"Pour 3",amount:hw,time:"1:05",wait:"drain",note:"Final pour, let drain"},
+  ];
+}
+
+function genV60(bean, dose, ratio, method) {
+  const tw = dose * ratio;
+  const isIced = method === 'iced';
+  const hw = isIced ? Math.round(tw/2) : tw;
+  const ice = isIced ? Math.round(tw/2) : 0;
+  const temp = isIced ? bean.v60?.icedTemp : bean.v60?.hotTemp;
+  const grind = bean.v60?.grind || 'Medium';
+  const ps = bean.v60?.pourStyle || 'Layered';
+  let pours;
+  if (isIced && ps === 'Descending') pours = descendingIced(hw);
+  else if (isIced) pours = defaultIced(hw);
+  else if (ps === 'Even') pours = evenHot(tw);
+  else if (ps === 'Descending') pours = descendingHot(tw);
+  else pours = layeredHot(tw);
+  return { type:'v60', method, bean, dose, ratio, totalWater:tw, hotWater:hw, ice, temp, grind, pourStyle:ps, pours, drawdown: isIced ? '2:00–2:30' : '2:30–3:00' };
+}
+
+function genBrikka(bean, style) {
+  const b = bean.brikka;
+  return { type:'brikka', drinkStyle:style, bean, dose:'15–16g (fill basket, level, no tamp)', clicks:b.clicks, baseWater:'150ml', baseWaterTemp:b.baseWaterTemp, infrared:'1200W', brewTime:'~6 min', output:'~100–110ml + crema',
+    americano: style==='americano' ? b.americanoWater : null,
+    iced: style==='iced' ? 'Pour concentrate over 150–170g ice' : null };
+}
+
+// ===== AI =====
+async function fetchAI(bean, method) {
+  const key = getApiKey();
+  if (!key) { return { error: 'No API key. Go to Settings to add your Anthropic API key.' }; }
+  const prompt = `You are a specialty coffee brewing expert. Given this coffee bean and brewing method, provide a concise recommendation. Respond ONLY in JSON format with no markdown or preamble.
+Bean: ${bean.name} | Origin: ${bean.origin} | Variety: ${bean.variety} | Process: ${bean.process} | Roast: ${bean.roast} | Notes: ${bean.notes} | Method: ${method}
+JSON: {"tempRecommendation":"...","grindAdvice":"...","keyTip":"...","flavorExpectation":"...","cautionNote":"..."}`;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] })
+    });
+    if (!r.ok) { const e = await r.text(); return { error: `API error ${r.status}: ${e.substring(0,200)}` }; }
+    const data = await r.json();
+    const text = (data.content||[]).map(i=>i.text||'').join('\n');
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  } catch(e) { return { error: 'Failed: ' + e.message + '. Check connection and API key.' }; }
+}
+
+// ===== RENDER =====
+function render() {
+  const app = document.getElementById('app');
+  if (state.showSettings) { app.innerHTML = renderSettings(); bindSettings(); return; }
+  if (state.showAddBean) { app.innerHTML = renderAddBean(); bindAddBean(); return; }
+  switch(state.screen) {
+    case 'home': app.innerHTML = renderHome(); bindHome(); break;
+    case 'method': app.innerHTML = renderMethod(); bindMethod(); break;
+    case 'bean': app.innerHTML = renderBean(); bindBean(); break;
+    case 'dose': app.innerHTML = renderDose(); bindDose(); break;
+    case 'recipe': app.innerHTML = renderRecipe(); bindRecipe(); break;
+  }
+}
+
+function renderHome() {
+  return `<div class="screen">
+    <div class="home-hero" style="position:relative">
+      <div>${icons.coffeeBig}</div>
+      <h1 class="display">Brew Lab</h1>
+      <p>Your personal coffee recipe engine</p>
+      <button class="settings-gear" id="settingsBtn">${icons.gear}</button>
+    </div>
+    <div class="pad stack">
+      <div class="card tappable highlight" id="filterBtn">
+        <div class="card-row">
+          <div class="card-icon">${icons.filter}</div>
+          <div><div class="display" style="font-size:18px;font-weight:700">V60 Pour Over</div><div style="font-size:13px;color:var(--text-dim);margin-top:2px">Filter coffee — hot or iced</div></div>
+        </div>
+      </div>
+      <div class="card tappable" id="brikkaBtn">
+        <div class="card-row">
+          <div class="card-icon">${icons.flame}</div>
+          <div><div class="display" style="font-size:18px;font-weight:700">Brikka Moka Pot</div><div style="font-size:13px;color:var(--text-dim);margin-top:2px">Espresso-style — straight, americano, or iced</div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function bindHome() {
+  document.getElementById('filterBtn').onclick = () => { state.brewType='filter'; state.screen='method'; render(); };
+  document.getElementById('brikkaBtn').onclick = () => { state.brewType='brikka'; state.screen='method'; render(); };
+  document.getElementById('settingsBtn').onclick = () => { state.showSettings=true; render(); };
+}
+
+function renderMethod() {
+  const opts = state.brewType === 'filter'
+    ? [{k:'hot',l:'Hot',d:'Classic hot pour-over',i:icons.hot},{k:'iced',l:'Iced',d:'50:50 water & ice',i:icons.ice}]
+    : [{k:'straight',l:'Straight Shot',d:'Concentrated, sip slowly',i:icons.flame},{k:'americano',l:'Americano',d:'Concentrate + hot water',i:icons.hot},{k:'iced',l:'Iced',d:'Concentrate over ice',i:icons.ice}];
+  const title = state.brewType === 'filter' ? 'V60 Pour Over' : 'Brikka Moka Pot';
+  return `<div class="screen">
+    <div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>${title}</h1><div class="sub">Choose your method</div></div></div></div>
+    <div class="pad stack">${opts.map((o,i) => `<div class="card tappable" id="opt${i}"><div class="card-row">${o.i}<div><div style="font-size:16px;font-weight:600">${o.l}</div><div style="font-size:13px;color:var(--text-dim)">${o.d}</div></div></div></div>`).join('')}</div>
+  </div>`;
+}
+function bindMethod() {
+  document.getElementById('backBtn').onclick = () => { state.screen='home'; render(); };
+  const opts = state.brewType === 'filter' ? ['hot','iced'] : ['straight','americano','iced'];
+  opts.forEach((k,i) => { document.getElementById('opt'+i).onclick = () => { state.method=k; state.screen='bean'; render(); }; });
+}
+
+function renderBean() {
+  const available = state.beans.filter(b => {
+    if (state.brewType==='filter') { return state.method==='iced' ? b.v60?.icedTemp!=null : b.v60?.hotTemp!=null; }
+    return b.brikka!=null;
+  });
+  const other = state.beans.filter(b => !available.includes(b));
+  const tagVal = b => {
+    if (state.brewType==='filter') return `${state.method==='iced' ? b.v60?.icedTemp : b.v60?.hotTemp}°C`;
+    return `${b.brikka?.clicks} clicks`;
+  };
+  let html = `<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>Select Bean</h1><div class="sub">${state.brewType==='filter'?'V60':'Brikka'} · ${state.method}</div></div></div></div><div class="pad">`;
+  if (available.length) {
+    html += `<div class="section-label accent">Dialed Recipes</div><div class="stack">`;
+    available.forEach((b,i) => {
+      html += `<div class="card tappable" id="avail${i}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="font-size:15px;font-weight:600;margin-bottom:4px">${b.name}</div><div style="font-size:12px;color:var(--text-dim)">${b.origin} · ${b.variety}</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">${b.notes}</div></div><span class="tag accent">${tagVal(b)}</span></div></div>`;
+    });
+    html += `</div>`;
+  }
+  if (other.length) {
+    html += `<div class="section-label muted" style="margin-top:20px">Other Beans (AI will recommend)</div><div class="stack">`;
+    other.forEach((b,i) => {
+      html += `<div class="card tappable" id="other${i}" style="opacity:0.7"><div style="font-size:15px;font-weight:600;margin-bottom:4px">${b.name}</div><div style="font-size:12px;color:var(--text-dim)">${b.origin} · ${b.notes}</div><div class="bean-ai-hint">${icons.spark} AI will recommend settings</div></div>`;
+    });
+    html += `</div>`;
+  }
+  html += `<div style="margin-top:20px"><button class="btn secondary" id="addBeanBtn"><span class="btn-flex">${icons.plus} Add New Bean</span></button></div></div></div>`;
+  return html;
+}
+function bindBean() {
+  document.getElementById('backBtn').onclick = () => { state.screen='method'; render(); };
+  const available = state.beans.filter(b => { if (state.brewType==='filter') return state.method==='iced'?b.v60?.icedTemp!=null:b.v60?.hotTemp!=null; return b.brikka!=null; });
+  const other = state.beans.filter(b => !available.includes(b));
+  available.forEach((b,i) => { document.getElementById('avail'+i).onclick = () => { state.selectedBean=b; state.screen='dose'; state.aiAdvice=null; render(); }; });
+  other.forEach((b,i) => { document.getElementById('other'+i).onclick = () => { state.selectedBean=b; state.screen='dose'; state.aiAdvice=null; render(); }; });
+  document.getElementById('addBeanBtn').onclick = () => { state.showAddBean=true; render(); };
+}
+
+function renderDose() {
+  const b = state.selectedBean;
+  const doses = [14,15,16,18,20];
+  const ratios = [14,15,16,17];
+  const tw = state.dose * state.ratio;
+  let html = `<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>Dose & Ratio</h1><div class="sub">${b.name}</div></div></div></div><div class="pad">`;
+  html += `<div style="margin-bottom:24px"><div class="label">Coffee Dose (g)</div><div class="wrap">${doses.map(d=>`<button class="chip ${state.dose===d?'active':'inactive'}" data-dose="${d}">${d}g</button>`).join('')}</div></div>`;
+  if (state.brewType==='filter') {
+    html += `<div style="margin-bottom:24px"><div class="label">Water Ratio (1:X)</div><div class="wrap">${ratios.map(r=>`<button class="chip ${state.ratio===r?'active':'inactive'}" data-ratio="${r}">1:${r}</button>`).join('')}</div></div>`;
+  }
+  html += `<div class="card glow-bg" style="margin-bottom:24px"><div class="recipe-meta">`;
+  if (state.brewType==='filter') {
+    html += `<div>Total water: <span class="hl">${tw}g</span></div>`;
+    if (state.method==='iced') html += `<div>Hot: <span class="hl">${Math.round(tw/2)}g</span> · Ice: <span class="hl">${Math.round(tw/2)}g</span></div>`;
+  } else {
+    html += `<div>Brikka basket: <span class="hl">15–16g</span> · Base water: <span class="hl">150ml</span></div>`;
+  }
+  html += `</div></div><button class="btn primary" id="genBtn">Generate Recipe</button></div></div>`;
+  return html;
+}
+function bindDose() {
+  document.getElementById('backBtn').onclick = () => { state.screen='bean'; render(); };
+  document.querySelectorAll('[data-dose]').forEach(el => { el.onclick = () => { state.dose=parseInt(el.dataset.dose); render(); }; });
+  document.querySelectorAll('[data-ratio]').forEach(el => { el.onclick = () => { state.ratio=parseInt(el.dataset.ratio); render(); }; });
+  document.getElementById('genBtn').onclick = () => {
+    if (state.brewType==='filter') state.recipe = genV60(state.selectedBean, state.dose, state.ratio, state.method);
+    else state.recipe = genBrikka(state.selectedBean, state.method);
+    state.screen='recipe'; render();
+  };
+}
+
+function renderRecipe() {
+  const r = state.recipe;
+  if (r.type==='brikka') return renderBrikkaRecipe(r);
+  return renderV60Recipe(r);
+}
+
+function renderV60Recipe(r) {
+  let html = `<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>${r.bean.name}</h1><div class="sub">V60 · ${r.method} · 1:${r.ratio}</div></div></div></div><div class="pad">`;
+  html += `<div class="card" style="margin-bottom:12px"><div class="tags-row"><span class="tag accent">${r.temp ? r.temp+'°C' : 'AI recommend'}</span><span class="tag green">${r.grind}</span><span class="tag blue">${r.pourStyle} pours</span></div>`;
+  html += `<div class="recipe-meta"><div>Dose: <span>${r.dose}g</span></div><div>Total water: <span>${r.totalWater}g</span></div>`;
+  if (r.method==='iced') html += `<div>Hot water: <span>${r.hotWater}g</span></div><div>Ice: <span>${r.ice}g</span></div>`;
+  html += `<div>Target drawdown: <span>${r.drawdown}</span></div></div></div>`;
+  html += `<div class="section-label accent">Pour Schedule</div>`;
+  if (r.method==='iced') {
+    html += `<div class="card" style="margin-bottom:8px;padding:12px 14px;border-color:var(--accent-dim)"><div style="display:flex;gap:12px;align-items:center">${icons.ice}<div style="font-size:14px">Place <span class="mono" style="color:var(--accent)">${r.ice}g</span> ice in server. Rinse filter, discard rinse, keep ice.</div></div></div>`;
+  }
+  r.pours.forEach((p,i) => {
+    html += `<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;gap:12px;flex:1"><div class="step-num ${i===0?'accent':'dim'}">${i+1}</div><div><div style="font-size:14px;font-weight:600">${p.label} → <span class="mono" style="color:var(--accent)">${p.amount}g</span></div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">${p.note}</div></div></div><div class="pour-time"><div>${p.time}</div><div class="wait">${p.wait}</div></div></div></div>`;
+  });
+  html += `<div class="card glow-bg" style="margin-top:12px;padding:12px 14px"><div style="font-size:12px;color:var(--text-dim)"><span style="color:var(--accent);font-weight:600">Caffeine:</span> ${r.bean.caffeineLevel}</div><div style="font-size:12px;color:var(--text-dim);margin-top:4px"><span style="color:var(--accent);font-weight:600">Flavor:</span> ${r.bean.notes}</div></div>`;
+  html += renderAISection();
+  html += `<div style="margin-top:12px"><button class="btn ghost" id="homeBtn">Back to Home</button></div></div></div>`;
+  return html;
+}
+
+function renderBrikkaRecipe(r) {
+  const steps = [
+    {n:'1',t:`Boil kettle. Pour 150ml into base.${r.baseWaterTemp!=='Boiling'?' Let cool to '+r.baseWaterTemp+'.':''}`},
+    {n:'2',t:`Grind 15–16g at ${r.clicks} clicks. Fill basket, level with finger. No tamp.`},
+    {n:'3',t:'Assemble with towel (base is hot). Screw on firmly.'},
+    {n:'4',t:'Place on infrared at 1200W.'},
+    {n:'5',t:'Wait for coffee flow. Pull off at loud sputtering. Cold wet towel on base.'},
+  ];
+  if (r.drinkStyle==='americano') steps.push({n:'6',t:`Pour ${r.americano} into cup first, then concentrate on top. Don't stir.`});
+  if (r.drinkStyle==='iced') steps.push({n:'6',t:`${r.iced}. No hot water needed.`});
+
+  let html = `<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>${r.bean.name}</h1><div class="sub">Brikka · ${r.drinkStyle}</div></div></div></div><div class="pad">`;
+  html += `<div class="card" style="margin-bottom:12px"><div class="tags-row"><span class="tag accent">${r.clicks} clicks</span><span class="tag green">${r.baseWaterTemp}</span><span class="tag blue">1200W</span></div>`;
+  html += `<div class="recipe-meta"><div>Dose: <span>${r.dose}</span></div><div>Base water: <span>${r.baseWater} at ${r.baseWaterTemp}</span></div><div>Infrared: <span>${r.infrared}</span></div><div>Brew time: <span>${r.brewTime}</span></div><div>Output: <span>${r.output}</span></div></div></div>`;
+  html += `<div class="section-label accent">Steps</div><div class="stack-sm">`;
+  steps.forEach(s => {
+    html += `<div class="card" style="padding:12px 14px"><div style="display:flex;gap:12px"><div class="step-num accent">${s.n}</div><div style="font-size:14px;line-height:1.5">${s.t}</div></div></div>`;
+  });
+  html += `</div>`;
+  html += renderAISection();
+  html += `<div style="margin-top:12px"><button class="btn ghost" id="homeBtn">Back to Home</button></div></div></div>`;
+  return html;
+}
+
+function renderAISection() {
+  let html = `<div style="margin-top:16px"><button class="btn secondary" id="aiBtn" ${state.loadingAI?'disabled':''}><span class="btn-flex">${icons.spark} ${state.loadingAI?'Thinking...':'Get AI Advice'}</span></button></div>`;
+  if (state.aiAdvice) {
+    if (state.aiAdvice.error) {
+      html += `<div class="card" style="margin-top:12px;border-color:var(--danger)"><div style="font-size:13px;color:var(--danger)">${state.aiAdvice.error}</div></div>`;
+    } else {
+      html += `<div class="card advice-card" style="margin-top:12px;border-color:var(--accent-dim)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">${icons.spark}<span style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">AI Brew Advisor</span></div>`;
+      [{l:'Temperature',v:state.aiAdvice.tempRecommendation},{l:'Grind',v:state.aiAdvice.grindAdvice},{l:'Key Tip',v:state.aiAdvice.keyTip},{l:'Expect',v:state.aiAdvice.flavorExpectation},{l:'Watch Out',v:state.aiAdvice.cautionNote}].forEach(item => {
+        html += `<div class="advice-item"><div class="advice-label">${item.l}</div><div class="advice-val">${item.v}</div></div>`;
+      });
+      html += `</div>`;
+    }
+  }
+  return html;
+}
+
+function bindRecipe() {
+  document.getElementById('backBtn').onclick = () => { state.screen='dose'; state.aiAdvice=null; render(); };
+  document.getElementById('homeBtn').onclick = () => { state.screen='home'; state.brewType=null; state.method=null; state.selectedBean=null; state.recipe=null; state.aiAdvice=null; render(); };
+  const aiBtn = document.getElementById('aiBtn');
+  if (aiBtn) aiBtn.onclick = async () => {
+    state.loadingAI = true; render();
+    const r = state.recipe;
+    const m = r.type==='v60' ? `V60 ${r.method}` : `Brikka ${r.drinkStyle}`;
+    state.aiAdvice = await fetchAI(r.bean, m);
+    state.loadingAI = false; render();
+  };
+}
+
+function renderSettings() {
+  const key = getApiKey();
+  const masked = key ? key.slice(0,10) + '...' + key.slice(-4) : '';
+  return `<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>Settings</h1><div class="sub">API key & preferences</div></div></div></div><div class="pad">
+    <div class="label">Anthropic API Key</div>
+    <input class="input" type="password" id="apiInput" placeholder="sk-ant-..." value="${key}" style="margin-bottom:8px">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">${key ? '✓ Key saved: '+masked : 'Required for AI Advice feature'}</div>
+    <button class="btn primary" id="saveKeyBtn">Save API Key</button>
+    <div class="settings-banner" style="margin-top:20px">
+      <strong style="color:var(--accent)">How to get an API key:</strong><br>
+      1. Go to console.anthropic.com<br>
+      2. Create an account & add credit (~$5)<br>
+      3. Generate an API key<br>
+      4. Paste it above<br><br>
+      Your key is stored locally on this device only.
+    </div>
+    <div style="margin-top:20px"><div class="label">Custom Beans</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:12px">${state.beans.filter(b=>b.id.startsWith('custom-')).length} custom beans saved</div>
+    <button class="btn secondary" id="clearBeansBtn" style="margin-bottom:8px">Clear Custom Beans</button></div>
+  </div></div>`;
+}
+function bindSettings() {
+  document.getElementById('backBtn').onclick = () => { state.showSettings=false; render(); };
+  document.getElementById('saveKeyBtn').onclick = () => { setApiKey(document.getElementById('apiInput').value.trim()); render(); };
+  document.getElementById('clearBeansBtn').onclick = () => { state.beans = [...PRESET_BEANS]; localStorage.removeItem(STORAGE_KEY); render(); };
+}
+
+function renderAddBean() {
+  return `<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${icons.back}</button><div><h1>Add New Bean</h1></div></div></div><div class="pad" style="display:flex;flex-direction:column;gap:16px">
+    ${[{k:'name',l:'Bean Name',p:'e.g. Colombia Gesha Honey'},{k:'origin',l:'Origin',p:'e.g. Colombia, Ethiopia'},{k:'variety',l:'Variety',p:'e.g. Caturra, Typica'},{k:'process',l:'Process',p:'e.g. Washed, Natural'},{k:'notes',l:'Tasting Notes',p:'e.g. Berry, chocolate'}].map(f=>`<div><label class="label">${f.l}</label><input class="input" id="field_${f.k}" placeholder="${f.p}"></div>`).join('')}
+    <div><label class="label">Roast Level</label><div class="wrap">${['Light','Light-Medium','Medium','Medium-Dark','Dark'].map(r=>`<button class="chip ${r==='Medium'?'active':'inactive'}" data-roast="${r}">${r}</button>`).join('')}</div></div>
+    <button class="btn primary" id="saveBeanBtn">Save Bean</button>
+    <div class="settings-banner">${icons.spark} New beans without presets will get AI-powered recommendations when you generate a recipe.</div>
+  </div></div>`;
+}
+function bindAddBean() {
+  let roast = 'Medium';
+  document.getElementById('backBtn').onclick = () => { state.showAddBean=false; render(); };
+  document.querySelectorAll('[data-roast]').forEach(el => {
+    el.onclick = () => {
+      roast = el.dataset.roast;
+      document.querySelectorAll('[data-roast]').forEach(e => { e.className = 'chip ' + (e.dataset.roast===roast?'active':'inactive'); });
+    };
+  });
+  document.getElementById('saveBeanBtn').onclick = () => {
+    const name = document.getElementById('field_name').value.trim();
+    if (!name) return;
+    const bean = {
+      id: 'custom-'+Date.now(), name,
+      origin: document.getElementById('field_origin').value.trim() || 'Unknown',
+      variety: document.getElementById('field_variety').value.trim() || 'Unknown',
+      process: document.getElementById('field_process').value.trim() || 'Unknown',
+      roast, notes: document.getElementById('field_notes').value.trim() || '',
+      v60: null, brikka: null, caffeineLevel: 'Unknown',
+    };
+    state.beans.push(bean);
+    saveCustomBeans();
+    state.showAddBean = false;
+    render();
+  };
+}
+
+// ===== INIT =====
+loadCustomBeans();
+render();
+</script>
+</body>
+</html>
