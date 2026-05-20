@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Brew Lab">
+<meta name="theme-color" content="#1a1612">
+<title>Brew Lab V3</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMWExNjEyIi8+PHRleHQgeD0iOTAiIHk9IjExNSIgZm9udC1zaXplPSI5MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2M4OTU2YyI+4piVPC90ZXh0Pjwvc3ZnPg==">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+:root {
+  --bg:#1a1612;--card:#241f1a;--card-hover:#2e2722;
+  --accent:#c8956c;--accent-dim:#8b6544;--accent-glow:rgba(200,149,108,0.15);
+  --text:#e8ddd0;--text-dim:#9c8e7e;--text-muted:#6b5f53;
+  --border:#362f28;--danger:#c46b5c;--success:#7bad6e;--tag:#2c2520;--blue:#7ea8c4;
+  --warn:#d4a843;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.screen{min-height:100vh;min-height:100dvh;padding-bottom:40px;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.header{padding:20px 20px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--card) 0%,var(--bg) 100%);position:sticky;top:0;z-index:10}
+.header-inner{display:flex;align-items:center;gap:12px}
+.header h1{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.header .sub{font-size:13px;color:var(--text-dim);margin-top:2px}
+.back-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:4px;display:flex;align-items:center}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;transition:all .2s ease}
+.card.tappable{cursor:pointer}.card.tappable:active{background:var(--card-hover);transform:scale(.98)}
+.card.highlight{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
+.card.glow-bg{background:var(--accent-glow)}
+.card.locked{border-color:var(--success);box-shadow:0 0 15px rgba(123,173,110,0.15)}
+.card-row{display:flex;align-items:center;gap:14px}
+.card-icon{width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.tag.accent{background:rgba(200,149,108,.13);color:var(--accent)}
+.tag.green{background:rgba(123,173,110,.13);color:var(--success)}
+.tag.blue{background:rgba(126,168,196,.13);color:var(--blue)}
+.tag.warn{background:rgba(212,168,67,.13);color:var(--warn)}
+.tag.locked-tag{background:rgba(123,173,110,.2);color:var(--success)}
+.btn{display:block;width:100%;padding:13px 20px;border-radius:10px;border:none;font-family:'DM Sans',system-ui;font-size:14px;cursor:pointer;transition:all .15s;text-align:center}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--bg);font-weight:700}
+.btn.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
+.btn.ghost{background:transparent;color:var(--text-dim)}
+.btn.success{background:var(--success);color:var(--bg);font-weight:700}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-flex{display:flex;align-items:center;justify-content:center;gap:6px}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px}
+.section-label.accent{color:var(--accent)}.section-label.muted{color:var(--text-muted)}.section-label.green{color:var(--success)}
+.mono{font-family:'JetBrains Mono','SF Mono',monospace}
+.display{font-family:'Playfair Display',Georgia,serif}
+.stack{display:flex;flex-direction:column;gap:10px}
+.stack-sm{display:flex;flex-direction:column;gap:8px}
+.wrap{display:flex;flex-wrap:wrap;gap:8px}
+.pad{padding:20px}
+.chip{padding:10px 18px;border-radius:8px;border:none;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+.chip:active{transform:scale(.95)}
+.chip.active{background:var(--accent);color:var(--bg)}
+.chip.inactive{background:var(--card);color:var(--text)}
+.fb-chip{padding:8px 14px;border-radius:8px;border:2px solid var(--border);font-family:'DM Sans',system-ui;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--card);color:var(--text-dim)}
+.fb-chip:active{transform:scale(.95)}
+.fb-chip.selected{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
+.fb-chip.perfect{border-color:var(--success);background:rgba(123,173,110,.15);color:var(--success)}
+.note-check{padding:6px 12px;border-radius:6px;border:2px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--card);color:var(--text-dim)}
+.note-check.achieved{border-color:var(--success);background:rgba(123,173,110,.12);color:var(--success)}
+.note-check.missed{border-color:var(--danger);background:rgba(196,107,92,.12);color:var(--danger)}
+.input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',system-ui;font-size:14px;outline:none}
+.input:focus{border-color:var(--accent-dim)}
+.input::placeholder{color:var(--text-muted)}
+.label{font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.05em}
+.step-num{width:24px;height:24px;border-radius:12px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-num.accent{background:var(--accent);color:var(--bg)}
+.step-num.dim{background:var(--tag);color:var(--text)}
+.tags-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.recipe-meta{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:var(--text-dim)}
+.recipe-meta span{color:var(--text)}.recipe-meta .hl{color:var(--accent);font-weight:700}
+.home-hero{padding:40px 20px;text-align:center}
+.home-hero h1{font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;margin:8px 0 4px;letter-spacing:-.03em}
+.home-hero p{color:var(--text-dim);font-size:14px}
+.pour-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);flex-shrink:0;text-align:right}
+.pour-time .wait{font-size:11px;color:var(--accent-dim)}
+.settings-gear{position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px}
+.history-btn{position:absolute;right:56px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px}
+.settings-banner{padding:12px 16px;border-radius:8px;background:var(--accent-glow);font-size:13px;color:var(--text-dim);line-height:1.5}
+.adj-card{border-color:var(--warn);background:rgba(212,168,67,.05)}
+.adj-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+.adj-old{color:var(--text-muted);text-decoration:line-through}
+.adj-new{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace}
+.adj-arrow{color:var(--warn);font-size:16px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ===== STORAGE =====
+const SK={beans:'bl_beans3',key:'bl_apikey3',history:'bl_history3',overrides:'bl_overrides3'};
+function LS(k,v){if(v===undefined){try{const d=localStorage.getItem(k);return d?JSON.parse(d):null}catch(e){return null}}else{localStorage.setItem(k,JSON.stringify(v))}}
+
+// ===== PRESET BEANS (V3 — fixed attributions, Commandante clicks, Celsius only) =====
+const PRESETS=[
+  {id:"col-coferment",name:"Colombia Coferment",origin:"Colombia",variety:"Castillo",process:"Cofermentation",roast:"Light-Medium",notes:"Tropical fruit",tastingNotes:["Tropical fruit"],v60:{hotTemp:93,icedTemp:93,clicks:24,grind:"Medium-fine",pourStyle:"Layered"},brikka:null,caffeineLevel:"Moderate"},
+  {id:"aalamin-peach",name:"Aalamin Bener Meriah Peach",origin:"Indonesia (Sumatra)",variety:"Typica",process:"Cofermented with peach, wet-hulled",roast:"Light-Medium",notes:"Golden peach, osmanthus tea, fruity",tastingNotes:["Golden peach","Osmanthus tea","Fruity"],v60:{hotTemp:91,icedTemp:91,clicks:26,grind:"Medium-coarse",pourStyle:"Layered"},brikka:null,caffeineLevel:"Moderate"},
+  {id:"tacu-mexico",name:"Camel Step Tacu Mexico",origin:"Mexico",variety:"Unknown",process:"Unknown",roast:"Medium",notes:"Chocolate, nutty, caramel",tastingNotes:["Chocolate","Nutty","Caramel"],v60:{hotTemp:94,icedTemp:null,clicks:24,grind:"Medium",pourStyle:"Even"},brikka:null,caffeineLevel:"Moderate (highest caffeine extraction)"},
+  {id:"col-722",name:"Colombia 722",origin:"Colombia",variety:"Caturra",process:"Cofermentation",roast:"Light-Medium",notes:"Berry, lemongrass, caramel, peach",tastingNotes:["Berry","Lemongrass","Caramel","Peach"],v60:{hotTemp:92,icedTemp:92,clicks:24,grind:"Medium-fine",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate"},
+  {id:"col-pina",name:"Colombia Piña Colada",origin:"Colombia",variety:"Caturra",process:"Cofermentation",roast:"Light-Medium",notes:"Tropical fruit, very fruity, acidic side",tastingNotes:["Tropical fruit","Pineapple","Coconut","Sweet"],v60:{hotTemp:93,icedTemp:93,clicks:24,grind:"Medium-fine",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate-High (fast absorption)"},
+  {id:"4-origin-blend",name:"Guatemala/Ethiopia/Costa Rica/Kenya Blend",origin:"Multi-origin",variety:"Mixed",process:"Mixed",roast:"Medium",notes:"Balanced: fruit + chocolate + sweetness",tastingNotes:["Fruit","Chocolate","Sweetness"],v60:{hotTemp:93,icedTemp:null,clicks:24,grind:"Medium",pourStyle:"Even"},brikka:null,caffeineLevel:"Moderate"},
+  {id:"png-istinye",name:"İstinye Kahvecisi Papua New Guinea",origin:"Papua New Guinea",variety:"Arabica",process:"Washed",roast:"Medium",notes:"Tropical fruit, citrus, chocolate, spices, jackfruit",tastingNotes:["Tropical fruit","Citrus","Chocolate","Spices","Jackfruit"],v60:{hotTemp:null,icedTemp:91,clicks:24,grind:"Medium",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate"},
+  {id:"liberica-tobacco",name:"Malaysia Liberica Tobacco",origin:"Malaysia (Johor)",variety:"Liberica",process:"Unknown",roast:"Medium-Dark",notes:"Jackfruit, leather, bourbon, tobacco, smoky",tastingNotes:["Jackfruit","Leather","Bourbon","Tobacco","Smoky"],v60:{hotTemp:90,icedTemp:91,clicks:24,grind:"Medium",pourStyle:"Even"},brikka:{clicks:14,baseWaterTemp:"Boiling",americanoWater:"80–100ml at 85–90°C"},caffeineLevel:"Low (Liberica — ~25% less caffeine)"},
+  {id:"brazil-catuai",name:"Brazil Cerrado Yellow Catuai Infused",origin:"Brazil (Cerrado)",variety:"Yellow Catuai",process:"Natural, infused",roast:"Medium",notes:"KitKat, chocolate, full sweetness",tastingNotes:["Chocolate","KitKat","Sweetness"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100–120ml at 85–90°C"},caffeineLevel:"Moderate"},
+  {id:"brazil-santos",name:"Camel Step Brazil Santos",origin:"Brazil",variety:"Mixed Arabica",process:"Natural",roast:"Medium",notes:"Chocolate, nutty, caramel, classic",tastingNotes:["Chocolate","Nutty","Caramel"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100–120ml at 85–90°C"},caffeineLevel:"Moderate"},
+  {id:"ethiopia-chelbesa",name:"Ethiopia Chelbesa",origin:"Ethiopia (Yirgacheffe)",variety:"Heirloom",process:"Natural",roast:"Light-Medium",notes:"Dried mango, grapes, passion fruit, jasmine tea",tastingNotes:["Dried mango","Grapes","Passion fruit","Jasmine tea"],v60:null,brikka:{clicks:14,baseWaterTemp:"~95°C (cool 30s)",americanoWater:"120–140ml at 80–85°C"},caffeineLevel:"Moderate-High"},
+  {id:"brazil-parainema",name:"Brazil Parainema",origin:"Brazil",variety:"Parainema (Sarchimor)",process:"Unknown",roast:"Medium",notes:"Chocolate, toffee, nuts",tastingNotes:["Chocolate","Toffee","Nuts"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100–120ml at 85–90°C"},caffeineLevel:"HIGH — Robusta heritage"},
+  {id:"indo-grapefruit",name:"Indonesia Grapefruit",origin:"Indonesia",variety:"Unknown",process:"Cofermented with grapefruit",roast:"Light-Medium",notes:"Grapefruit, citrus, fruity",tastingNotes:["Grapefruit","Citrus","Fruity"],v60:{hotTemp:null,icedTemp:91,clicks:24,grind:"Medium-coarse",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate"},
+  {id:"brazil-santa-ines",name:"Brazil Santa Ines",origin:"Brazil",variety:"Yellow Bourbon",process:"Natural",roast:"Medium",notes:"Toffee, brown sugar, almond, barley tea",tastingNotes:["Toffee","Brown sugar","Almond","Barley tea"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"60–80ml hot + ice"},caffeineLevel:"Moderate"},
+];
+
+// ===== SMART DEFAULTS FOR NEW BEANS =====
+function smartDefaults(bean){
+  const n=(bean.notes||'').toLowerCase();const o=(bean.origin||'').toLowerCase();const v=(bean.variety||'').toLowerCase();const p=(bean.process||'').toLowerCase();const r=(bean.roast||'').toLowerCase();
+  let v60clicks=24,v60temp=92,brikkaClicks=13,pourStyle='Layered',grind='Medium';
+  // Fruity/bright → finer clicks, protect with lower temp
+  if(n.match(/berry|citrus|floral|jasmine|mango|passion|grapefruit/)||o.match(/kenya|ethiopia/)){v60clicks=22;v60temp=91;pourStyle='Descending';grind='Medium-fine'}
+  // Chocolate/nutty → standard
+  if(n.match(/chocolate|nutty|caramel|toffee|cocoa/)){v60clicks=24;v60temp=93;pourStyle='Even';grind='Medium'}
+  // Delicate coferment/floral
+  if(p.match(/coferment|anaerobic/)&&n.match(/peach|osmanthus|tea|floral|lemongrass/)){v60clicks=26;v60temp=91;pourStyle='Descending';grind='Medium-coarse'}
+  // Wet-hulled / porous
+  if(p.match(/wet.?hull/)||o.match(/sumatra|indonesia/)&&!n.match(/grapefruit/)){v60clicks=26;grind='Medium-coarse'}
+  // Dense highland washed
+  if(o.match(/colombia|kenya|guatemala/)&&p.match(/washed/)){v60clicks=22;v60temp=93;grind='Medium-fine'}
+  // Medium-dark or dark roast
+  if(r.match(/dark/)){v60temp=90;v60clicks=24;brikkaClicks=14}
+  // Liberica
+  if(v.match(/liberica/)){v60temp=89;v60clicks=24;brikkaClicks=14;pourStyle='Even'}
+  // Robusta heritage
+  if(v.match(/sarchimor|parainema|catimor|timor/)){brikkaClicks=13}
+  // Acidic notes → higher temp to develop sweetness
+  if(n.match(/acidic|sour|tart|bright/)){v60temp=Math.min(v60temp+1,94)}
+  return {v60clicks,v60temp,brikkaClicks,pourStyle,grind};
+}
+
+// ===== FEEDBACK RULES ENGINE =====
+const FEEDBACK_RULES={
+  'sour':{clicks:-1,temp:1,priority:1,desc:'Underextracted — finer grind or raise temp'},
+  'bitter':{clicks:1,temp:-1,priority:1,desc:'Over-extracted — coarser grind or lower temp'},
+  'acrid':{clicks:1,temp:-1,priority:2,desc:'Harsh over-extraction — coarsen grind, check bed prep'},
+  'thin':{clicks:-1,temp:0,priority:2,desc:'Under-extracted body — finer grind'},
+  'too acidic':{clicks:0,temp:1,priority:1,desc:'Need more sweetness — raise temp'},
+  'flat/muddy':{clicks:1,temp:0,priority:2,desc:'Muddied flavors — coarsen grind or adjust pour'},
+  'missing notes':{clicks:-1,temp:1,priority:3,desc:'Under-extracted aromatics — finer grind or raise temp'},
+};
+
+function computeAdjustment(feedbackItems, currentRecipe){
+  let clicksDelta=0, tempDelta=0, reasons=[];
+  // Sort by priority
+  const sorted = feedbackItems.sort((a,b)=>(FEEDBACK_RULES[a]?.priority||9)-(FEEDBACK_RULES[b]?.priority||9));
+  // Check for contradictions
+  const hasSour=feedbackItems.includes('sour');
+  const hasBitter=feedbackItems.includes('bitter');
+  const hasAcrid=feedbackItems.includes('acrid');
+  if((hasSour&&hasBitter)||(hasSour&&hasAcrid)){
+    return {clicksDelta:0,tempDelta:0,reasons:['Sour + bitter/acrid = likely channeling. Check bed is leveled evenly, no tamping. Grind may be uneven. Re-brew with better bed prep before changing settings.'],isChanneling:true};
+  }
+  sorted.forEach(fb=>{
+    const rule=FEEDBACK_RULES[fb];
+    if(rule){clicksDelta+=rule.clicks;tempDelta+=rule.temp;reasons.push(rule.desc)}
+  });
+  // Cap adjustments
+  clicksDelta=Math.max(-2,Math.min(2,clicksDelta));
+  tempDelta=Math.max(-2,Math.min(2,tempDelta));
+  return {clicksDelta,tempDelta,reasons,isChanneling:false};
+}
+
+// ===== STATE =====
+let state={
+  screen:'home',brewType:null,method:null,selectedBean:null,
+  recipe:null,beans:[...PRESETS],showAddBean:false,
+  showSettings:false,showHistory:false,dose:16,ratio:15,
+  aiAdvice:null,loadingAI:false,
+  // Feedback
+  feedbackMode:false,feedbackItems:[],noteResults:{},
+};
+
+function loadData(){
+  const custom=LS(SK.beans);if(custom)state.beans=[...PRESETS,...custom];
+}
+function saveCustomBeans(){LS(SK.beans,state.beans.filter(b=>b.id.startsWith('custom-')))}
+function getApiKey(){return localStorage.getItem(SK.key)||''}
+function setApiKey(k){localStorage.setItem(SK.key,k)}
+function getHistory(){return LS(SK.history)||[]}
+function addHistory(entry){const h=getHistory();h.unshift(entry);if(h.length>100)h.length=100;LS(SK.history,h)}
+function getOverrides(){return LS(SK.overrides)||{}}
+function saveOverride(beanId,method,brewType,overrides){const all=getOverrides();const key=`${beanId}_${brewType}_${method}`;all[key]=overrides;LS(SK.overrides,all)}
+function getOverride(beanId,method,brewType){const all=getOverrides();return all[`${beanId}_${brewType}_${method}`]||null}
+
+// ===== ICONS =====
+const I={
+  coffee:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM6 2v2M10 2v2M14 2v2"/></svg>`,
+  filter:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l5 7v6l2 2V11l5-7z"/></svg>`,
+  flame:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c0 4-4 6-4 10a4 4 0 008 0c0-4-4-6-4-10z"/></svg>`,
+  ice:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>`,
+  hot:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M4 6l1.5 1.5M20 6l-1.5 1.5M8 14s1.5 2 4 2 4-2 4-2"/></svg>`,
+  back:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`,
+  spark:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 2L9 12l-7 1 5 5-1 7 6-4 6 4-1-7 5-5-7-1z"/></svg>`,
+  plus:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
+  gear:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
+  coffeeBig:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM6 2v2M10 2v2M14 2v2"/></svg>`,
+  history:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+  lock:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`,
+  check:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`,
+};
+
+// ===== POUR SCHEDULES =====
+function layeredHot(tw){return[{label:"Bloom",amount:50,time:"0:00",wait:"45s",note:"Gentle spiral, light swirl"},{label:"Pour 2",amount:130,time:"0:45",wait:"25s",note:"Slow concentric circles"},{label:"Pour 3",amount:200,time:"1:10",wait:"40s",note:"Steady circles"},{label:"Pour 4",amount:tw,time:"1:50",wait:"drain",note:"Final pour, let drain"}]}
+function descendingIced(hw){return[{label:"Bloom",amount:Math.round(hw*.36),time:"0:00",wait:"40s",note:"Big bloom, gentle swirl"},{label:"Pour 2",amount:Math.round(hw*.6),time:"0:40",wait:"20s",note:"Moderate pour"},{label:"Pour 3",amount:Math.round(hw*.8),time:"1:00",wait:"20s",note:"Gentler, less agitation"},{label:"Pour 4",amount:hw,time:"1:20",wait:"drain",note:"Very gentle center pour"}]}
+function evenHot(tw){const ps=Math.round((tw-50)/4);return[{label:"Bloom",amount:50,time:"0:00",wait:"35s",note:"Gentle spiral, light swirl"},{label:"Pour 2",amount:50+ps,time:"0:35",wait:"20s",note:"Gentle center pour"},{label:"Pour 3",amount:50+ps*2,time:"0:55",wait:"20s",note:"Same gentle pace"},{label:"Pour 4",amount:50+ps*3,time:"1:15",wait:"20s",note:"Consistent"},{label:"Pour 5",amount:tw,time:"1:35",wait:"drain",note:"Final gentle pour"}]}
+function descendingHot(tw){return[{label:"Bloom",amount:Math.round(tw*.22),time:"0:00",wait:"45s",note:"Big bloom for fruit"},{label:"Pour 2",amount:Math.round(tw*.39),time:"0:45",wait:"25s",note:"Moderate pour"},{label:"Pour 3",amount:Math.round(tw*.54),time:"1:10",wait:"25s",note:"Gentler pour"},{label:"Pour 4",amount:tw,time:"1:35",wait:"drain",note:"Light final pour"}]}
+function defaultIced(hw){return[{label:"Bloom",amount:Math.round(hw*.35),time:"0:00",wait:"40s",note:"Gentle spiral, swirl"},{label:"Pour 2",amount:Math.round(hw*.65),time:"0:40",wait:"25s",note:"Slow circles"},{label:"Pour 3",amount:hw,time:"1:05",wait:"drain",note:"Final pour, let drain"}]}
+
+// ===== RECIPE GENERATORS =====
+function genV60(bean,dose,ratio,method){
+  const tw=dose*ratio,isIced=method==='iced',hw=isIced?Math.round(tw/2):tw,ice=isIced?Math.round(tw/2):0;
+  const hasV60=bean.v60!=null;
+  const sd=hasV60?null:smartDefaults(bean);
+  const ovr=getOverride(bean.id,method,'v60');
+  let temp=ovr?.temp||(hasV60?(isIced?bean.v60.icedTemp:bean.v60.hotTemp):sd.v60temp);
+  let clicks=ovr?.clicks||(hasV60?bean.v60.clicks:sd.v60clicks);
+  const grind=hasV60?(bean.v60.grind||'Medium'):(sd?.grind||'Medium');
+  const ps=hasV60?(bean.v60.pourStyle||'Layered'):(sd?.pourStyle||'Layered');
+  let pours;
+  if(isIced&&ps==='Descending')pours=descendingIced(hw);
+  else if(isIced)pours=defaultIced(hw);
+  else if(ps==='Even')pours=evenHot(tw);
+  else if(ps==='Descending')pours=descendingHot(tw);
+  else pours=layeredHot(tw);
+  const locked=ovr?.locked||false;
+  return{type:'v60',method,bean,dose,ratio,totalWater:tw,hotWater:hw,ice,temp,clicks,grind,pourStyle:ps,pours,drawdown:isIced?'2:00–2:30':'2:30–3:00',needsAI:!hasV60||temp==null,locked};
+}
+
+function genBrikka(bean,style){
+  const hasBrikka=bean.brikka!=null;
+  const sd=hasBrikka?null:smartDefaults(bean);
+  const b=bean.brikka||{clicks:sd?.brikkaClicks||13,baseWaterTemp:'Boiling',americanoWater:'100–120ml at 85–90°C'};
+  const ovr=getOverride(bean.id,style,'brikka');
+  const clicks=ovr?.clicks||b.clicks;
+  const locked=ovr?.locked||false;
+  return{type:'brikka',drinkStyle:style,bean,dose:'15–16g (fill basket, level, no tamp)',clicks,baseWater:'150ml',baseWaterTemp:b.baseWaterTemp,infrared:'1600W',brewTime:'~6 min',output:'~100–110ml + crema',
+    americano:style==='americano'?b.americanoWater:null,
+    iced:style==='iced'?'Pour concentrate over 150–170g ice':null,needsAI:!hasBrikka,locked};
+}
+
+// ===== AI =====
+async function fetchAI(bean,method,context){
+  const key=getApiKey();
+  if(!key)return{error:'No API key. Go to Settings to add your Anthropic API key.'};
+  const ctxStr=context?`\nContext: ${context}`:'';
+  const prompt=`You are a specialty coffee brewing expert helping a user who brews with a Commandante C40 grinder and Hario V60 or Bialetti Brikka moka pot with infrared burner at 1600W. Temperatures in Celsius only. For grind, recommend specific Commandante click numbers (typical range: 22-26 for V60, 12-15 for Brikka). Respond ONLY in JSON with no markdown or preamble.
+Bean: ${bean.name} | Origin: ${bean.origin} | Variety: ${bean.variety} | Process: ${bean.process} | Roast: ${bean.roast} | Notes: ${bean.notes} | Method: ${method}${ctxStr}
+JSON: {"tempRecommendation":"...","grindAdvice":"...","clicksRecommendation":0,"keyTip":"...","flavorExpectation":"...","cautionNote":"..."}`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!r.ok){const e=await r.text();return{error:`API error ${r.status}: ${e.substring(0,200)}`}}
+    const data=await r.json();
+    const text=(data.content||[]).map(i=>i.text||'').join('\n');
+    return JSON.parse(text.replace(/```json|```/g,'').trim());
+  }catch(e){return{error:'Failed: '+e.message}}
+}
+
+// ===== RENDER ENGINE =====
+function render(){
+  const app=document.getElementById('app');
+  if(state.showSettings){app.innerHTML=renderSettings();bindSettings();return}
+  if(state.showAddBean){app.innerHTML=renderAddBean();bindAddBean();return}
+  if(state.showHistory){app.innerHTML=renderHistory();bindHistory();return}
+  if(state.feedbackMode){app.innerHTML=renderFeedback();bindFeedback();return}
+  switch(state.screen){
+    case'home':app.innerHTML=renderHome();bindHome();break;
+    case'method':app.innerHTML=renderMethod();bindMethod();break;
+    case'bean':app.innerHTML=renderBean();bindBean();break;
+    case'dose':app.innerHTML=renderDose();bindDose();break;
+    case'recipe':app.innerHTML=renderRecipe();bindRecipe();break;
+  }
+}
+
+function renderHome(){
+  return`<div class="screen"><div class="home-hero" style="position:relative"><div>${I.coffeeBig}</div><h1 class="display">Brew Lab</h1><p>V3 — feedback-powered recipes</p><button class="history-btn" id="historyBtn">${I.history}</button><button class="settings-gear" id="settingsBtn">${I.gear}</button></div>
+  <div class="pad stack">
+    <div class="card tappable highlight" id="filterBtn"><div class="card-row"><div class="card-icon">${I.filter}</div><div><div class="display" style="font-size:18px;font-weight:700">V60 Pour Over</div><div style="font-size:13px;color:var(--text-dim);margin-top:2px">Filter coffee — hot or iced</div></div></div></div>
+    <div class="card tappable" id="brikkaBtn"><div class="card-row"><div class="card-icon">${I.flame}</div><div><div class="display" style="font-size:18px;font-weight:700">Brikka Moka Pot</div><div style="font-size:13px;color:var(--text-dim);margin-top:2px">Espresso-style — straight, americano, iced</div></div></div></div>
+  </div></div>`;
+}
+function bindHome(){
+  document.getElementById('filterBtn').onclick=()=>{state.brewType='filter';state.screen='method';render()};
+  document.getElementById('brikkaBtn').onclick=()=>{state.brewType='brikka';state.screen='method';render()};
+  document.getElementById('settingsBtn').onclick=()=>{state.showSettings=true;render()};
+  document.getElementById('historyBtn').onclick=()=>{state.showHistory=true;render()};
+}
+
+function renderMethod(){
+  const opts=state.brewType==='filter'?[{k:'hot',l:'Hot',d:'Classic hot pour-over',i:I.hot},{k:'iced',l:'Iced',d:'50:50 water & ice',i:I.ice}]:[{k:'straight',l:'Straight Shot',d:'Concentrated, sip slowly',i:I.flame},{k:'americano',l:'Americano',d:'Concentrate + hot water',i:I.hot},{k:'iced',l:'Iced',d:'Concentrate over ice',i:I.ice}];
+  return`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>${state.brewType==='filter'?'V60 Pour Over':'Brikka Moka Pot'}</h1><div class="sub">Choose your method</div></div></div></div>
+  <div class="pad stack">${opts.map((o,i)=>`<div class="card tappable" id="opt${i}"><div class="card-row">${o.i}<div><div style="font-size:16px;font-weight:600">${o.l}</div><div style="font-size:13px;color:var(--text-dim)">${o.d}</div></div></div></div>`).join('')}</div></div>`;
+}
+function bindMethod(){
+  document.getElementById('backBtn').onclick=()=>{state.screen='home';render()};
+  const opts=state.brewType==='filter'?['hot','iced']:['straight','americano','iced'];
+  opts.forEach((k,i)=>{document.getElementById('opt'+i).onclick=()=>{state.method=k;state.screen='bean';render()}});
+}
+
+function renderBean(){
+  const available=state.beans.filter(b=>{if(state.brewType==='filter')return state.method==='iced'?b.v60?.icedTemp!=null:b.v60?.hotTemp!=null;return b.brikka!=null});
+  const other=state.beans.filter(b=>!available.includes(b));
+  const tagVal=b=>{
+    const ovr=getOverride(b.id,state.method,state.brewType==='filter'?'v60':'brikka');
+    if(state.brewType==='filter'){const t=state.method==='iced'?b.v60?.icedTemp:b.v60?.hotTemp;return`${ovr?.temp||t}°C · ${ovr?.clicks||b.v60?.clicks||24}ck`}
+    return`${ovr?.clicks||b.brikka?.clicks} clicks`};
+  const isLocked=b=>{const ovr=getOverride(b.id,state.method,state.brewType==='filter'?'v60':'brikka');return ovr?.locked};
+  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Select Bean</h1><div class="sub">${state.brewType==='filter'?'V60':'Brikka'} · ${state.method}</div></div></div></div><div class="pad">`;
+  if(available.length){
+    html+=`<div class="section-label accent">Dialed Recipes</div><div class="stack">`;
+    available.forEach((b,i)=>{
+      const locked=isLocked(b);
+      html+=`<div class="card tappable ${locked?'locked':''}" id="avail${i}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px">${b.name}${locked?I.lock:''}</div><div style="font-size:12px;color:var(--text-dim)">${b.origin} · ${b.variety}</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">${b.notes}</div></div><span class="tag ${locked?'locked-tag':'accent'}">${tagVal(b)}</span></div></div>`;
+    });
+    html+=`</div>`;
+  }
+  if(other.length){
+    html+=`<div class="section-label muted" style="margin-top:20px">Other Beans (smart defaults + AI)</div><div class="stack">`;
+    other.forEach((b,i)=>{
+      const locked=isLocked(b);
+      html+=`<div class="card tappable" id="other${i}" style="opacity:0.7"><div style="font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px">${b.name}${locked?I.lock:''}</div><div style="font-size:12px;color:var(--text-dim)">${b.origin} · ${b.notes}</div><div style="font-size:11px;color:var(--accent);margin-top:6px;display:flex;align-items:center;gap:4px">${I.spark} Smart defaults + AI advice</div></div>`;
+    });
+    html+=`</div>`;
+  }
+  html+=`<div style="margin-top:20px"><button class="btn secondary" id="addBeanBtn"><span class="btn-flex">${I.plus} Add New Bean</span></button></div></div></div>`;
+  return html;
+}
+function bindBean(){
+  document.getElementById('backBtn').onclick=()=>{state.screen='method';render()};
+  const available=state.beans.filter(b=>{if(state.brewType==='filter')return state.method==='iced'?b.v60?.icedTemp!=null:b.v60?.hotTemp!=null;return b.brikka!=null});
+  const other=state.beans.filter(b=>!available.includes(b));
+  available.forEach((b,i)=>{document.getElementById('avail'+i).onclick=()=>{state.selectedBean=b;state.screen='dose';state.aiAdvice=null;render()}});
+  other.forEach((b,i)=>{document.getElementById('other'+i).onclick=()=>{state.selectedBean=b;state.screen='dose';state.aiAdvice=null;render()}});
+  document.getElementById('addBeanBtn').onclick=()=>{state.showAddBean=true;render()};
+}
+
+function renderDose(){
+  const b=state.selectedBean;const doses=[14,15,16,18,20];const ratios=[14,15,16,17];
+  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Dose & Ratio</h1><div class="sub">${b.name}</div></div></div></div><div class="pad">`;
+  html+=`<div style="margin-bottom:24px"><div class="label">Coffee Dose (g)</div><div class="wrap">${doses.map(d=>`<button class="chip ${state.dose===d?'active':'inactive'}" data-dose="${d}">${d}g</button>`).join('')}</div></div>`;
+  if(state.brewType==='filter'){
+    html+=`<div style="margin-bottom:24px"><div class="label">Water Ratio (1:X)</div><div class="wrap">${ratios.map(r=>`<button class="chip ${state.ratio===r?'active':'inactive'}" data-ratio="${r}">1:${r}</button>`).join('')}</div></div>`;
+  }
+  const tw=state.dose*state.ratio;
+  html+=`<div class="card glow-bg" style="margin-bottom:24px"><div class="recipe-meta">`;
+  if(state.brewType==='filter'){html+=`<div>Total water: <span class="hl">${tw}g</span></div>`;if(state.method==='iced')html+=`<div>Hot: <span class="hl">${Math.round(tw/2)}g</span> · Ice: <span class="hl">${Math.round(tw/2)}g</span></div>`}
+  else html+=`<div>Brikka basket: <span class="hl">15–16g</span> · Base water: <span class="hl">150ml</span></div>`;
+  html+=`</div></div><button class="btn primary" id="genBtn">Generate Recipe</button></div></div>`;
+  return html;
+}
+function bindDose(){
+  document.getElementById('backBtn').onclick=()=>{state.screen='bean';render()};
+  document.querySelectorAll('[data-dose]').forEach(el=>{el.onclick=()=>{state.dose=parseInt(el.dataset.dose);render()}});
+  document.querySelectorAll('[data-ratio]').forEach(el=>{el.onclick=()=>{state.ratio=parseInt(el.dataset.ratio);render()}});
+  document.getElementById('genBtn').onclick=async()=>{
+    if(state.brewType==='filter')state.recipe=genV60(state.selectedBean,state.dose,state.ratio,state.method);
+    else state.recipe=genBrikka(state.selectedBean,state.method);
+    state.screen='recipe';
+    if(state.recipe.needsAI&&getApiKey()){state.loadingAI=true;render();const r=state.recipe;const m=r.type==='v60'?`V60 ${r.method}`:`Brikka ${r.drinkStyle}`;state.aiAdvice=await fetchAI(r.bean,m);state.loadingAI=false}
+    render();
+  };
+}
+
+function renderRecipe(){
+  const r=state.recipe;
+  if(r.type==='brikka')return renderBrikkaRecipe(r);
+  return renderV60Recipe(r);
+}
+
+function renderV60Recipe(r){
+  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>${r.bean.name}</h1><div class="sub">V60 · ${r.method} · 1:${r.ratio}${r.locked?' · 🔒 Locked':''}</div></div></div></div><div class="pad">`;
+  html+=`<div class="card ${r.locked?'locked':''}" style="margin-bottom:12px"><div class="tags-row"><span class="tag accent">${r.temp?r.temp+'°C':'AI recommend'}</span><span class="tag green">${r.clicks} clicks</span><span class="tag blue">${r.pourStyle}</span></div>`;
+  html+=`<div class="recipe-meta"><div>Dose: <span>${r.dose}g</span></div><div>Total water: <span>${r.totalWater}g</span></div>`;
+  if(r.method==='iced')html+=`<div>Hot water: <span>${r.hotWater}g</span></div><div>Ice: <span>${r.ice}g</span></div>`;
+  html+=`<div>Grind: <span>${r.grind} (${r.clicks} clicks)</span></div><div>Target drawdown: <span>${r.drawdown}</span></div></div></div>`;
+  html+=`<div class="section-label accent">Pour Schedule</div>`;
+  if(r.method==='iced')html+=`<div class="card" style="margin-bottom:8px;padding:12px 14px;border-color:var(--accent-dim)"><div style="display:flex;gap:12px;align-items:center">${I.ice}<div style="font-size:14px">Place <span class="mono" style="color:var(--accent)">${r.ice}g</span> ice in server. Rinse filter, discard rinse, keep ice.</div></div></div>`;
+  r.pours.forEach((p,i)=>{
+    html+=`<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;gap:12px;flex:1"><div class="step-num ${i===0?'accent':'dim'}">${i+1}</div><div><div style="font-size:14px;font-weight:600">${p.label} → <span class="mono" style="color:var(--accent)">${p.amount}g</span></div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">${p.note}</div></div></div><div class="pour-time"><div>${p.time}</div><div class="wait">${p.wait}</div></div></div></div>`;
+  });
+  html+=`<div class="card glow-bg" style="margin-top:12px;padding:12px 14px"><div style="font-size:12px;color:var(--text-dim)"><span style="color:var(--accent);font-weight:600">Caffeine:</span> ${r.bean.caffeineLevel}</div><div style="font-size:12px;color:var(--text-dim);margin-top:4px"><span style="color:var(--accent);font-weight:600">Flavor:</span> ${r.bean.notes}</div></div>`;
+  html+=renderAISection();
+  html+=`<div style="margin-top:16px"><button class="btn success" id="brewedBtn"><span class="btn-flex">${I.check} I Brewed This — Give Feedback</span></button></div>`;
+  html+=`<div style="margin-top:8px"><button class="btn ghost" id="homeBtn">Back to Home</button></div></div></div>`;
+  return html;
+}
+
+function renderBrikkaRecipe(r){
+  const steps=[
+    {n:'1',t:`Boil kettle. Pour 150ml into base.${r.baseWaterTemp!=='Boiling'?' Let cool to '+r.baseWaterTemp+'.':''}`},
+    {n:'2',t:`Grind 15–16g at ${r.clicks} clicks. Fill basket, level with finger. No tamp.`},
+    {n:'3',t:'Assemble with towel (base is hot). Screw on firmly.'},
+    {n:'4',t:'Place on infrared at 1600W.'},
+    {n:'5',t:'Wait for coffee flow. Pull off at loud sputtering. Cold wet towel on base.'},
+  ];
+  if(r.drinkStyle==='americano')steps.push({n:'6',t:`Pour ${r.americano} into cup first, then concentrate on top. Don't stir.`});
+  if(r.drinkStyle==='iced')steps.push({n:'6',t:`${r.iced}. No hot water needed.`});
+  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>${r.bean.name}</h1><div class="sub">Brikka · ${r.drinkStyle}${r.locked?' · 🔒 Locked':''}</div></div></div></div><div class="pad">`;
+  html+=`<div class="card ${r.locked?'locked':''}" style="margin-bottom:12px"><div class="tags-row"><span class="tag accent">${r.clicks} clicks</span><span class="tag green">${r.baseWaterTemp}</span><span class="tag blue">1600W</span></div>`;
+  html+=`<div class="recipe-meta"><div>Dose: <span>${r.dose}</span></div><div>Base water: <span>${r.baseWater} at ${r.baseWaterTemp}</span></div><div>Infrared: <span>${r.infrared}</span></div><div>Brew time: <span>${r.brewTime}</span></div><div>Output: <span>${r.output}</span></div></div></div>`;
+  html+=`<div class="section-label accent">Steps</div><div class="stack-sm">`;
+  steps.forEach(s=>{html+=`<div class="card" style="padding:12px 14px"><div style="display:flex;gap:12px"><div class="step-num accent">${s.n}</div><div style="font-size:14px;line-height:1.5">${s.t}</div></div></div>`});
+  html+=`</div>`;
+  html+=renderAISection();
+  html+=`<div style="margin-top:16px"><button class="btn success" id="brewedBtn"><span class="btn-flex">${I.check} I Brewed This — Give Feedback</span></button></div>`;
+  html+=`<div style="margin-top:8px"><button class="btn ghost" id="homeBtn">Back to Home</button></div></div></div>`;
+  return html;
+}
+
+function renderAISection(){
+  let html=`<div style="margin-top:16px"><button class="btn secondary" id="aiBtn" ${state.loadingAI?'disabled':''}><span class="btn-flex">${I.spark} ${state.loadingAI?'Thinking...':state.recipe?.locked?'AI Review':'Get AI Advice'}</span></button></div>`;
+  if(state.aiAdvice){
+    if(state.aiAdvice.error){html+=`<div class="card" style="margin-top:12px;border-color:var(--danger)"><div style="font-size:13px;color:var(--danger)">${state.aiAdvice.error}</div></div>`}
+    else{
+      html+=`<div class="card" style="margin-top:12px;border-color:var(--accent-dim)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">${I.spark}<span style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em">AI Brew Advisor</span></div>`;
+      [{l:'Temperature',v:state.aiAdvice.tempRecommendation},{l:'Grind',v:state.aiAdvice.grindAdvice+(state.aiAdvice.clicksRecommendation?` (${state.aiAdvice.clicksRecommendation} clicks)`:'')},{l:'Key Tip',v:state.aiAdvice.keyTip},{l:'Expect',v:state.aiAdvice.flavorExpectation},{l:'Watch Out',v:state.aiAdvice.cautionNote}].forEach(item=>{
+        html+=`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--accent-dim);text-transform:uppercase">${item.l}</div><div style="font-size:13px;color:var(--text);line-height:1.5;margin-top:2px">${item.v}</div></div>`;
+      });
+      html+=`</div>`;
+    }
+  }
+  return html;
+}
+
+function bindRecipe(){
+  document.getElementById('backBtn').onclick=()=>{state.screen='dose';state.aiAdvice=null;render()};
+  document.getElementById('homeBtn').onclick=()=>{state.screen='home';state.brewType=null;state.method=null;state.selectedBean=null;state.recipe=null;state.aiAdvice=null;render()};
+  const aiBtn=document.getElementById('aiBtn');
+  if(aiBtn)aiBtn.onclick=async()=>{
+    state.loadingAI=true;render();
+    const r=state.recipe;const m=r.type==='v60'?`V60 ${r.method}`:`Brikka ${r.drinkStyle}`;
+    const ctx=r.locked?`This is a locked/dialed recipe at ${r.temp||'N/A'}°C and ${r.clicks} clicks. Review and suggest enhancements without overriding the baseline.`:null;
+    state.aiAdvice=await fetchAI(r.bean,m,ctx);
+    state.loadingAI=false;render();
+  };
+  document.getElementById('brewedBtn').onclick=()=>{state.feedbackMode=true;state.feedbackItems=[];state.noteResults={};render()};
+}
+
+// ===== FEEDBACK SCREEN =====
+function renderFeedback(){
+  const r=state.recipe;
+  const descriptors=['sour','bitter','acrid','thin','too acidic','flat/muddy','missing notes'];
+  const notes=r.bean.tastingNotes||r.bean.notes.split(',').map(n=>n.trim());
+  const isPerfect=state.feedbackItems.includes('perfect');
+  const hasIssues=state.feedbackItems.filter(f=>f!=='perfect').length>0;
+  const adj=hasIssues?computeAdjustment(state.feedbackItems.filter(f=>f!=='perfect'),r):null;
+
+  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Brew Feedback</h1><div class="sub">${r.bean.name} · ${r.type==='v60'?'V60 '+r.method:'Brikka '+r.drinkStyle}</div></div></div></div><div class="pad">`;
+  // Current settings
+  html+=`<div class="card" style="margin-bottom:16px"><div class="recipe-meta">`;
+  if(r.type==='v60')html+=`<div>Current: <span class="hl">${r.temp}°C</span> · <span class="hl">${r.clicks} clicks</span> · ${r.pourStyle}</div>`;
+  else html+=`<div>Current: <span class="hl">${r.clicks} clicks</span> · ${r.baseWaterTemp} · 1600W</div>`;
+  html+=`</div></div>`;
+  // Perfect button
+  html+=`<div class="section-label accent">How was it?</div>`;
+  html+=`<div style="margin-bottom:12px"><button class="fb-chip ${isPerfect?'perfect':''}" data-fb="perfect" style="width:100%;padding:14px;font-size:15px">✓ Perfect — Lock this recipe</button></div>`;
+  // Issue descriptors (multi-select)
+  if(!isPerfect){
+    html+=`<div class="section-label muted">Issues (select all that apply)</div><div class="wrap" style="margin-bottom:16px">`;
+    descriptors.forEach(d=>{html+=`<button class="fb-chip ${state.feedbackItems.includes(d)?'selected':''}" data-fb="${d}">${d}</button>`});
+    html+=`</div>`;
+  }
+  // Tasting notes check
+  html+=`<div class="section-label muted">Tasting notes — which came through?</div><div class="wrap" style="margin-bottom:16px">`;
+  notes.forEach(n=>{
+    const st=state.noteResults[n];
+    html+=`<button class="note-check ${st==='achieved'?'achieved':st==='missed'?'missed':''}" data-note="${n}">${st==='achieved'?'✓ ':st==='missed'?'✗ ':''}${n}</button>`;
+  });
+  html+=`</div>`;
+  // Adjustment preview
+  if(adj&&hasIssues){
+    html+=`<div class="section-label warn" style="color:var(--warn)">Recommended Adjustment</div>`;
+    if(adj.isChanneling){
+      html+=`<div class="card adj-card" style="margin-bottom:12px"><div style="font-size:13px;color:var(--warn);line-height:1.5">${adj.reasons[0]}</div></div>`;
+    }else{
+      html+=`<div class="card adj-card" style="margin-bottom:12px">`;
+      if(r.type==='v60'&&adj.tempDelta!==0){
+        const newTemp=(r.temp||92)+adj.tempDelta;
+        html+=`<div class="adj-item"><span>Temperature</span><span><span class="adj-old">${r.temp}°C</span> <span class="adj-arrow">→</span> <span class="adj-new">${newTemp}°C</span></span></div>`;
+      }
+      if(adj.clicksDelta!==0){
+        const newClicks=r.clicks+adj.clicksDelta;
+        html+=`<div class="adj-item"><span>Commandante</span><span><span class="adj-old">${r.clicks} clicks</span> <span class="adj-arrow">→</span> <span class="adj-new">${newClicks} clicks</span></span></div>`;
+      }
+      adj.reasons.forEach(reason=>{html+=`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.4">• ${reason}</div>`});
+      html+=`</div>`;
+    }
+  }
+  // Action buttons
+  if(isPerfect){
+    html+=`<button class="btn success" id="lockBtn"><span class="btn-flex">${I.lock} Lock Recipe as Baseline</span></button>`;
+  }else if(hasIssues&&adj&&!adj.isChanneling){
+    html+=`<button class="btn primary" id="applyBtn">Apply Adjustment & Save</button>`;
+    html+=`<div style="margin-top:8px"><button class="btn ghost" id="skipBtn">Save feedback without adjusting</button></div>`;
+  }else{
+    html+=`<button class="btn primary" id="saveBtn">Save Feedback</button>`;
+  }
+  html+=`</div></div>`;
+  return html;
+}
+
+function bindFeedback(){
+  const r=state.recipe;
+  document.getElementById('backBtn').onclick=()=>{state.feedbackMode=false;render()};
+  // Feedback chips
+  document.querySelectorAll('[data-fb]').forEach(el=>{
+    el.onclick=()=>{
+      const fb=el.dataset.fb;
+      if(fb==='perfect'){
+        state.feedbackItems=state.feedbackItems.includes('perfect')?[]:[fb];
+      }else{
+        state.feedbackItems=state.feedbackItems.filter(f=>f!=='perfect');
+        if(state.feedbackItems.includes(fb))state.feedbackItems=state.feedbackItems.filter(f=>f!==fb);
+        else state.feedbackItems.push(fb);
+      }
+      render();
+    };
+  });
+  // Note checks (3-state: none → achieved → missed → none)
+  document.querySelectorAll('[data-note]').forEach(el=>{
+    el.onclick=()=>{
+      const n=el.dataset.note;const cur=state.noteResults[n];
+      if(!cur)state.noteResults[n]='achieved';
+      else if(cur==='achieved')state.noteResults[n]='missed';
+      else delete state.noteResults[n];
+      render();
+    };
+  });
+  // Lock
+  const lockBtn=document.getElementById('lockBtn');
+  if(lockBtn)lockBtn.onclick=()=>{
+    const key=r.type==='v60'?'v60':'brikka';const method=r.type==='v60'?r.method:r.drinkStyle;
+    saveOverride(r.bean.id,method,key,{temp:r.temp,clicks:r.clicks,locked:true});
+    addHistory({date:new Date().toISOString(),bean:r.bean.name,type:r.type,method:r.type==='v60'?r.method:r.drinkStyle,temp:r.temp,clicks:r.clicks,feedback:['perfect'],notes:state.noteResults});
+    state.feedbackMode=false;state.recipe.locked=true;render();
+  };
+  // Apply adjustment
+  const applyBtn=document.getElementById('applyBtn');
+  if(applyBtn)applyBtn.onclick=()=>{
+    const adj=computeAdjustment(state.feedbackItems.filter(f=>f!=='perfect'),r);
+    const newClicks=r.clicks+(adj.clicksDelta||0);
+    const newTemp=r.type==='v60'?(r.temp||92)+(adj.tempDelta||0):null;
+    const key=r.type==='v60'?'v60':'brikka';const method=r.type==='v60'?r.method:r.drinkStyle;
+    const ovr={clicks:newClicks,locked:false};if(newTemp)ovr.temp=newTemp;
+    saveOverride(r.bean.id,method,key,ovr);
+    addHistory({date:new Date().toISOString(),bean:r.bean.name,type:r.type,method:method,temp:r.temp,clicks:r.clicks,newTemp,newClicks,feedback:state.feedbackItems,notes:state.noteResults,adjustment:adj.reasons});
+    state.feedbackMode=false;
+    // Regenerate with new settings
+    if(state.brewType==='filter')state.recipe=genV60(state.selectedBean,state.dose,state.ratio,state.method);
+    else state.recipe=genBrikka(state.selectedBean,state.method);
+    render();
+  };
+  // Save without adjusting / Skip
+  const saveBtn=document.getElementById('saveBtn')||document.getElementById('skipBtn');
+  if(saveBtn)saveBtn.onclick=()=>{
+    addHistory({date:new Date().toISOString(),bean:r.bean.name,type:r.type,method:r.type==='v60'?r.method:r.drinkStyle,temp:r.temp,clicks:r.clicks,feedback:state.feedbackItems,notes:state.noteResults});
+    state.feedbackMode=false;render();
+  };
+}
+
+// ===== HISTORY =====
+function renderHistory(){
+  const h=getHistory();
+  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Brew History</h1><div class="sub">${h.length} brews logged</div></div></div></div><div class="pad">`;
+  if(!h.length)html+=`<div style="text-align:center;color:var(--text-muted);padding:40px 0">No brews logged yet. Brew a recipe and give feedback to start tracking.</div>`;
+  else{
+    html+=`<div class="stack">`;
+    h.slice(0,30).forEach(entry=>{
+      const d=new Date(entry.date);
+      const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      const isPerfect=entry.feedback?.includes('perfect');
+      const hasAdj=entry.newClicks||entry.newTemp;
+      html+=`<div class="card ${isPerfect?'locked':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:14px;font-weight:600">${entry.bean}</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">${entry.type==='v60'?'V60':'Brikka'} · ${entry.method}</div>`;
+      if(isPerfect)html+=`<div style="font-size:12px;color:var(--success);margin-top:4px">✓ Perfect — Locked</div>`;
+      else if(entry.feedback?.length)html+=`<div style="font-size:12px;color:var(--warn);margin-top:4px">${entry.feedback.join(', ')}</div>`;
+      if(hasAdj)html+=`<div style="font-size:11px;color:var(--accent);margin-top:2px">${entry.clicks}→${entry.newClicks||entry.clicks} clicks${entry.newTemp?', '+entry.temp+'→'+entry.newTemp+'°C':''}</div>`;
+      html+=`</div><div style="text-align:right"><div style="font-size:12px;color:var(--text-muted)">${dateStr}</div><div class="mono" style="font-size:11px;color:var(--text-dim);margin-top:2px">${entry.temp?entry.temp+'°C':''} ${entry.clicks}ck</div></div></div></div>`;
+    });
+    html+=`</div>`;
+    if(h.length>0)html+=`<div style="margin-top:16px"><button class="btn danger" id="clearHistBtn">Clear All History</button></div>`;
+  }
+  html+=`</div></div>`;
+  return html;
+}
+function bindHistory(){
+  document.getElementById('backBtn').onclick=()=>{state.showHistory=false;render()};
+  const clr=document.getElementById('clearHistBtn');
+  if(clr)clr.onclick=()=>{LS(SK.history,[]);render()};
+}
+
+// ===== SETTINGS =====
+function renderSettings(){
+  const key=getApiKey();const masked=key?key.slice(0,10)+'...'+key.slice(-4):'';
+  const overrides=getOverrides();const ovrCount=Object.keys(overrides).length;
+  return`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Settings</h1><div class="sub">API key & data</div></div></div></div><div class="pad">
+  <div class="label">Anthropic API Key</div>
+  <input class="input" type="password" id="apiInput" placeholder="sk-ant-..." value="${key}" style="margin-bottom:8px">
+  <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">${key?'✓ Key saved: '+masked:'Required for AI Advice feature'}</div>
+  <button class="btn primary" id="saveKeyBtn">Save API Key</button>
+  <div class="settings-banner" style="margin-top:20px"><strong style="color:var(--accent)">How to get an API key:</strong><br>1. Go to console.anthropic.com<br>2. Create account & add ~$5 credit<br>3. Generate API key<br>4. Paste above<br><br>Key stored locally on device only.</div>
+  <div style="margin-top:24px"><div class="label">Data</div>
+  <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px">${state.beans.filter(b=>b.id.startsWith('custom-')).length} custom beans · ${ovrCount} recipe overrides · ${getHistory().length} brew logs</div>
+  <button class="btn secondary" id="clearBeansBtn" style="margin-bottom:8px">Clear Custom Beans</button>
+  <button class="btn secondary" id="clearOvrBtn" style="margin-bottom:8px">Reset All Recipe Overrides</button>
+  <button class="btn danger" id="clearAllBtn">Clear All Data</button></div>
+  </div></div>`;
+}
+function bindSettings(){
+  document.getElementById('backBtn').onclick=()=>{state.showSettings=false;render()};
+  document.getElementById('saveKeyBtn').onclick=()=>{setApiKey(document.getElementById('apiInput').value.trim());render()};
+  document.getElementById('clearBeansBtn').onclick=()=>{state.beans=[...PRESETS];LS(SK.beans,null);render()};
+  document.getElementById('clearOvrBtn').onclick=()=>{LS(SK.overrides,null);render()};
+  document.getElementById('clearAllBtn').onclick=()=>{Object.values(SK).forEach(k=>localStorage.removeItem(k));state.beans=[...PRESETS];render()};
+}
+
+// ===== ADD BEAN =====
+function renderAddBean(){
+  return`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Add New Bean</h1></div></div></div><div class="pad" style="display:flex;flex-direction:column;gap:16px">
+  ${[{k:'name',l:'Bean Name',p:'e.g. Colombia Gesha Honey'},{k:'origin',l:'Origin',p:'e.g. Colombia, Ethiopia'},{k:'variety',l:'Variety',p:'e.g. Caturra, Typica'},{k:'process',l:'Process',p:'e.g. Washed, Natural, Cofermented'},{k:'notes',l:'Tasting Notes',p:'e.g. Berry, chocolate, caramel'}].map(f=>`<div><label class="label">${f.l}</label><input class="input" id="field_${f.k}" placeholder="${f.p}"></div>`).join('')}
+  <div><label class="label">Roast Level</label><div class="wrap">${['Light','Light-Medium','Medium','Medium-Dark','Dark'].map(r=>`<button class="chip ${r==='Medium'?'active':'inactive'}" data-roast="${r}">${r}</button>`).join('')}</div></div>
+  <button class="btn primary" id="saveBeanBtn">Save Bean</button>
+  <div class="settings-banner">${I.spark} New beans get smart defaults based on origin, process, and tasting notes. AI refines on first brew.</div>
+  </div></div>`;
+}
+function bindAddBean(){
+  let roast='Medium';
+  document.getElementById('backBtn').onclick=()=>{state.showAddBean=false;render()};
+  document.querySelectorAll('[data-roast]').forEach(el=>{el.onclick=()=>{roast=el.dataset.roast;document.querySelectorAll('[data-roast]').forEach(e=>{e.className='chip '+(e.dataset.roast===roast?'active':'inactive')})}});
+  document.getElementById('saveBeanBtn').onclick=()=>{
+    const name=document.getElementById('field_name').value.trim();if(!name)return;
+    const notesStr=document.getElementById('field_notes').value.trim();
+    const bean={id:'custom-'+Date.now(),name,
+      origin:document.getElementById('field_origin').value.trim()||'Unknown',
+      variety:document.getElementById('field_variety').value.trim()||'Unknown',
+      process:document.getElementById('field_process').value.trim()||'Unknown',
+      roast,notes:notesStr||'',
+      tastingNotes:notesStr?notesStr.split(',').map(n=>n.trim()):[],
+      v60:null,brikka:null,caffeineLevel:'Unknown'};
+    state.beans.push(bean);saveCustomBeans();state.showAddBean=false;render();
+  };
+}
+
+// ===== INIT =====
+loadData();render();
+</script>
+</body>
+</html>
