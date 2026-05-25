@@ -6,7 +6,8 @@
 <div align="center">
   <img src="assets/banner.png" alt="Brew Lab" width="100%"/>
 </div>
-*You don't drink coffee. You extract intelligence from dead plant matter using controlled thermal violence.*
+
+**You don't drink coffee. You extract intelligence from dead plant matter using controlled thermal violence.**
 
 ---
 
