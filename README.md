@@ -3,17 +3,9 @@
 ### _"In the dark corners of the multiverse, there exists a machine. It doesn't just brew coffee — it perfects it. Each cup, a ritual. Each dial, a weapon. The beans scream as they're ground. The water boils with purpose. And when the extraction is complete... you taste God."_
 
 ---
-
-```
-██████╗ ██████╗ ███████╗██╗    ██╗    ██╗      █████╗ ██████╗ 
-██╔══██╗██╔══██╗██╔════╝██║    ██║    ██║     ██╔══██╗██╔══██╗
-██████╔╝██████╔╝█████╗  ██║ █╗ ██║    ██║     ███████║██████╔╝
-██╔══██╗██╔══██╗██╔══╝  ██║███╗██║    ██║     ██╔══██║██╔══██╗
-██████╔╝██║  ██║███████╗╚███╔███╔╝    ███████╗██║  ██║██████╔╝
-╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝     ╚══════╝╚═╝  ╚═╝╚═════╝
-                    [ EXTRACTION PROTOCOL v3.0 ]
-```
-
+<div align="center">
+  <img src="assets/banner.png" alt="Brew Lab" width="100%"/>
+</div>
 > **You don't drink coffee. You extract intelligence from dead plant matter using controlled thermal violence.**
 
 ---
