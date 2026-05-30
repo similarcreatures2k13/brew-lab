@@ -7,658 +7,2033 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Lab">
 <meta name="theme-color" content="#1a1612">
-<title>Brew Lab V3</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMWExNjEyIi8+PHRleHQgeD0iOTAiIHk9IjExNSIgZm9udC1zaXplPSI5MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2M4OTU2YyI+4piVPC90ZXh0Pjwvc3ZnPg==">
+<title>Brew Lab V3.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-:root {
-  --bg:#1a1612;--card:#241f1a;--card-hover:#2e2722;
-  --accent:#c8956c;--accent-dim:#8b6544;--accent-glow:rgba(200,149,108,0.15);
-  --text:#e8ddd0;--text-dim:#9c8e7e;--text-muted:#6b5f53;
-  --border:#362f28;--danger:#c46b5c;--success:#7bad6e;--tag:#2c2520;--blue:#7ea8c4;
-  --warn:#d4a843;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh;min-height:100dvh;overflow-x:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
-.screen{min-height:100vh;min-height:100dvh;padding-bottom:40px;animation:fadeIn .25s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.header{padding:20px 20px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--card) 0%,var(--bg) 100%);position:sticky;top:0;z-index:10}
-.header-inner{display:flex;align-items:center;gap:12px}
-.header h1{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;letter-spacing:-.02em}
-.header .sub{font-size:13px;color:var(--text-dim);margin-top:2px}
-.back-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:4px;display:flex;align-items:center}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;transition:all .2s ease}
-.card.tappable{cursor:pointer}.card.tappable:active{background:var(--card-hover);transform:scale(.98)}
-.card.highlight{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
-.card.glow-bg{background:var(--accent-glow)}
-.card.locked{border-color:var(--success);box-shadow:0 0 15px rgba(123,173,110,0.15)}
-.card-row{display:flex;align-items:center;gap:14px}
-.card-icon{width:48px;height:48px;border-radius:12px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
-.tag.accent{background:rgba(200,149,108,.13);color:var(--accent)}
-.tag.green{background:rgba(123,173,110,.13);color:var(--success)}
-.tag.blue{background:rgba(126,168,196,.13);color:var(--blue)}
-.tag.warn{background:rgba(212,168,67,.13);color:var(--warn)}
-.tag.locked-tag{background:rgba(123,173,110,.2);color:var(--success)}
-.btn{display:block;width:100%;padding:13px 20px;border-radius:10px;border:none;font-family:'DM Sans',system-ui;font-size:14px;cursor:pointer;transition:all .15s;text-align:center}
-.btn:active{transform:scale(.97)}
-.btn.primary{background:var(--accent);color:var(--bg);font-weight:700}
-.btn.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent-dim)}
-.btn.ghost{background:transparent;color:var(--text-dim)}
-.btn.success{background:var(--success);color:var(--bg);font-weight:700}
-.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-flex{display:flex;align-items:center;justify-content:center;gap:6px}
-.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px}
-.section-label.accent{color:var(--accent)}.section-label.muted{color:var(--text-muted)}.section-label.green{color:var(--success)}
-.mono{font-family:'JetBrains Mono','SF Mono',monospace}
-.display{font-family:'Playfair Display',Georgia,serif}
-.stack{display:flex;flex-direction:column;gap:10px}
-.stack-sm{display:flex;flex-direction:column;gap:8px}
-.wrap{display:flex;flex-wrap:wrap;gap:8px}
-.pad{padding:20px}
-.chip{padding:10px 18px;border-radius:8px;border:none;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
-.chip:active{transform:scale(.95)}
-.chip.active{background:var(--accent);color:var(--bg)}
-.chip.inactive{background:var(--card);color:var(--text)}
-.fb-chip{padding:8px 14px;border-radius:8px;border:2px solid var(--border);font-family:'DM Sans',system-ui;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--card);color:var(--text-dim)}
-.fb-chip:active{transform:scale(.95)}
-.fb-chip.selected{border-color:var(--accent);background:var(--accent-glow);color:var(--accent)}
-.fb-chip.perfect{border-color:var(--success);background:rgba(123,173,110,.15);color:var(--success)}
-.note-check{padding:6px 12px;border-radius:6px;border:2px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--card);color:var(--text-dim)}
-.note-check.achieved{border-color:var(--success);background:rgba(123,173,110,.12);color:var(--success)}
-.note-check.missed{border-color:var(--danger);background:rgba(196,107,92,.12);color:var(--danger)}
-.input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',system-ui;font-size:14px;outline:none}
-.input:focus{border-color:var(--accent-dim)}
-.input::placeholder{color:var(--text-muted)}
-.label{font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.05em}
-.step-num{width:24px;height:24px;border-radius:12px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.step-num.accent{background:var(--accent);color:var(--bg)}
-.step-num.dim{background:var(--tag);color:var(--text)}
-.tags-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-.recipe-meta{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:var(--text-dim)}
-.recipe-meta span{color:var(--text)}.recipe-meta .hl{color:var(--accent);font-weight:700}
-.home-hero{padding:40px 20px;text-align:center}
-.home-hero h1{font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;margin:8px 0 4px;letter-spacing:-.03em}
-.home-hero p{color:var(--text-dim);font-size:14px}
-.pour-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);flex-shrink:0;text-align:right}
-.pour-time .wait{font-size:11px;color:var(--accent-dim)}
-.settings-gear{position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px}
-.history-btn{position:absolute;right:56px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px}
-.settings-banner{padding:12px 16px;border-radius:8px;background:var(--accent-glow);font-size:13px;color:var(--text-dim);line-height:1.5}
-.adj-card{border-color:var(--warn);background:rgba(212,168,67,.05)}
-.adj-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
-.adj-old{color:var(--text-muted);text-decoration:line-through}
-.adj-new{color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace}
-.adj-arrow{color:var(--warn);font-size:16px}
+  :root {
+    --bg-void: #0d0a08;
+    --bg-shell: #1a1612;
+    --bg-raised: #241d18;
+    --bg-deepest: #050403;
+    --line-faint: #2a221c;
+    --line-strong: #4a3a2c;
+    --text-primary: #f0e6dc;
+    --text-muted: #8a7a6a;
+    --text-ghost: #4a3a2c;
+    --gold: #c8956c;
+    --gold-glow: #e5b380;
+    --gold-deep: #8a6240;
+    --green-lock: #6b8e5a;
+    --red-miss: #8e5a5a;
+    --blue-cool: #5a7a8e;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --ui: 'Inter Tight', -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: var(--ui);
+    background: var(--bg-void);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input, textarea, select {
+    font-family: inherit;
+    background: var(--bg-shell);
+    color: var(--text-primary);
+    border: 1px solid var(--line-strong);
+    padding: 12px;
+    font-size: 15px;
+    width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* status bar */
+  .status-bar {
+    position: sticky; top: 0;
+    background: var(--bg-deepest);
+    border-bottom: 1px solid var(--line-faint);
+    padding: 10px 16px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    z-index: 10;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .status-bar .sep { color: var(--text-ghost); }
+  .status-bar .crumb { color: var(--text-primary); }
+  .status-bar .right { margin-left: auto; }
+  .status-bar.locked .status-dot { background: var(--green-lock); }
+
+  /* app header */
+  .app-header {
+    padding: 20px 16px 8px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .app-header h1 {
+    font-family: var(--mono); font-weight: 700;
+    font-size: 22px; letter-spacing: 0.02em;
+  }
+  .app-header .version {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-ghost); letter-spacing: 0.1em;
+  }
+
+  .section { padding: 12px 16px; }
+  .section h2 {
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-muted); margin-bottom: 10px;
+  }
+
+  /* card pattern */
+  .card {
+    position: relative;
+    border: 1px solid var(--line-faint);
+    background: var(--bg-shell);
+    padding: 18px 16px 16px;
+    margin-bottom: 12px;
+  }
+  .card-label {
+    position: absolute; top: -7px; left: 12px;
+    background: var(--bg-void);
+    padding: 0 8px;
+    font-family: var(--mono); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-muted);
+  }
+  .card.locked { border-color: var(--green-lock); }
+  .card.locked .card-label { color: var(--green-lock); }
+  .lock-marker {
+    position: absolute; top: 12px; right: 12px;
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.15em; color: var(--green-lock);
+  }
+  .lock-marker::before { content: "◆ "; }
+
+  .bean-name {
+    font-size: 19px; font-weight: 600;
+    letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+  .bean-meta {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .bean-meta .sep { color: var(--text-ghost); margin: 0 6px; }
+  .bean-meta .roast-intent {
+    color: var(--gold); font-weight: 500;
+  }
+  .bean-notes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .note-chip {
+    font-family: var(--mono); font-size: 10px;
+    padding: 4px 8px; border: 1px solid var(--line-strong);
+    color: var(--text-muted); letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .note-chip.achieved { color: var(--green-lock); border-color: var(--green-lock); }
+  .note-chip.missed { color: var(--red-miss); border-color: var(--red-miss); }
+
+  /* data grid */
+  .data-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    margin-top: 12px; border-top: 1px solid var(--line-faint);
+  }
+  .data-cell {
+    padding: 12px;
+    border-bottom: 1px solid var(--line-faint);
+  }
+  .data-cell:nth-child(odd) { border-right: 1px solid var(--line-faint); }
+  .data-cell:last-child, .data-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .data-cell .label {
+    font-family: var(--mono); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-muted); margin-bottom: 4px;
+  }
+  .data-cell .value {
+    font-family: var(--mono); font-size: 18px;
+    font-weight: 500;
+  }
+  .data-cell .value.large { font-size: 24px; font-weight: 600; }
+  .data-cell .value .unit { font-size: 11px; color: var(--text-muted); margin-left: 3px; }
+
+  /* pour timeline */
+  .pour-timeline { margin-top: 6px; }
+  .pour-step {
+    display: grid; grid-template-columns: 60px 1fr;
+    gap: 14px; padding: 12px 0;
+    border-bottom: 1px solid var(--line-faint);
+    position: relative;
+  }
+  .pour-step:last-child { border-bottom: none; }
+  .pour-step::before {
+    content: ""; position: absolute;
+    left: 50px; top: 0; bottom: 0; width: 1px;
+    background: var(--line-strong);
+  }
+  .pour-step::after {
+    content: ""; position: absolute;
+    left: 47px; top: 16px; width: 7px; height: 7px;
+    border: 1px solid var(--gold); background: var(--bg-shell);
+    transform: rotate(45deg);
+  }
+  .pour-step .time {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--gold); font-weight: 500;
+  }
+  .pour-step .weight {
+    font-family: var(--mono); font-size: 14px;
+    font-weight: 500; margin-bottom: 2px;
+  }
+  .pour-step .instr { font-size: 12px; color: var(--text-muted); }
+
+  /* buttons */
+  .btn {
+    min-height: 48px; padding: 12px 16px;
+    background: transparent; border: 1px solid var(--line-strong);
+    color: var(--text-primary);
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; width: 100%;
+  }
+  .btn:active { background: var(--bg-raised); }
+  .btn.primary { border-color: var(--gold); color: var(--gold); }
+  .btn.primary:active { background: var(--gold); color: var(--bg-void); }
+  .btn.danger { border-color: var(--red-miss); color: var(--red-miss); }
+  .btn.ghost { border-color: var(--line-faint); color: var(--text-muted); }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .btn-row.three { grid-template-columns: repeat(3, 1fr); }
+  .btn-stack > .btn { margin-bottom: 8px; }
+
+  /* chips */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 10px 14px;
+    border: 1px solid var(--line-faint);
+    background: var(--bg-shell);
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip::before { content: "◇"; color: var(--text-ghost); }
+  .chip.selected {
+    border-color: var(--gold); color: var(--gold);
+    background: var(--bg-raised);
+  }
+  .chip.selected::before { content: "◆"; color: var(--gold); }
+  .chip.perfect {
+    border-color: var(--green-lock); color: var(--green-lock);
+    width: 100%; justify-content: center;
+  }
+  .chip.perfect::before { content: "✓"; }
+
+  /* feedback grid */
+  .feedback-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    margin-top: 8px;
+  }
+  .feedback-grid .chip {
+    padding: 12px 10px;
+    text-align: left; justify-content: flex-start;
+  }
+  .feedback-grid .chip.perfect { grid-column: 1 / -1; }
+
+  /* bean grid */
+  .bean-grid {
+    display: grid; grid-template-columns: 1fr; gap: 10px;
+  }
+  .bean-grid .card {
+    padding: 14px 14px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .bean-grid .card:active { border-color: var(--gold); }
+  .bean-grid .card.custom .card-label::after {
+    content: " · CUSTOM";
+    color: var(--gold-deep);
+  }
+
+  /* adjustment preview */
+  .adjustment {
+    margin-top: 14px; padding: 12px;
+    border-left: 2px solid var(--gold);
+    background: var(--bg-deepest);
+    font-family: var(--mono); font-size: 12px;
+  }
+  .adjustment .head {
+    color: var(--gold); text-transform: uppercase;
+    letter-spacing: 0.1em; font-size: 10px; margin-bottom: 6px;
+  }
+  .adjustment .change { line-height: 1.7; }
+  .arrow { color: var(--text-ghost); margin: 0 6px; }
+  .new { color: var(--gold-glow); }
+  .adjustment .why {
+    color: var(--text-muted); margin-top: 8px; font-size: 11px;
+    font-family: var(--ui); line-height: 1.5;
+  }
+
+  /* dev note */
+  .dev-note-toggle {
+    margin-top: 12px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: none; border: none; padding: 6px 0;
+  }
+  .dev-note-toggle::before { content: "[+ "; color: var(--text-ghost); }
+  .dev-note-toggle::after { content: " ]"; color: var(--text-ghost); }
+  .dev-note-toggle.open::before { content: "[− "; }
+  .dev-note-area {
+    margin-top: 8px; display: none;
+  }
+  .dev-note-area.open { display: block; }
+  .dev-note-area textarea {
+    background: var(--bg-deepest);
+    border-color: var(--line-faint);
+    font-family: var(--mono); font-size: 12px;
+  }
+
+  /* form bits */
+  .form-row { margin-bottom: 14px; }
+  .form-row label {
+    display: block; margin-bottom: 6px;
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+  .three-toggle {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    border: 1px solid var(--line-strong);
+  }
+  .three-toggle button {
+    background: transparent; border: none; padding: 12px 4px;
+    color: var(--text-muted);
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    border-right: 1px solid var(--line-strong);
+  }
+  .three-toggle button:last-child { border-right: none; }
+  .three-toggle button.selected {
+    background: var(--bg-raised); color: var(--gold);
+  }
+  .helper-text {
+    font-size: 11px; color: var(--text-muted);
+    margin-top: 6px; line-height: 1.4;
+  }
+
+  /* tab bar */
+  .tab-bar {
+    position: sticky; bottom: 0;
+    background: var(--bg-deepest);
+    border-top: 1px solid var(--line-faint);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    padding: 14px 0; text-align: center;
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-muted);
+    border: none; background: transparent;
+    border-top: 2px solid transparent;
+  }
+  .tab.active { color: var(--gold); border-top-color: var(--gold); }
+
+  /* hidden version long-press for dev log */
+  .version-tap {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* history entry */
+  .history-entry {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-faint);
+  }
+  .history-entry .head {
+    display: flex; justify-content: space-between;
+    margin-bottom: 6px; align-items: baseline;
+  }
+  .history-entry .bean { font-weight: 600; }
+  .history-entry .date {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted);
+  }
+  .history-entry .settings {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-muted);
+  }
+  .history-entry .feedback {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .history-entry .dev-note {
+    margin-top: 6px;
+    padding: 6px 8px;
+    background: var(--bg-deepest);
+    border-left: 2px solid var(--gold-deep);
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text-primary);
+  }
+
+  .empty-state {
+    padding: 40px 20px; text-align: center;
+    color: var(--text-muted); font-size: 13px;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-raised);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 12px 20px;
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* loading */
+  .loading {
+    display: inline-block;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
 </style>
 </head>
 <body>
-<div id="app"></div>
-<script>
-// ===== STORAGE =====
-const SK={beans:'bl_beans3',key:'bl_apikey3',history:'bl_history3',overrides:'bl_overrides3'};
-function LS(k,v){if(v===undefined){try{const d=localStorage.getItem(k);return d?JSON.parse(d):null}catch(e){return null}}else{localStorage.setItem(k,JSON.stringify(v))}}
+  <div id="app"></div>
+  <div id="toast" class="toast"></div>
 
-// ===== PRESET BEANS (V3 — fixed attributions, Commandante clicks, Celsius only) =====
-const PRESETS=[
-  {id:"col-coferment",name:"Colombia Coferment",origin:"Colombia",variety:"Castillo",process:"Cofermentation",roast:"Light-Medium",notes:"Tropical fruit",tastingNotes:["Tropical fruit"],v60:{hotTemp:93,icedTemp:93,clicks:24,grind:"Medium-fine",pourStyle:"Layered"},brikka:null,caffeineLevel:"Moderate"},
-  {id:"aalamin-peach",name:"Aalamin Bener Meriah Peach",origin:"Indonesia (Sumatra)",variety:"Typica",process:"Cofermented with peach, wet-hulled",roast:"Light-Medium",notes:"Golden peach, osmanthus tea, fruity",tastingNotes:["Golden peach","Osmanthus tea","Fruity"],v60:{hotTemp:91,icedTemp:91,clicks:26,grind:"Medium-coarse",pourStyle:"Layered"},brikka:null,caffeineLevel:"Moderate"},
-  {id:"tacu-mexico",name:"Camel Step Tacu Mexico",origin:"Mexico",variety:"Unknown",process:"Unknown",roast:"Medium",notes:"Chocolate, nutty, caramel",tastingNotes:["Chocolate","Nutty","Caramel"],v60:{hotTemp:94,icedTemp:null,clicks:24,grind:"Medium",pourStyle:"Even"},brikka:null,caffeineLevel:"Moderate (highest caffeine extraction)"},
-  {id:"col-722",name:"Colombia 722",origin:"Colombia",variety:"Caturra",process:"Cofermentation",roast:"Light-Medium",notes:"Berry, lemongrass, caramel, peach",tastingNotes:["Berry","Lemongrass","Caramel","Peach"],v60:{hotTemp:92,icedTemp:92,clicks:24,grind:"Medium-fine",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate"},
-  {id:"col-pina",name:"Colombia Piña Colada",origin:"Colombia",variety:"Caturra",process:"Cofermentation",roast:"Light-Medium",notes:"Tropical fruit, very fruity, acidic side",tastingNotes:["Tropical fruit","Pineapple","Coconut","Sweet"],v60:{hotTemp:93,icedTemp:93,clicks:24,grind:"Medium-fine",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate-High (fast absorption)"},
-  {id:"4-origin-blend",name:"Guatemala/Ethiopia/Costa Rica/Kenya Blend",origin:"Multi-origin",variety:"Mixed",process:"Mixed",roast:"Medium",notes:"Balanced: fruit + chocolate + sweetness",tastingNotes:["Fruit","Chocolate","Sweetness"],v60:{hotTemp:93,icedTemp:null,clicks:24,grind:"Medium",pourStyle:"Even"},brikka:null,caffeineLevel:"Moderate"},
-  {id:"png-istinye",name:"İstinye Kahvecisi Papua New Guinea",origin:"Papua New Guinea",variety:"Arabica",process:"Washed",roast:"Medium",notes:"Tropical fruit, citrus, chocolate, spices, jackfruit",tastingNotes:["Tropical fruit","Citrus","Chocolate","Spices","Jackfruit"],v60:{hotTemp:null,icedTemp:91,clicks:24,grind:"Medium",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate"},
-  {id:"liberica-tobacco",name:"Malaysia Liberica Tobacco",origin:"Malaysia (Johor)",variety:"Liberica",process:"Unknown",roast:"Medium-Dark",notes:"Jackfruit, leather, bourbon, tobacco, smoky",tastingNotes:["Jackfruit","Leather","Bourbon","Tobacco","Smoky"],v60:{hotTemp:90,icedTemp:91,clicks:24,grind:"Medium",pourStyle:"Even"},brikka:{clicks:14,baseWaterTemp:"Boiling",americanoWater:"80–100ml at 85–90°C"},caffeineLevel:"Low (Liberica — ~25% less caffeine)"},
-  {id:"brazil-catuai",name:"Brazil Cerrado Yellow Catuai Infused",origin:"Brazil (Cerrado)",variety:"Yellow Catuai",process:"Natural, infused",roast:"Medium",notes:"KitKat, chocolate, full sweetness",tastingNotes:["Chocolate","KitKat","Sweetness"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100–120ml at 85–90°C"},caffeineLevel:"Moderate"},
-  {id:"brazil-santos",name:"Camel Step Brazil Santos",origin:"Brazil",variety:"Mixed Arabica",process:"Natural",roast:"Medium",notes:"Chocolate, nutty, caramel, classic",tastingNotes:["Chocolate","Nutty","Caramel"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100–120ml at 85–90°C"},caffeineLevel:"Moderate"},
-  {id:"ethiopia-chelbesa",name:"Ethiopia Chelbesa",origin:"Ethiopia (Yirgacheffe)",variety:"Heirloom",process:"Natural",roast:"Light-Medium",notes:"Dried mango, grapes, passion fruit, jasmine tea",tastingNotes:["Dried mango","Grapes","Passion fruit","Jasmine tea"],v60:null,brikka:{clicks:14,baseWaterTemp:"~95°C (cool 30s)",americanoWater:"120–140ml at 80–85°C"},caffeineLevel:"Moderate-High"},
-  {id:"brazil-parainema",name:"Brazil Parainema",origin:"Brazil",variety:"Parainema (Sarchimor)",process:"Unknown",roast:"Medium",notes:"Chocolate, toffee, nuts",tastingNotes:["Chocolate","Toffee","Nuts"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"100–120ml at 85–90°C"},caffeineLevel:"HIGH — Robusta heritage"},
-  {id:"indo-grapefruit",name:"Indonesia Grapefruit",origin:"Indonesia",variety:"Unknown",process:"Cofermented with grapefruit",roast:"Light-Medium",notes:"Grapefruit, citrus, fruity",tastingNotes:["Grapefruit","Citrus","Fruity"],v60:{hotTemp:null,icedTemp:91,clicks:24,grind:"Medium-coarse",pourStyle:"Descending"},brikka:null,caffeineLevel:"Moderate"},
-  {id:"brazil-santa-ines",name:"Brazil Santa Ines",origin:"Brazil",variety:"Yellow Bourbon",process:"Natural",roast:"Medium",notes:"Toffee, brown sugar, almond, barley tea",tastingNotes:["Toffee","Brown sugar","Almond","Barley tea"],v60:null,brikka:{clicks:13,baseWaterTemp:"Boiling",americanoWater:"60–80ml hot + ice"},caffeineLevel:"Moderate"},
+<script>
+"use strict";
+
+// ==========================================================
+// DATA: Origin Profiles
+// ==========================================================
+const ORIGIN_DENSITY = {
+  Kenya: 0.85, Colombia: 0.75, Ethiopia: 0.70, Guatemala: 0.70,
+  "Costa Rica": 0.70, "El Salvador": 0.65, Rwanda: 0.65, Burundi: 0.65,
+  Honduras: 0.60, Mexico: 0.60, Peru: 0.60, Brazil: 0.50,
+  India: 0.45, Indonesia: 0.40, Sumatra: 0.35, Malaysia: 0.30,
+  Vietnam: 0.30, PNG: 0.55, "Papua New Guinea": 0.55
+};
+const PROCESS_SOLUBILITY = {
+  Washed: 0.40, Honey: 0.55, Natural: 0.70,
+  Cofermentation: 0.75, Anaerobic: 0.80, "Wet-hulled": 0.65, Experimental: 0.75
+};
+const FRUITY_ORIGINS = ["Kenya", "Ethiopia", "Burundi", "Rwanda"];
+const CHOCOLATE_ORIGINS = ["Brazil", "Mexico", "Peru", "Honduras"];
+
+function weightedOriginProfile(origins) {
+  if (!origins || origins.length === 0) {
+    return { density: 0.6, solubility: 0.5, fruity: false, chocolate: false, delicate: false };
+  }
+  const total = origins.reduce((s, o) => s + (o.share || 0), 0) || 1;
+  let density = 0, solubility = 0;
+  let fruity = false, chocolate = false, delicate = false;
+  for (const o of origins) {
+    const w = (o.share || 0) / total;
+    density += w * (ORIGIN_DENSITY[o.country] ?? 0.6);
+    solubility += w * (PROCESS_SOLUBILITY[o.process] ?? 0.5);
+    if (FRUITY_ORIGINS.includes(o.country)) fruity = true;
+    if (CHOCOLATE_ORIGINS.includes(o.country)) chocolate = true;
+    if (o.process === "Cofermentation" || o.process === "Anaerobic") delicate = true;
+  }
+  return { density, solubility, fruity, chocolate, delicate };
+}
+
+// ==========================================================
+// ENGINE: Smart Defaults
+// ==========================================================
+function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+
+function smartDefaultsV60(bean, brewType) {
+  const { roast = {}, tastingNotes = [], origins = [] } = bean;
+  const profile = weightedOriginProfile(origins);
+  let clicks = 24, temp = 92, pourStyle = "layered";
+  const reasons = [], signals = [];
+
+  if (profile.density > 0.7) { clicks -= 2; temp += 1; reasons.push("dense origin → finer + warmer"); signals.push("dense"); }
+  if (profile.density < 0.4) { clicks += 2; temp -= 1; pourStyle = "even"; reasons.push("porous origin → coarser + cooler"); signals.push("porous"); }
+  if (profile.fruity) { clicks -= 1; temp -= 1; pourStyle = "descending"; reasons.push("fruity origin → descending pour, gentle temp"); signals.push("fruity"); }
+  if (profile.chocolate && !profile.fruity) { temp += 1; pourStyle = pourStyle === "layered" ? "even" : pourStyle; reasons.push("chocolate-leaning → integration pour"); signals.push("chocolate"); }
+  if (profile.delicate) { clicks += 2; temp -= 1; if (pourStyle === "layered") pourStyle = "descending"; reasons.push("delicate/porous process → coarser + cooler"); signals.push("delicate"); }
+  if (origins.some(o => o.process === "Wet-hulled")) { clicks += 1; reasons.push("wet-hulled → +1 click for porosity"); signals.push("wet-hulled"); }
+  if (origins.some(o => /liberica/i.test(o.variety || ""))) { clicks -= 2; temp -= 1; pourStyle = "even"; reasons.push("liberica species → counter-balance porous"); signals.push("liberica"); }
+
+  if (roast.intent === "Espresso") {
+    clicks += 2; temp -= 1; pourStyle = "even";
+    reasons.push("espresso roast → more soluble, coarser + cooler, integrate");
+    signals.push("espresso");
+  }
+
+  if (/dark/i.test(roast.level || "")) { clicks += 1; temp -= 1; reasons.push("dark roast → coarser, cooler"); }
+  if (/^light\b/i.test(roast.level || "") && roast.intent !== "Espresso") { temp += 1; reasons.push("light filter → develop with heat"); }
+
+  if (brewType === "iced") {
+    if (signals.includes("fruity") || signals.includes("delicate")) { clicks += 1; reasons.push("iced + fragile → +1 click"); }
+    if (pourStyle === "layered") pourStyle = "descending";
+  }
+
+  const fragile = /jasmine|lemongrass|osmanthus|bergamot|elderflower|peach|lychee/i;
+  if (tastingNotes.some(n => fragile.test(n))) { temp = Math.min(temp, 91); reasons.push("fragile aromatics → cap temp at 91°C"); }
+
+  let confidence = "medium";
+  if (signals.length >= 3) confidence = "high";
+  if (origins.length >= 3) confidence = "low";
+  if (!roast.intent || roast.intent === "Omni") { if (confidence === "high") confidence = "medium"; }
+
+  return { clicks: clamp(clicks, 12, 26), temp: clamp(temp, 88, 96), pourStyle, ratio: 15, locked: false, confidence, reasons, signals };
+}
+
+function smartDefaultsBrikka(bean) {
+  const { roast = {}, origins = [] } = bean;
+  const profile = weightedOriginProfile(origins);
+  let clicks = 13, baseWaterTemp = "boiling";
+  const reasons = [];
+  if (/^light\b/i.test(roast.level || "") && roast.intent !== "Espresso") { clicks = 14; baseWaterTemp = "95C-cool-30s"; reasons.push("light filter → finer + cooler base"); }
+  if (profile.density < 0.4) { clicks = 14; reasons.push("porous → finer"); }
+  if (origins.some(o => /sarchimor|parainema|catimor/i.test(o.variety || ""))) { clicks = 13; reasons.push("robusta heritage variety → standard"); }
+  return { clicks, baseWaterTemp, drinkStyle: "neat", locked: false, confidence: "high", reasons };
+}
+
+// ==========================================================
+// ENGINE: Pour Schedules
+// ==========================================================
+function roundTo(n, step = 5) { return Math.round(n / step) * step; }
+function pourCount(dose) { if (dose <= 12) return 3; if (dose <= 18) return 4; return 5; }
+function bloomG(dose) { return roundTo(dose * 2.5, 5); }
+
+function buildLayered(dose, ratio) {
+  const total = dose * ratio, bloom = bloomG(dose), pours = pourCount(dose);
+  const remaining = total - bloom;
+  const weights = pours === 3 ? [0.6, 0.4] : pours === 4 ? [0.4, 0.35, 0.25] : [0.32, 0.28, 0.22, 0.18];
+  const steps = [{ t: 0, add: bloom, running: bloom, instr: "Bloom. Gentle spiral, swirl." }];
+  let running = bloom, t = 45;
+  weights.forEach((w, i) => {
+    const add = roundTo(remaining * w, 5);
+    running += add;
+    steps.push({ t, add, running, instr: i === 0 ? "Concentric circles, center-out." : "Continue. Thin steady stream." });
+    t += pours <= 3 ? 30 : 25;
+  });
+  const last = steps[steps.length - 1];
+  last.add += total - last.running;
+  last.running = total;
+  return { steps, total, drawdown: t + 30 };
+}
+function buildDescending(dose, ratio) {
+  const total = dose * ratio, bloom = roundTo(dose * 3, 5), pours = pourCount(dose);
+  const remaining = total - bloom;
+  const weights = pours === 3 ? [0.6, 0.4] : pours === 4 ? [0.42, 0.32, 0.26] : [0.34, 0.26, 0.22, 0.18];
+  const steps = [{ t: 0, add: bloom, running: bloom, instr: "Big bloom. Spiral, swirl firmly." }];
+  let running = bloom, t = 50;
+  weights.forEach((w, i) => {
+    const add = roundTo(remaining * w, 5);
+    running += add;
+    steps.push({ t, add, running, instr: i === 0 ? "First pour. Wide spiral, fruit-forward." : i === weights.length - 1 ? "Finishing pour. Thin stream, hold the center." : "Tighter spiral, slow flow." });
+    t += 30;
+  });
+  const last = steps[steps.length - 1];
+  last.add += total - last.running;
+  last.running = total;
+  return { steps, total, drawdown: t + 30 };
+}
+function buildEven(dose, ratio) {
+  const total = dose * ratio, bloom = bloomG(dose), pours = pourCount(dose);
+  const remaining = total - bloom;
+  const each = roundTo(remaining / (pours - 1), 5);
+  const steps = [{ t: 0, add: bloom, running: bloom, instr: "Bloom. Gentle spiral, swirl." }];
+  let running = bloom, t = 45;
+  for (let i = 0; i < pours - 1; i++) {
+    const add = i === pours - 2 ? total - running : each;
+    running += add;
+    steps.push({ t, add, running, instr: `Equal pour ${i + 1}. Steady concentric pour.` });
+    t += 25;
+  }
+  return { steps, total, drawdown: t + 30 };
+}
+function buildCustomEven(dose, ratio, pulseG = 26) {
+  const total = dose * ratio;
+  const count = Math.ceil(total / pulseG);
+  const each = roundTo(total / count, 5);
+  const steps = [];
+  let running = 0, t = 0;
+  for (let i = 0; i < count; i++) {
+    const add = i === count - 1 ? total - running : each;
+    running += add;
+    steps.push({ t, add, running, instr: i === 0 ? "First pulse. Saturate fully." : `Pulse ${i + 1}. Same volume, same rhythm.` });
+    t += 25;
+  }
+  return { steps, total, drawdown: t + 30 };
+}
+function generatePourSchedule(dose, ratio, pourStyle) {
+  switch (pourStyle) {
+    case "descending": return buildDescending(dose, ratio);
+    case "even": return buildEven(dose, ratio);
+    case "custom_even": return buildCustomEven(dose, ratio);
+    default: return buildLayered(dose, ratio);
+  }
+}
+function fmtTime(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; }
+
+// ==========================================================
+// ENGINE: Feedback
+// ==========================================================
+const FEEDBACK_RULES = {
+  sour: { clicks: -1, temp: +1, note: "Underextracted — finer + warmer" },
+  bitter: { clicks: +1, temp: -1, note: "Overextracted — coarser + cooler" },
+  acrid: { clicks: +1, temp: -1, note: "Harsh overextraction — coarser + cooler" },
+  thin: { clicks: -1, temp: 0, note: "Underextracted body — finer" },
+  "too-acidic": { clicks: 0, temp: +1, note: "Need more sweetness — bump temp" },
+  "flat-muddy": { clicks: +1, temp: 0, note: "Muddied flavors — coarser" },
+  "missing-notes": { clicks: -1, temp: +1, note: "Under-extracted aromatics — finer + warmer" }
+};
+const CHANNELING_PAIRS = [["sour", "bitter"], ["sour", "acrid"]];
+const FEEDBACK_OPTIONS = [
+  { id: "sour", label: "Sour" },
+  { id: "bitter", label: "Bitter" },
+  { id: "acrid", label: "Acrid" },
+  { id: "thin", label: "Thin" },
+  { id: "too-acidic", label: "Too acidic" },
+  { id: "flat-muddy", label: "Flat / muddy" },
+  { id: "missing-notes", label: "Missing notes" }
 ];
 
-// ===== SMART DEFAULTS FOR NEW BEANS =====
-function smartDefaults(bean){
-  const n=(bean.notes||'').toLowerCase();const o=(bean.origin||'').toLowerCase();const v=(bean.variety||'').toLowerCase();const p=(bean.process||'').toLowerCase();const r=(bean.roast||'').toLowerCase();
-  let v60clicks=24,v60temp=92,brikkaClicks=13,pourStyle='Layered',grind='Medium';
-  // Fruity/bright → finer clicks, protect with lower temp
-  if(n.match(/berry|citrus|floral|jasmine|mango|passion|grapefruit/)||o.match(/kenya|ethiopia/)){v60clicks=22;v60temp=91;pourStyle='Descending';grind='Medium-fine'}
-  // Chocolate/nutty → standard
-  if(n.match(/chocolate|nutty|caramel|toffee|cocoa/)){v60clicks=24;v60temp=93;pourStyle='Even';grind='Medium'}
-  // Delicate coferment/floral
-  if(p.match(/coferment|anaerobic/)&&n.match(/peach|osmanthus|tea|floral|lemongrass/)){v60clicks=26;v60temp=91;pourStyle='Descending';grind='Medium-coarse'}
-  // Wet-hulled / porous
-  if(p.match(/wet.?hull/)||o.match(/sumatra|indonesia/)&&!n.match(/grapefruit/)){v60clicks=26;grind='Medium-coarse'}
-  // Dense highland washed
-  if(o.match(/colombia|kenya|guatemala/)&&p.match(/washed/)){v60clicks=22;v60temp=93;grind='Medium-fine'}
-  // Medium-dark or dark roast
-  if(r.match(/dark/)){v60temp=90;v60clicks=24;brikkaClicks=14}
-  // Liberica
-  if(v.match(/liberica/)){v60temp=89;v60clicks=24;brikkaClicks=14;pourStyle='Even'}
-  // Robusta heritage
-  if(v.match(/sarchimor|parainema|catimor|timor/)){brikkaClicks=13}
-  // Acidic notes → higher temp to develop sweetness
-  if(n.match(/acidic|sour|tart|bright/)){v60temp=Math.min(v60temp+1,94)}
-  return {v60clicks,v60temp,brikkaClicks,pourStyle,grind};
-}
-
-// ===== FEEDBACK RULES ENGINE =====
-const FEEDBACK_RULES={
-  'sour':{clicks:-1,temp:1,priority:1,desc:'Underextracted — finer grind or raise temp'},
-  'bitter':{clicks:1,temp:-1,priority:1,desc:'Over-extracted — coarser grind or lower temp'},
-  'acrid':{clicks:1,temp:-1,priority:2,desc:'Harsh over-extraction — coarsen grind, check bed prep'},
-  'thin':{clicks:-1,temp:0,priority:2,desc:'Under-extracted body — finer grind'},
-  'too acidic':{clicks:0,temp:1,priority:1,desc:'Need more sweetness — raise temp'},
-  'flat/muddy':{clicks:1,temp:0,priority:2,desc:'Muddied flavors — coarsen grind or adjust pour'},
-  'missing notes':{clicks:-1,temp:1,priority:3,desc:'Under-extracted aromatics — finer grind or raise temp'},
-};
-
-function computeAdjustment(feedbackItems, currentRecipe){
-  let clicksDelta=0, tempDelta=0, reasons=[];
-  // Sort by priority
-  const sorted = feedbackItems.sort((a,b)=>(FEEDBACK_RULES[a]?.priority||9)-(FEEDBACK_RULES[b]?.priority||9));
-  // Check for contradictions
-  const hasSour=feedbackItems.includes('sour');
-  const hasBitter=feedbackItems.includes('bitter');
-  const hasAcrid=feedbackItems.includes('acrid');
-  if((hasSour&&hasBitter)||(hasSour&&hasAcrid)){
-    return {clicksDelta:0,tempDelta:0,reasons:['Sour + bitter/acrid = likely channeling. Check bed is leveled evenly, no tamping. Grind may be uneven. Re-brew with better bed prep before changing settings.'],isChanneling:true};
+function processFeedback({ currentRecipe, feedback }) {
+  for (const [a, b] of CHANNELING_PAIRS) {
+    if (feedback.includes(a) && feedback.includes(b)) {
+      return { type: "channeling", diagnosis: "Sour + bitter together = channeling. Bed prep issue, not grind or temp.", action: "Try: wet WDT, level bed, slower bloom. Same settings.", adjustment: null };
+    }
   }
-  sorted.forEach(fb=>{
-    const rule=FEEDBACK_RULES[fb];
-    if(rule){clicksDelta+=rule.clicks;tempDelta+=rule.temp;reasons.push(rule.desc)}
-  });
-  // Cap adjustments
-  clicksDelta=Math.max(-2,Math.min(2,clicksDelta));
-  tempDelta=Math.max(-2,Math.min(2,tempDelta));
-  return {clicksDelta,tempDelta,reasons,isChanneling:false};
-}
-
-// ===== STATE =====
-let state={
-  screen:'home',brewType:null,method:null,selectedBean:null,
-  recipe:null,beans:[...PRESETS],showAddBean:false,
-  showSettings:false,showHistory:false,dose:16,ratio:15,
-  aiAdvice:null,loadingAI:false,
-  // Feedback
-  feedbackMode:false,feedbackItems:[],noteResults:{},
-};
-
-function loadData(){
-  const custom=LS(SK.beans);if(custom)state.beans=[...PRESETS,...custom];
-}
-function saveCustomBeans(){LS(SK.beans,state.beans.filter(b=>b.id.startsWith('custom-')))}
-function getApiKey(){return localStorage.getItem(SK.key)||''}
-function setApiKey(k){localStorage.setItem(SK.key,k)}
-function getHistory(){return LS(SK.history)||[]}
-function addHistory(entry){const h=getHistory();h.unshift(entry);if(h.length>100)h.length=100;LS(SK.history,h)}
-function getOverrides(){return LS(SK.overrides)||{}}
-function saveOverride(beanId,method,brewType,overrides){const all=getOverrides();const key=`${beanId}_${brewType}_${method}`;all[key]=overrides;LS(SK.overrides,all)}
-function getOverride(beanId,method,brewType){const all=getOverrides();return all[`${beanId}_${brewType}_${method}`]||null}
-
-// ===== ICONS =====
-const I={
-  coffee:`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM6 2v2M10 2v2M14 2v2"/></svg>`,
-  filter:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l5 7v6l2 2V11l5-7z"/></svg>`,
-  flame:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c0 4-4 6-4 10a4 4 0 008 0c0-4-4-6-4-10z"/></svg>`,
-  ice:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>`,
-  hot:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M4 6l1.5 1.5M20 6l-1.5 1.5M8 14s1.5 2 4 2 4-2 4-2"/></svg>`,
-  back:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>`,
-  spark:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 2L9 12l-7 1 5 5-1 7 6-4 6 4-1-7 5-5-7-1z"/></svg>`,
-  plus:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
-  gear:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
-  coffeeBig:`<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M17 8h1a4 4 0 010 8h-1M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM6 2v2M10 2v2M14 2v2"/></svg>`,
-  history:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
-  lock:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`,
-  check:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`,
-};
-
-// ===== POUR SCHEDULES =====
-function layeredHot(tw){return[{label:"Bloom",amount:50,time:"0:00",wait:"45s",note:"Gentle spiral, light swirl"},{label:"Pour 2",amount:130,time:"0:45",wait:"25s",note:"Slow concentric circles"},{label:"Pour 3",amount:200,time:"1:10",wait:"40s",note:"Steady circles"},{label:"Pour 4",amount:tw,time:"1:50",wait:"drain",note:"Final pour, let drain"}]}
-function descendingIced(hw){return[{label:"Bloom",amount:Math.round(hw*.36),time:"0:00",wait:"40s",note:"Big bloom, gentle swirl"},{label:"Pour 2",amount:Math.round(hw*.6),time:"0:40",wait:"20s",note:"Moderate pour"},{label:"Pour 3",amount:Math.round(hw*.8),time:"1:00",wait:"20s",note:"Gentler, less agitation"},{label:"Pour 4",amount:hw,time:"1:20",wait:"drain",note:"Very gentle center pour"}]}
-function evenHot(tw){const ps=Math.round((tw-50)/4);return[{label:"Bloom",amount:50,time:"0:00",wait:"35s",note:"Gentle spiral, light swirl"},{label:"Pour 2",amount:50+ps,time:"0:35",wait:"20s",note:"Gentle center pour"},{label:"Pour 3",amount:50+ps*2,time:"0:55",wait:"20s",note:"Same gentle pace"},{label:"Pour 4",amount:50+ps*3,time:"1:15",wait:"20s",note:"Consistent"},{label:"Pour 5",amount:tw,time:"1:35",wait:"drain",note:"Final gentle pour"}]}
-function descendingHot(tw){return[{label:"Bloom",amount:Math.round(tw*.22),time:"0:00",wait:"45s",note:"Big bloom for fruit"},{label:"Pour 2",amount:Math.round(tw*.39),time:"0:45",wait:"25s",note:"Moderate pour"},{label:"Pour 3",amount:Math.round(tw*.54),time:"1:10",wait:"25s",note:"Gentler pour"},{label:"Pour 4",amount:tw,time:"1:35",wait:"drain",note:"Light final pour"}]}
-function defaultIced(hw){return[{label:"Bloom",amount:Math.round(hw*.35),time:"0:00",wait:"40s",note:"Gentle spiral, swirl"},{label:"Pour 2",amount:Math.round(hw*.65),time:"0:40",wait:"25s",note:"Slow circles"},{label:"Pour 3",amount:hw,time:"1:05",wait:"drain",note:"Final pour, let drain"}]}
-
-// ===== RECIPE GENERATORS =====
-function genV60(bean,dose,ratio,method){
-  const tw=dose*ratio,isIced=method==='iced',hw=isIced?Math.round(tw/2):tw,ice=isIced?Math.round(tw/2):0;
-  const hasV60=bean.v60!=null;
-  const sd=hasV60?null:smartDefaults(bean);
-  const ovr=getOverride(bean.id,method,'v60');
-  let temp=ovr?.temp||(hasV60?(isIced?bean.v60.icedTemp:bean.v60.hotTemp):sd.v60temp);
-  let clicks=ovr?.clicks||(hasV60?bean.v60.clicks:sd.v60clicks);
-  const grind=hasV60?(bean.v60.grind||'Medium'):(sd?.grind||'Medium');
-  const ps=hasV60?(bean.v60.pourStyle||'Layered'):(sd?.pourStyle||'Layered');
-  let pours;
-  if(isIced&&ps==='Descending')pours=descendingIced(hw);
-  else if(isIced)pours=defaultIced(hw);
-  else if(ps==='Even')pours=evenHot(tw);
-  else if(ps==='Descending')pours=descendingHot(tw);
-  else pours=layeredHot(tw);
-  const locked=ovr?.locked||false;
-  return{type:'v60',method,bean,dose,ratio,totalWater:tw,hotWater:hw,ice,temp,clicks,grind,pourStyle:ps,pours,drawdown:isIced?'2:00–2:30':'2:30–3:00',needsAI:!hasV60||temp==null,locked};
-}
-
-function genBrikka(bean,style){
-  const hasBrikka=bean.brikka!=null;
-  const sd=hasBrikka?null:smartDefaults(bean);
-  const b=bean.brikka||{clicks:sd?.brikkaClicks||13,baseWaterTemp:'Boiling',americanoWater:'100–120ml at 85–90°C'};
-  const ovr=getOverride(bean.id,style,'brikka');
-  const clicks=ovr?.clicks||b.clicks;
-  const locked=ovr?.locked||false;
-  return{type:'brikka',drinkStyle:style,bean,dose:'15–16g (fill basket, level, no tamp)',clicks,baseWater:'150ml',baseWaterTemp:b.baseWaterTemp,infrared:'1600W',brewTime:'~6 min',output:'~100–110ml + crema',
-    americano:style==='americano'?b.americanoWater:null,
-    iced:style==='iced'?'Pour concentrate over 150–170g ice':null,needsAI:!hasBrikka,locked};
-}
-
-// ===== AI =====
-async function fetchAI(bean,method,context){
-  const key=getApiKey();
-  if(!key)return{error:'No API key. Go to Settings to add your Anthropic API key.'};
-  const ctxStr=context?`\nContext: ${context}`:'';
-  const prompt=`You are a specialty coffee brewing expert helping a user who brews with a Commandante C40 grinder and Hario V60 or Bialetti Brikka moka pot with infrared burner at 1600W. Temperatures in Celsius only. For grind, recommend specific Commandante click numbers (typical range: 22-26 for V60, 12-15 for Brikka). Respond ONLY in JSON with no markdown or preamble.
-Bean: ${bean.name} | Origin: ${bean.origin} | Variety: ${bean.variety} | Process: ${bean.process} | Roast: ${bean.roast} | Notes: ${bean.notes} | Method: ${method}${ctxStr}
-JSON: {"tempRecommendation":"...","grindAdvice":"...","clicksRecommendation":0,"keyTip":"...","flavorExpectation":"...","cautionNote":"..."}`;
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
-    });
-    if(!r.ok){const e=await r.text();return{error:`API error ${r.status}: ${e.substring(0,200)}`}}
-    const data=await r.json();
-    const text=(data.content||[]).map(i=>i.text||'').join('\n');
-    return JSON.parse(text.replace(/```json|```/g,'').trim());
-  }catch(e){return{error:'Failed: '+e.message}}
-}
-
-// ===== RENDER ENGINE =====
-function render(){
-  const app=document.getElementById('app');
-  if(state.showSettings){app.innerHTML=renderSettings();bindSettings();return}
-  if(state.showAddBean){app.innerHTML=renderAddBean();bindAddBean();return}
-  if(state.showHistory){app.innerHTML=renderHistory();bindHistory();return}
-  if(state.feedbackMode){app.innerHTML=renderFeedback();bindFeedback();return}
-  switch(state.screen){
-    case'home':app.innerHTML=renderHome();bindHome();break;
-    case'method':app.innerHTML=renderMethod();bindMethod();break;
-    case'bean':app.innerHTML=renderBean();bindBean();break;
-    case'dose':app.innerHTML=renderDose();bindDose();break;
-    case'recipe':app.innerHTML=renderRecipe();bindRecipe();break;
+  let clicksDelta = 0, tempDelta = 0;
+  const reasons = [];
+  for (const f of feedback) {
+    const rule = FEEDBACK_RULES[f];
+    if (!rule) continue;
+    clicksDelta += rule.clicks; tempDelta += rule.temp;
+    reasons.push(rule.note);
   }
-}
-
-function renderHome(){
-  return`<div class="screen"><div class="home-hero" style="position:relative"><div>${I.coffeeBig}</div><h1 class="display">Brew Lab</h1><p>V3 — feedback-powered recipes</p><button class="history-btn" id="historyBtn">${I.history}</button><button class="settings-gear" id="settingsBtn">${I.gear}</button></div>
-  <div class="pad stack">
-    <div class="card tappable highlight" id="filterBtn"><div class="card-row"><div class="card-icon">${I.filter}</div><div><div class="display" style="font-size:18px;font-weight:700">V60 Pour Over</div><div style="font-size:13px;color:var(--text-dim);margin-top:2px">Filter coffee — hot or iced</div></div></div></div>
-    <div class="card tappable" id="brikkaBtn"><div class="card-row"><div class="card-icon">${I.flame}</div><div><div class="display" style="font-size:18px;font-weight:700">Brikka Moka Pot</div><div style="font-size:13px;color:var(--text-dim);margin-top:2px">Espresso-style — straight, americano, iced</div></div></div></div>
-  </div></div>`;
-}
-function bindHome(){
-  document.getElementById('filterBtn').onclick=()=>{state.brewType='filter';state.screen='method';render()};
-  document.getElementById('brikkaBtn').onclick=()=>{state.brewType='brikka';state.screen='method';render()};
-  document.getElementById('settingsBtn').onclick=()=>{state.showSettings=true;render()};
-  document.getElementById('historyBtn').onclick=()=>{state.showHistory=true;render()};
-}
-
-function renderMethod(){
-  const opts=state.brewType==='filter'?[{k:'hot',l:'Hot',d:'Classic hot pour-over',i:I.hot},{k:'iced',l:'Iced',d:'50:50 water & ice',i:I.ice}]:[{k:'straight',l:'Straight Shot',d:'Concentrated, sip slowly',i:I.flame},{k:'americano',l:'Americano',d:'Concentrate + hot water',i:I.hot},{k:'iced',l:'Iced',d:'Concentrate over ice',i:I.ice}];
-  return`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>${state.brewType==='filter'?'V60 Pour Over':'Brikka Moka Pot'}</h1><div class="sub">Choose your method</div></div></div></div>
-  <div class="pad stack">${opts.map((o,i)=>`<div class="card tappable" id="opt${i}"><div class="card-row">${o.i}<div><div style="font-size:16px;font-weight:600">${o.l}</div><div style="font-size:13px;color:var(--text-dim)">${o.d}</div></div></div></div>`).join('')}</div></div>`;
-}
-function bindMethod(){
-  document.getElementById('backBtn').onclick=()=>{state.screen='home';render()};
-  const opts=state.brewType==='filter'?['hot','iced']:['straight','americano','iced'];
-  opts.forEach((k,i)=>{document.getElementById('opt'+i).onclick=()=>{state.method=k;state.screen='bean';render()}});
-}
-
-function renderBean(){
-  const available=state.beans.filter(b=>{if(state.brewType==='filter')return state.method==='iced'?b.v60?.icedTemp!=null:b.v60?.hotTemp!=null;return b.brikka!=null});
-  const other=state.beans.filter(b=>!available.includes(b));
-  const tagVal=b=>{
-    const ovr=getOverride(b.id,state.method,state.brewType==='filter'?'v60':'brikka');
-    if(state.brewType==='filter'){const t=state.method==='iced'?b.v60?.icedTemp:b.v60?.hotTemp;return`${ovr?.temp||t}°C · ${ovr?.clicks||b.v60?.clicks||24}ck`}
-    return`${ovr?.clicks||b.brikka?.clicks} clicks`};
-  const isLocked=b=>{const ovr=getOverride(b.id,state.method,state.brewType==='filter'?'v60':'brikka');return ovr?.locked};
-  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Select Bean</h1><div class="sub">${state.brewType==='filter'?'V60':'Brikka'} · ${state.method}</div></div></div></div><div class="pad">`;
-  if(available.length){
-    html+=`<div class="section-label accent">Dialed Recipes</div><div class="stack">`;
-    available.forEach((b,i)=>{
-      const locked=isLocked(b);
-      html+=`<div class="card tappable ${locked?'locked':''}" id="avail${i}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px">${b.name}${locked?I.lock:''}</div><div style="font-size:12px;color:var(--text-dim)">${b.origin} · ${b.variety}</div><div style="font-size:12px;color:var(--text-muted);margin-top:4px">${b.notes}</div></div><span class="tag ${locked?'locked-tag':'accent'}">${tagVal(b)}</span></div></div>`;
-    });
-    html+=`</div>`;
+  if (clicksDelta === 0 && tempDelta === 0) {
+    return { type: "no-change", diagnosis: "Feedback signals cancel. No clear direction.", action: "Re-brew same settings, focus technique.", adjustment: null };
   }
-  if(other.length){
-    html+=`<div class="section-label muted" style="margin-top:20px">Other Beans (smart defaults + AI)</div><div class="stack">`;
-    other.forEach((b,i)=>{
-      const locked=isLocked(b);
-      html+=`<div class="card tappable" id="other${i}" style="opacity:0.7"><div style="font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px">${b.name}${locked?I.lock:''}</div><div style="font-size:12px;color:var(--text-dim)">${b.origin} · ${b.notes}</div><div style="font-size:11px;color:var(--accent);margin-top:6px;display:flex;align-items:center;gap:4px">${I.spark} Smart defaults + AI advice</div></div>`;
-    });
-    html+=`</div>`;
-  }
-  html+=`<div style="margin-top:20px"><button class="btn secondary" id="addBeanBtn"><span class="btn-flex">${I.plus} Add New Bean</span></button></div></div></div>`;
-  return html;
-}
-function bindBean(){
-  document.getElementById('backBtn').onclick=()=>{state.screen='method';render()};
-  const available=state.beans.filter(b=>{if(state.brewType==='filter')return state.method==='iced'?b.v60?.icedTemp!=null:b.v60?.hotTemp!=null;return b.brikka!=null});
-  const other=state.beans.filter(b=>!available.includes(b));
-  available.forEach((b,i)=>{document.getElementById('avail'+i).onclick=()=>{state.selectedBean=b;state.screen='dose';state.aiAdvice=null;render()}});
-  other.forEach((b,i)=>{document.getElementById('other'+i).onclick=()=>{state.selectedBean=b;state.screen='dose';state.aiAdvice=null;render()}});
-  document.getElementById('addBeanBtn').onclick=()=>{state.showAddBean=true;render()};
-}
-
-function renderDose(){
-  const b=state.selectedBean;const doses=[14,15,16,18,20];const ratios=[14,15,16,17];
-  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Dose & Ratio</h1><div class="sub">${b.name}</div></div></div></div><div class="pad">`;
-  html+=`<div style="margin-bottom:24px"><div class="label">Coffee Dose (g)</div><div class="wrap">${doses.map(d=>`<button class="chip ${state.dose===d?'active':'inactive'}" data-dose="${d}">${d}g</button>`).join('')}</div></div>`;
-  if(state.brewType==='filter'){
-    html+=`<div style="margin-bottom:24px"><div class="label">Water Ratio (1:X)</div><div class="wrap">${ratios.map(r=>`<button class="chip ${state.ratio===r?'active':'inactive'}" data-ratio="${r}">1:${r}</button>`).join('')}</div></div>`;
-  }
-  const tw=state.dose*state.ratio;
-  html+=`<div class="card glow-bg" style="margin-bottom:24px"><div class="recipe-meta">`;
-  if(state.brewType==='filter'){html+=`<div>Total water: <span class="hl">${tw}g</span></div>`;if(state.method==='iced')html+=`<div>Hot: <span class="hl">${Math.round(tw/2)}g</span> · Ice: <span class="hl">${Math.round(tw/2)}g</span></div>`}
-  else html+=`<div>Brikka basket: <span class="hl">15–16g</span> · Base water: <span class="hl">150ml</span></div>`;
-  html+=`</div></div><button class="btn primary" id="genBtn">Generate Recipe</button></div></div>`;
-  return html;
-}
-function bindDose(){
-  document.getElementById('backBtn').onclick=()=>{state.screen='bean';render()};
-  document.querySelectorAll('[data-dose]').forEach(el=>{el.onclick=()=>{state.dose=parseInt(el.dataset.dose);render()}});
-  document.querySelectorAll('[data-ratio]').forEach(el=>{el.onclick=()=>{state.ratio=parseInt(el.dataset.ratio);render()}});
-  document.getElementById('genBtn').onclick=async()=>{
-    if(state.brewType==='filter')state.recipe=genV60(state.selectedBean,state.dose,state.ratio,state.method);
-    else state.recipe=genBrikka(state.selectedBean,state.method);
-    state.screen='recipe';
-    if(state.recipe.needsAI&&getApiKey()){state.loadingAI=true;render();const r=state.recipe;const m=r.type==='v60'?`V60 ${r.method}`:`Brikka ${r.drinkStyle}`;state.aiAdvice=await fetchAI(r.bean,m);state.loadingAI=false}
-    render();
+  clicksDelta = clamp(clicksDelta, -2, 2);
+  tempDelta = clamp(tempDelta, -2, 2);
+  const adjustment = {
+    clicks: clamp(currentRecipe.clicks + clicksDelta, 12, 26),
+    temp: currentRecipe.temp ? clamp(currentRecipe.temp + tempDelta, 88, 96) : null
   };
+  return { type: "adjustment", diagnosis: reasons.join(". "), adjustment, delta: { clicks: clicksDelta, temp: tempDelta } };
 }
 
-function renderRecipe(){
-  const r=state.recipe;
-  if(r.type==='brikka')return renderBrikkaRecipe(r);
-  return renderV60Recipe(r);
+// ==========================================================
+// ENGINE: AI Advisor
+// ==========================================================
+const EQUIPMENT_BLOCK = `EQUIPMENT:
+- Hand grinder: Commandante C40 (click range 12-26, finer = lower number, default 24)
+- Filter brewer: Hario V60 (paper filter)
+- Pressure brewer: Bialetti Brikka 4-cup moka pot
+- Heat source: Infrared burner at 1600W
+- Kettle: Temperature-controlled, Celsius only`;
+
+const AI_ROLES = {
+  fill: `ROLE: New bean, no dial-in yet. Generate a starting recipe. Be conservative — user will dial from here. Aim for the gentler/safer end. If espresso roast, it is MORE soluble on V60 — coarser + cooler than filter roast.`,
+  adjust: `ROLE: Current recipe is not landing after multiple brews. Diagnose pattern and propose a shift. Treat current values as anchor — adjust, do not replace. Maximum 2 clicks and 2°C from current.`,
+  review: `ROLE: Sanity check on current recipe. If it looks correct, say so with high confidence and propose minimal/no changes.`
+};
+
+function buildAIPrompt({ bean, recipeKey, currentRecipe, feedbackHistory = [], mode }) {
+  const beanCtx = `BEAN:
+Name: ${bean.name}
+Roaster: ${bean.roaster || "Unknown"}
+Roast level: ${bean.roast?.level || "Unknown"}
+Roast intent: ${bean.roast?.intent || "Filter"}${bean.roast?.intent === "Espresso" ? "  (espresso roast — more soluble on V60, coarser + cooler than filter roasts)" : ""}
+Origins:
+${bean.origins.map(o => `  - ${o.country} ${o.variety || ""} ${o.process || ""} (${o.share}%)`).join("\n")}
+Tasting notes: ${bean.tastingNotes?.join(", ") || "—"}`;
+
+  const currentCtx = currentRecipe ?
+`CURRENT RECIPE (your anchor):
+Slot: ${recipeKey}
+- Clicks: ${currentRecipe.clicks}
+- Temp: ${currentRecipe.temp || "—"}°C
+- Pour style: ${currentRecipe.pourStyle || "—"}
+- Ratio: 1:${currentRecipe.ratio || 15}
+- Locked: ${currentRecipe.locked ? "yes" : "no"}` : `NO CURRENT RECIPE. Generate from scratch.`;
+
+  const feedbackCtx = feedbackHistory.length ?
+`RECENT BREWS (most recent last):
+${feedbackHistory.slice(-3).map((h, i) => `  ${i + 1}. ${h.settings.clicks} clicks, ${h.settings.temp}°C → ${h.feedback.join(", ")}`).join("\n")}` : "";
+
+  return `${EQUIPMENT_BLOCK}
+
+${beanCtx}
+
+${currentCtx}
+
+${feedbackCtx}
+
+${AI_ROLES[mode]}
+
+OUTPUT — return ONLY this JSON object. No preamble, no markdown fences, no commentary.
+
+{"clicks": INT_12_TO_26, "temp": INT_88_TO_96, "pourStyle": "layered" OR "descending" OR "even" OR "custom_even", "ratio": INT_14_TO_17, "rationale": "STRING max 50 words", "confidence": "high" OR "medium" OR "low"}
+
+HARD RULES:
+1. Click numbers only. Never text grind descriptions ("medium-fine" is forbidden).
+2. ${mode === "adjust" ? "ADJUST MODE: " : ""}Stay within 2 clicks and 2°C of current recipe.${currentRecipe ? ` Current is ${currentRecipe.clicks} clicks, ${currentRecipe.temp}°C — your output must be in [${Math.max(12, currentRecipe.clicks - 2)}, ${Math.min(26, currentRecipe.clicks + 2)}] clicks and [${Math.max(88, (currentRecipe.temp || 92) - 2)}, ${Math.min(96, (currentRecipe.temp || 92) + 2)}]°C.` : ""}
+3. For Brikka, use clicks 12-15. Set temp to ${currentRecipe?.temp || 92} and pourStyle to "even".
+4. Espresso roast on V60 needs COARSER and COOLER than filter roast. Counterintuitive but critical.`;
 }
 
-function renderV60Recipe(r){
-  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>${r.bean.name}</h1><div class="sub">V60 · ${r.method} · 1:${r.ratio}${r.locked?' · 🔒 Locked':''}</div></div></div></div><div class="pad">`;
-  html+=`<div class="card ${r.locked?'locked':''}" style="margin-bottom:12px"><div class="tags-row"><span class="tag accent">${r.temp?r.temp+'°C':'AI recommend'}</span><span class="tag green">${r.clicks} clicks</span><span class="tag blue">${r.pourStyle}</span></div>`;
-  html+=`<div class="recipe-meta"><div>Dose: <span>${r.dose}g</span></div><div>Total water: <span>${r.totalWater}g</span></div>`;
-  if(r.method==='iced')html+=`<div>Hot water: <span>${r.hotWater}g</span></div><div>Ice: <span>${r.ice}g</span></div>`;
-  html+=`<div>Grind: <span>${r.grind} (${r.clicks} clicks)</span></div><div>Target drawdown: <span>${r.drawdown}</span></div></div></div>`;
-  html+=`<div class="section-label accent">Pour Schedule</div>`;
-  if(r.method==='iced')html+=`<div class="card" style="margin-bottom:8px;padding:12px 14px;border-color:var(--accent-dim)"><div style="display:flex;gap:12px;align-items:center">${I.ice}<div style="font-size:14px">Place <span class="mono" style="color:var(--accent)">${r.ice}g</span> ice in server. Rinse filter, discard rinse, keep ice.</div></div></div>`;
-  r.pours.forEach((p,i)=>{
-    html+=`<div class="card" style="margin-bottom:8px;padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="display:flex;gap:12px;flex:1"><div class="step-num ${i===0?'accent':'dim'}">${i+1}</div><div><div style="font-size:14px;font-weight:600">${p.label} → <span class="mono" style="color:var(--accent)">${p.amount}g</span></div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">${p.note}</div></div></div><div class="pour-time"><div>${p.time}</div><div class="wait">${p.wait}</div></div></div></div>`;
-  });
-  html+=`<div class="card glow-bg" style="margin-top:12px;padding:12px 14px"><div style="font-size:12px;color:var(--text-dim)"><span style="color:var(--accent);font-weight:600">Caffeine:</span> ${r.bean.caffeineLevel}</div><div style="font-size:12px;color:var(--text-dim);margin-top:4px"><span style="color:var(--accent);font-weight:600">Flavor:</span> ${r.bean.notes}</div></div>`;
-  html+=renderAISection();
-  html+=`<div style="margin-top:16px"><button class="btn success" id="brewedBtn"><span class="btn-flex">${I.check} I Brewed This — Give Feedback</span></button></div>`;
-  html+=`<div style="margin-top:8px"><button class="btn ghost" id="homeBtn">Back to Home</button></div></div></div>`;
-  return html;
+function parseAIResponse(text) {
+  let cleaned = text.replace(/```json|```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start >= 0 && end > start) cleaned = cleaned.slice(start, end + 1);
+  try {
+    const p = JSON.parse(cleaned);
+    if (typeof p.clicks !== "number" || p.clicks < 12 || p.clicks > 26) throw new Error(`clicks out of range: ${p.clicks}`);
+    if (typeof p.temp !== "number" || p.temp < 88 || p.temp > 96) throw new Error(`temp out of range: ${p.temp}`);
+    if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) throw new Error(`bad pourStyle: ${p.pourStyle}`);
+    if (typeof p.ratio !== "number" || p.ratio < 14 || p.ratio > 17) throw new Error(`ratio out of range: ${p.ratio}`);
+    if (!["high", "medium", "low"].includes(p.confidence)) p.confidence = "medium";
+    if (typeof p.rationale !== "string") p.rationale = "";
+    return { ok: true, ...p };
+  } catch (e) {
+    return { ok: false, error: e.message, raw: text };
+  }
 }
 
-function renderBrikkaRecipe(r){
-  const steps=[
-    {n:'1',t:`Boil kettle. Pour 150ml into base.${r.baseWaterTemp!=='Boiling'?' Let cool to '+r.baseWaterTemp+'.':''}`},
-    {n:'2',t:`Grind 15–16g at ${r.clicks} clicks. Fill basket, level with finger. No tamp.`},
-    {n:'3',t:'Assemble with towel (base is hot). Screw on firmly.'},
-    {n:'4',t:'Place on infrared at 1600W.'},
-    {n:'5',t:'Wait for coffee flow. Pull off at loud sputtering. Cold wet towel on base.'},
+async function askAdvisor({ bean, recipeKey, currentRecipe, feedbackHistory, mode, apiKey }) {
+  if (!apiKey) return { ok: false, error: "No API key set. Add one in Settings." };
+  if (!bean) return { ok: false, error: "No bean provided." };
+  if (!["fill", "adjust", "review"].includes(mode)) return { ok: false, error: `Bad mode: ${mode}` };
+
+  const prompt = buildAIPrompt({ bean, recipeKey, currentRecipe, feedbackHistory, mode });
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 400,
+        messages: [
+          { role: "user", content: prompt },
+          { role: "assistant", content: "{" }
+        ]
+      })
+    });
+    if (!response.ok) {
+      const err = await response.text();
+      return { ok: false, error: `API ${response.status}: ${err.slice(0, 200)}` };
+    }
+    const data = await response.json();
+    const text = data.content?.[0]?.text || "";
+    return parseAIResponse("{" + text);
+  } catch (e) {
+    return { ok: false, error: `Network error: ${e.message}` };
+  }
+}
+
+// ==========================================================
+// PRESETS — seeded with roast.intent
+// ==========================================================
+const PRESETS = [
+  {
+    id: "col-coferment", name: "Colombia Coferment", roaster: null, custom: false,
+    origins: [{ country: "Colombia", variety: "Caturra", process: "Cofermentation", share: 100 }],
+    roast: { level: "Light-Medium", intent: "Filter" },
+    tastingNotes: ["Tropical fruit", "Wine", "Berry"],
+    recipes: {
+      v60_hot: { clicks: 24, temp: 93, pourStyle: "layered", ratio: 15, locked: false },
+      v60_iced: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false },
+      brikka: null
+    }
+  },
+  {
+    id: "aalamin-bm", name: "Aalamin Bener Meriah Peach", roaster: null, custom: false,
+    origins: [{ country: "Indonesia", variety: "Typica", process: "Wet-hulled", share: 100 }],
+    roast: { level: "Light-Medium", intent: "Filter" },
+    tastingNotes: ["Peach", "Osmanthus", "Honey"],
+    recipes: {
+      v60_hot: { clicks: 26, temp: 91, pourStyle: "layered", ratio: 15, locked: false },
+      v60_iced: { clicks: 26, temp: 91, pourStyle: "descending", ratio: 15, locked: false },
+      brikka: null
+    }
+  },
+  {
+    id: "camel-tacu", name: "Camel Step Tacu Mexico", roaster: "Camel Step", custom: false,
+    origins: [{ country: "Mexico", variety: "Typica", process: "Washed", share: 100 }],
+    roast: { level: "Medium", intent: "Filter" },
+    tastingNotes: ["Chocolate", "Almond", "Brown sugar"],
+    recipes: {
+      v60_hot: { clicks: 24, temp: 94, pourStyle: "even", ratio: 15, locked: false },
+      v60_iced: null,
+      brikka: null
+    }
+  },
+  {
+    id: "col-722", name: "Colombia 722", roaster: null, custom: false,
+    origins: [{ country: "Colombia", variety: "Castillo", process: "Cofermentation", share: 100 }],
+    roast: { level: "Light-Medium", intent: "Filter" },
+    tastingNotes: ["Berry", "Lemongrass", "Caramel", "Peach"],
+    recipes: {
+      v60_hot: { clicks: 24, temp: 92, pourStyle: "descending", ratio: 15, locked: false },
+      v60_iced: { clicks: 24, temp: 92, pourStyle: "descending", ratio: 15, locked: false },
+      brikka: null
+    }
+  },
+  {
+    id: "col-pinacolada", name: "Colombia Piña Colada", roaster: null, custom: false,
+    origins: [{ country: "Colombia", variety: "Castillo", process: "Cofermentation", share: 100 }],
+    roast: { level: "Light-Medium", intent: "Filter" },
+    tastingNotes: ["Pineapple", "Coconut", "Tropical"],
+    recipes: {
+      v60_hot: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false },
+      v60_iced: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false },
+      brikka: null
+    }
+  },
+  {
+    id: "blend-4origin", name: "4-Origin Blend", roaster: null, custom: false,
+    origins: [
+      { country: "Brazil", variety: "Catuai", process: "Natural", share: 40 },
+      { country: "Colombia", variety: "Castillo", process: "Washed", share: 25 },
+      { country: "Guatemala", variety: "Bourbon", process: "Washed", share: 20 },
+      { country: "Rwanda", variety: "Bourbon", process: "Natural", share: 15 }
+    ],
+    roast: { level: "Medium", intent: "Espresso" },
+    tastingNotes: ["Caramel", "Chocolate", "Creamy"],
+    recipes: {
+      v60_hot: { clicks: 26, temp: 92, pourStyle: "even", ratio: 15, locked: false },
+      v60_iced: null,
+      brikka: null
+    }
+  },
+  {
+    id: "istinye-png", name: "İstinye PNG", roaster: "İstinye", custom: false,
+    origins: [{ country: "Papua New Guinea", variety: "Typica", process: "Washed", share: 100 }],
+    roast: { level: "Light-Medium", intent: "Filter" },
+    tastingNotes: ["Floral", "Citrus", "Honey"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: { clicks: 24, temp: 91, pourStyle: "descending", ratio: 15, locked: false },
+      brikka: null
+    }
+  },
+  {
+    id: "malaysia-liberica", name: "Malaysia Liberica Tobacco", roaster: null, custom: false,
+    origins: [{ country: "Malaysia", variety: "Liberica", process: "Natural", share: 100 }],
+    roast: { level: "Medium", intent: "Filter" },
+    tastingNotes: ["Tobacco", "Dark chocolate", "Woody"],
+    recipes: {
+      v60_hot: { clicks: 24, temp: 90, pourStyle: "even", ratio: 15, locked: false },
+      v60_iced: { clicks: 24, temp: 91, pourStyle: "even", ratio: 15, locked: false },
+      brikka: { clicks: 14, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
+    }
+  },
+  {
+    id: "indo-grapefruit", name: "Indonesia Grapefruit", roaster: null, custom: false,
+    origins: [{ country: "Indonesia", variety: "Typica", process: "Wet-hulled", share: 100 }],
+    roast: { level: "Light-Medium", intent: "Filter" },
+    tastingNotes: ["Grapefruit", "Citrus", "Bright"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: { clicks: 24, temp: 91, pourStyle: "descending", ratio: 15, locked: false },
+      brikka: null
+    }
+  },
+  // Brikka-focused presets
+  {
+    id: "brazil-yellow-cat", name: "Brazil Yellow Catuai Infused", roaster: null, custom: false,
+    origins: [{ country: "Brazil", variety: "Yellow Catuai", process: "Natural", share: 100 }],
+    roast: { level: "Medium", intent: "Espresso" },
+    tastingNotes: ["Caramel", "Apple pie", "Sweet"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: null,
+      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
+    }
+  },
+  {
+    id: "camel-santos", name: "Camel Step Brazil Santos", roaster: "Camel Step", custom: false,
+    origins: [{ country: "Brazil", variety: "Mundo Novo", process: "Natural", share: 100 }],
+    roast: { level: "Medium", intent: "Espresso" },
+    tastingNotes: ["Chocolate", "Hazelnut", "Caramel"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: null,
+      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
+    }
+  },
+  {
+    id: "eth-chelbesa", name: "Ethiopia Chelbesa", roaster: null, custom: false,
+    origins: [{ country: "Ethiopia", variety: "Heirloom", process: "Washed", share: 100 }],
+    roast: { level: "Light", intent: "Filter" },
+    tastingNotes: ["Floral", "Jasmine", "Citrus"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: null,
+      brikka: { clicks: 14, baseWaterTemp: "95C-cool-30s", drinkStyle: "neat", locked: false }
+    }
+  },
+  {
+    id: "brazil-parainema", name: "Brazil Parainema", roaster: null, custom: false,
+    origins: [{ country: "Brazil", variety: "Parainema", process: "Natural", share: 100 }],
+    roast: { level: "Medium", intent: "Espresso" },
+    tastingNotes: ["Chocolate", "Nutty", "Caramel"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: null,
+      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
+    }
+  },
+  {
+    id: "brazil-santa-ines", name: "Brazil Santa Ines", roaster: null, custom: false,
+    origins: [{ country: "Brazil", variety: "Catuai", process: "Natural", share: 100 }],
+    roast: { level: "Medium", intent: "Espresso" },
+    tastingNotes: ["Chocolate", "Caramel", "Smooth"],
+    recipes: {
+      v60_hot: null,
+      v60_iced: null,
+      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
+    }
+  }
+];
+
+// ==========================================================
+// STORAGE
+// ==========================================================
+const KEYS = {
+  beans: "bl_beans4",
+  apiKey: "bl_apikey",
+  history: "bl_history4",
+  settings: "bl_settings4",
+  devLog: "bl_devlog4"
+};
+
+function load(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch { return fallback; }
+}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+// ==========================================================
+// APP STATE
+// ==========================================================
+const state = {
+  screen: "home",          // home | method | bean | dose | recipe | feedback | history | settings | addBean
+  customBeans: load(KEYS.beans, []),
+  history: load(KEYS.history, []),
+  settings: load(KEYS.settings, { defaultRatio: 15, defaultV60Dose: 16, defaultBrikkaDose: 16 }),
+  apiKey: localStorage.getItem(KEYS.apiKey) || "",
+  // current flow
+  brewType: null,          // "v60" | "brikka"
+  method: null,            // "hot" | "iced" | "neat" | "americano"
+  selectedBean: null,
+  dose: 16,
+  ratio: 15,
+  recipe: null,
+  recipeKey: null,
+  pourSchedule: null,
+  engineMeta: null,        // captured per-brew: reasons[], aiInvoked, aiRationale, confidence
+  // feedback
+  feedback: [],
+  taggedNotes: {},
+  adjustment: null,
+  pendingDevNote: "",
+  // ai
+  aiLoading: false,
+  aiResult: null,
+  // ui
+  versionTapCount: 0
+};
+
+// ==========================================================
+// UTILITIES
+// ==========================================================
+function toast(msg, ms = 2000) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), ms);
+}
+function uid() { return Math.random().toString(36).slice(2, 9); }
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) + " " +
+         d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+}
+function allBeans() { return [...PRESETS, ...state.customBeans]; }
+function findBean(id) { return allBeans().find(b => b.id === id); }
+
+function recipeKeyFor(brewType, method) {
+  if (brewType === "v60") return method === "iced" ? "v60_iced" : "v60_hot";
+  if (brewType === "brikka") return method === "americano" ? "brikka_americano" : "brikka";
+  return null;
+}
+
+function getRecipeForBean(bean, recipeKey, brewType) {
+  const existing = bean.recipes?.[recipeKey];
+  if (existing) return { recipe: existing, basis: "preset", meta: null };
+  // fallback to smart defaults
+  if (recipeKey.startsWith("v60")) {
+    const sd = smartDefaultsV60(bean, recipeKey === "v60_iced" ? "iced" : "hot");
+    return { recipe: sd, basis: "smart_default", meta: sd };
+  }
+  if (recipeKey.startsWith("brikka")) {
+    const sd = smartDefaultsBrikka(bean);
+    return { recipe: { ...sd, temp: null, pourStyle: null, ratio: null }, basis: "smart_default", meta: sd };
+  }
+  return null;
+}
+
+// ==========================================================
+// RENDER ROUTER
+// ==========================================================
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  app.appendChild(renderStatusBar());
+  app.appendChild(renderHeader());
+
+  const screens = {
+    home: renderHome,
+    method: renderMethod,
+    bean: renderBeanPicker,
+    dose: renderDose,
+    recipe: renderRecipe,
+    feedback: renderFeedback,
+    history: renderHistory,
+    settings: renderSettings,
+    addBean: renderAddBean
+  };
+  const fn = screens[state.screen] || renderHome;
+  app.appendChild(fn());
+
+  if (["home", "history", "settings"].includes(state.screen)) {
+    app.appendChild(renderTabBar());
+  }
+  window.scrollTo(0, 0);
+}
+
+function renderStatusBar() {
+  const el = document.createElement("div");
+  el.className = "status-bar";
+  const parts = [];
+  parts.push(`<span class="status-dot"></span>`);
+  if (state.selectedBean) {
+    parts.push(`<span class="crumb">${state.selectedBean.name.toUpperCase()}</span>`);
+    if (state.brewType) {
+      parts.push(`<span class="sep">/</span>`);
+      parts.push(`<span>${state.brewType.toUpperCase()}${state.method ? " " + state.method.toUpperCase() : ""}</span>`);
+    }
+  } else {
+    parts.push(`<span class="crumb">BREW LAB</span>`);
+    parts.push(`<span class="sep">/</span>`);
+    parts.push(`<span>${state.screen.toUpperCase()}</span>`);
+  }
+  if (state.recipe?.locked) {
+    el.classList.add("locked");
+    parts.push(`<span class="right" style="color: var(--green-lock);">LOCKED</span>`);
+  }
+  el.innerHTML = parts.join("");
+  return el;
+}
+
+function renderHeader() {
+  const h = document.createElement("header");
+  h.className = "app-header";
+  h.innerHTML = `
+    <h1>BREW LAB</h1>
+    <span class="version version-tap" id="version-tap">V3.5 / PHANTOM</span>
+  `;
+  setTimeout(() => {
+    const tap = h.querySelector("#version-tap");
+    if (tap) {
+      tap.addEventListener("click", onVersionTap);
+    }
+  }, 0);
+  return h;
+}
+
+function renderTabBar() {
+  const nav = document.createElement("nav");
+  nav.className = "tab-bar";
+  const tabs = [
+    { id: "home", label: "Brew" },
+    { id: "history", label: "History" },
+    { id: "addBean", label: "+ Bean" },
+    { id: "settings", label: "Settings" }
   ];
-  if(r.drinkStyle==='americano')steps.push({n:'6',t:`Pour ${r.americano} into cup first, then concentrate on top. Don't stir.`});
-  if(r.drinkStyle==='iced')steps.push({n:'6',t:`${r.iced}. No hot water needed.`});
-  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>${r.bean.name}</h1><div class="sub">Brikka · ${r.drinkStyle}${r.locked?' · 🔒 Locked':''}</div></div></div></div><div class="pad">`;
-  html+=`<div class="card ${r.locked?'locked':''}" style="margin-bottom:12px"><div class="tags-row"><span class="tag accent">${r.clicks} clicks</span><span class="tag green">${r.baseWaterTemp}</span><span class="tag blue">1600W</span></div>`;
-  html+=`<div class="recipe-meta"><div>Dose: <span>${r.dose}</span></div><div>Base water: <span>${r.baseWater} at ${r.baseWaterTemp}</span></div><div>Infrared: <span>${r.infrared}</span></div><div>Brew time: <span>${r.brewTime}</span></div><div>Output: <span>${r.output}</span></div></div></div>`;
-  html+=`<div class="section-label accent">Steps</div><div class="stack-sm">`;
-  steps.forEach(s=>{html+=`<div class="card" style="padding:12px 14px"><div style="display:flex;gap:12px"><div class="step-num accent">${s.n}</div><div style="font-size:14px;line-height:1.5">${s.t}</div></div></div>`});
-  html+=`</div>`;
-  html+=renderAISection();
-  html+=`<div style="margin-top:16px"><button class="btn success" id="brewedBtn"><span class="btn-flex">${I.check} I Brewed This — Give Feedback</span></button></div>`;
-  html+=`<div style="margin-top:8px"><button class="btn ghost" id="homeBtn">Back to Home</button></div></div></div>`;
-  return html;
-}
-
-function renderAISection(){
-  let html=`<div style="margin-top:16px"><button class="btn secondary" id="aiBtn" ${state.loadingAI?'disabled':''}><span class="btn-flex">${I.spark} ${state.loadingAI?'Thinking...':state.recipe?.locked?'AI Review':'Get AI Advice'}</span></button></div>`;
-  if(state.aiAdvice){
-    if(state.aiAdvice.error){html+=`<div class="card" style="margin-top:12px;border-color:var(--danger)"><div style="font-size:13px;color:var(--danger)">${state.aiAdvice.error}</div></div>`}
-    else{
-      html+=`<div class="card" style="margin-top:12px;border-color:var(--accent-dim)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">${I.spark}<span style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em">AI Brew Advisor</span></div>`;
-      [{l:'Temperature',v:state.aiAdvice.tempRecommendation},{l:'Grind',v:state.aiAdvice.grindAdvice+(state.aiAdvice.clicksRecommendation?` (${state.aiAdvice.clicksRecommendation} clicks)`:'')},{l:'Key Tip',v:state.aiAdvice.keyTip},{l:'Expect',v:state.aiAdvice.flavorExpectation},{l:'Watch Out',v:state.aiAdvice.cautionNote}].forEach(item=>{
-        html+=`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--accent-dim);text-transform:uppercase">${item.l}</div><div style="font-size:13px;color:var(--text);line-height:1.5;margin-top:2px">${item.v}</div></div>`;
-      });
-      html+=`</div>`;
-    }
-  }
-  return html;
-}
-
-function bindRecipe(){
-  document.getElementById('backBtn').onclick=()=>{state.screen='dose';state.aiAdvice=null;render()};
-  document.getElementById('homeBtn').onclick=()=>{state.screen='home';state.brewType=null;state.method=null;state.selectedBean=null;state.recipe=null;state.aiAdvice=null;render()};
-  const aiBtn=document.getElementById('aiBtn');
-  if(aiBtn)aiBtn.onclick=async()=>{
-    state.loadingAI=true;render();
-    const r=state.recipe;const m=r.type==='v60'?`V60 ${r.method}`:`Brikka ${r.drinkStyle}`;
-    const ctx=r.locked?`This is a locked/dialed recipe at ${r.temp||'N/A'}°C and ${r.clicks} clicks. Review and suggest enhancements without overriding the baseline.`:null;
-    state.aiAdvice=await fetchAI(r.bean,m,ctx);
-    state.loadingAI=false;render();
-  };
-  document.getElementById('brewedBtn').onclick=()=>{state.feedbackMode=true;state.feedbackItems=[];state.noteResults={};render()};
-}
-
-// ===== FEEDBACK SCREEN =====
-function renderFeedback(){
-  const r=state.recipe;
-  const descriptors=['sour','bitter','acrid','thin','too acidic','flat/muddy','missing notes'];
-  const notes=r.bean.tastingNotes||r.bean.notes.split(',').map(n=>n.trim());
-  const isPerfect=state.feedbackItems.includes('perfect');
-  const hasIssues=state.feedbackItems.filter(f=>f!=='perfect').length>0;
-  const adj=hasIssues?computeAdjustment(state.feedbackItems.filter(f=>f!=='perfect'),r):null;
-
-  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Brew Feedback</h1><div class="sub">${r.bean.name} · ${r.type==='v60'?'V60 '+r.method:'Brikka '+r.drinkStyle}</div></div></div></div><div class="pad">`;
-  // Current settings
-  html+=`<div class="card" style="margin-bottom:16px"><div class="recipe-meta">`;
-  if(r.type==='v60')html+=`<div>Current: <span class="hl">${r.temp}°C</span> · <span class="hl">${r.clicks} clicks</span> · ${r.pourStyle}</div>`;
-  else html+=`<div>Current: <span class="hl">${r.clicks} clicks</span> · ${r.baseWaterTemp} · 1600W</div>`;
-  html+=`</div></div>`;
-  // Perfect button
-  html+=`<div class="section-label accent">How was it?</div>`;
-  html+=`<div style="margin-bottom:12px"><button class="fb-chip ${isPerfect?'perfect':''}" data-fb="perfect" style="width:100%;padding:14px;font-size:15px">✓ Perfect — Lock this recipe</button></div>`;
-  // Issue descriptors (multi-select)
-  if(!isPerfect){
-    html+=`<div class="section-label muted">Issues (select all that apply)</div><div class="wrap" style="margin-bottom:16px">`;
-    descriptors.forEach(d=>{html+=`<button class="fb-chip ${state.feedbackItems.includes(d)?'selected':''}" data-fb="${d}">${d}</button>`});
-    html+=`</div>`;
-  }
-  // Tasting notes check
-  html+=`<div class="section-label muted">Tasting notes — which came through?</div><div class="wrap" style="margin-bottom:16px">`;
-  notes.forEach(n=>{
-    const st=state.noteResults[n];
-    html+=`<button class="note-check ${st==='achieved'?'achieved':st==='missed'?'missed':''}" data-note="${n}">${st==='achieved'?'✓ ':st==='missed'?'✗ ':''}${n}</button>`;
-  });
-  html+=`</div>`;
-  // Adjustment preview
-  if(adj&&hasIssues){
-    html+=`<div class="section-label warn" style="color:var(--warn)">Recommended Adjustment</div>`;
-    if(adj.isChanneling){
-      html+=`<div class="card adj-card" style="margin-bottom:12px"><div style="font-size:13px;color:var(--warn);line-height:1.5">${adj.reasons[0]}</div></div>`;
-    }else{
-      html+=`<div class="card adj-card" style="margin-bottom:12px">`;
-      if(r.type==='v60'&&adj.tempDelta!==0){
-        const newTemp=(r.temp||92)+adj.tempDelta;
-        html+=`<div class="adj-item"><span>Temperature</span><span><span class="adj-old">${r.temp}°C</span> <span class="adj-arrow">→</span> <span class="adj-new">${newTemp}°C</span></span></div>`;
-      }
-      if(adj.clicksDelta!==0){
-        const newClicks=r.clicks+adj.clicksDelta;
-        html+=`<div class="adj-item"><span>Commandante</span><span><span class="adj-old">${r.clicks} clicks</span> <span class="adj-arrow">→</span> <span class="adj-new">${newClicks} clicks</span></span></div>`;
-      }
-      adj.reasons.forEach(reason=>{html+=`<div style="font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.4">• ${reason}</div>`});
-      html+=`</div>`;
-    }
-  }
-  // Action buttons
-  if(isPerfect){
-    html+=`<button class="btn success" id="lockBtn"><span class="btn-flex">${I.lock} Lock Recipe as Baseline</span></button>`;
-  }else if(hasIssues&&adj&&!adj.isChanneling){
-    html+=`<button class="btn primary" id="applyBtn">Apply Adjustment & Save</button>`;
-    html+=`<div style="margin-top:8px"><button class="btn ghost" id="skipBtn">Save feedback without adjusting</button></div>`;
-  }else{
-    html+=`<button class="btn primary" id="saveBtn">Save Feedback</button>`;
-  }
-  html+=`</div></div>`;
-  return html;
-}
-
-function bindFeedback(){
-  const r=state.recipe;
-  document.getElementById('backBtn').onclick=()=>{state.feedbackMode=false;render()};
-  // Feedback chips
-  document.querySelectorAll('[data-fb]').forEach(el=>{
-    el.onclick=()=>{
-      const fb=el.dataset.fb;
-      if(fb==='perfect'){
-        state.feedbackItems=state.feedbackItems.includes('perfect')?[]:[fb];
-      }else{
-        state.feedbackItems=state.feedbackItems.filter(f=>f!=='perfect');
-        if(state.feedbackItems.includes(fb))state.feedbackItems=state.feedbackItems.filter(f=>f!==fb);
-        else state.feedbackItems.push(fb);
-      }
-      render();
-    };
-  });
-  // Note checks (3-state: none → achieved → missed → none)
-  document.querySelectorAll('[data-note]').forEach(el=>{
-    el.onclick=()=>{
-      const n=el.dataset.note;const cur=state.noteResults[n];
-      if(!cur)state.noteResults[n]='achieved';
-      else if(cur==='achieved')state.noteResults[n]='missed';
-      else delete state.noteResults[n];
-      render();
-    };
-  });
-  // Lock
-  const lockBtn=document.getElementById('lockBtn');
-  if(lockBtn)lockBtn.onclick=()=>{
-    const key=r.type==='v60'?'v60':'brikka';const method=r.type==='v60'?r.method:r.drinkStyle;
-    saveOverride(r.bean.id,method,key,{temp:r.temp,clicks:r.clicks,locked:true});
-    addHistory({date:new Date().toISOString(),bean:r.bean.name,type:r.type,method:r.type==='v60'?r.method:r.drinkStyle,temp:r.temp,clicks:r.clicks,feedback:['perfect'],notes:state.noteResults});
-    state.feedbackMode=false;state.recipe.locked=true;render();
-  };
-  // Apply adjustment
-  const applyBtn=document.getElementById('applyBtn');
-  if(applyBtn)applyBtn.onclick=()=>{
-    const adj=computeAdjustment(state.feedbackItems.filter(f=>f!=='perfect'),r);
-    const newClicks=r.clicks+(adj.clicksDelta||0);
-    const newTemp=r.type==='v60'?(r.temp||92)+(adj.tempDelta||0):null;
-    const key=r.type==='v60'?'v60':'brikka';const method=r.type==='v60'?r.method:r.drinkStyle;
-    const ovr={clicks:newClicks,locked:false};if(newTemp)ovr.temp=newTemp;
-    saveOverride(r.bean.id,method,key,ovr);
-    addHistory({date:new Date().toISOString(),bean:r.bean.name,type:r.type,method:method,temp:r.temp,clicks:r.clicks,newTemp,newClicks,feedback:state.feedbackItems,notes:state.noteResults,adjustment:adj.reasons});
-    state.feedbackMode=false;
-    // Regenerate with new settings
-    if(state.brewType==='filter')state.recipe=genV60(state.selectedBean,state.dose,state.ratio,state.method);
-    else state.recipe=genBrikka(state.selectedBean,state.method);
+  nav.innerHTML = tabs.map(t =>
+    `<button class="tab ${state.screen === t.id ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`
+  ).join("");
+  nav.addEventListener("click", e => {
+    const tab = e.target.dataset.tab;
+    if (!tab) return;
+    state.selectedBean = null;
+    state.brewType = null;
+    state.method = null;
+    state.recipe = null;
+    state.screen = tab;
     render();
-  };
-  // Save without adjusting / Skip
-  const saveBtn=document.getElementById('saveBtn')||document.getElementById('skipBtn');
-  if(saveBtn)saveBtn.onclick=()=>{
-    addHistory({date:new Date().toISOString(),bean:r.bean.name,type:r.type,method:r.type==='v60'?r.method:r.drinkStyle,temp:r.temp,clicks:r.clicks,feedback:state.feedbackItems,notes:state.noteResults});
-    state.feedbackMode=false;render();
-  };
+  });
+  return nav;
 }
 
-// ===== HISTORY =====
-function renderHistory(){
-  const h=getHistory();
-  let html=`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Brew History</h1><div class="sub">${h.length} brews logged</div></div></div></div><div class="pad">`;
-  if(!h.length)html+=`<div style="text-align:center;color:var(--text-muted);padding:40px 0">No brews logged yet. Brew a recipe and give feedback to start tracking.</div>`;
-  else{
-    html+=`<div class="stack">`;
-    h.slice(0,30).forEach(entry=>{
-      const d=new Date(entry.date);
-      const dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-      const isPerfect=entry.feedback?.includes('perfect');
-      const hasAdj=entry.newClicks||entry.newTemp;
-      html+=`<div class="card ${isPerfect?'locked':''}"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-size:14px;font-weight:600">${entry.bean}</div><div style="font-size:12px;color:var(--text-dim);margin-top:2px">${entry.type==='v60'?'V60':'Brikka'} · ${entry.method}</div>`;
-      if(isPerfect)html+=`<div style="font-size:12px;color:var(--success);margin-top:4px">✓ Perfect — Locked</div>`;
-      else if(entry.feedback?.length)html+=`<div style="font-size:12px;color:var(--warn);margin-top:4px">${entry.feedback.join(', ')}</div>`;
-      if(hasAdj)html+=`<div style="font-size:11px;color:var(--accent);margin-top:2px">${entry.clicks}→${entry.newClicks||entry.clicks} clicks${entry.newTemp?', '+entry.temp+'→'+entry.newTemp+'°C':''}</div>`;
-      html+=`</div><div style="text-align:right"><div style="font-size:12px;color:var(--text-muted)">${dateStr}</div><div class="mono" style="font-size:11px;color:var(--text-dim);margin-top:2px">${entry.temp?entry.temp+'°C':''} ${entry.clicks}ck</div></div></div></div>`;
-    });
-    html+=`</div>`;
-    if(h.length>0)html+=`<div style="margin-top:16px"><button class="btn danger" id="clearHistBtn">Clear All History</button></div>`;
+// ==========================================================
+// HOME — pick method
+// ==========================================================
+function renderHome() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+  wrap.innerHTML = `
+    <h2>Select brewer</h2>
+    <div class="btn-stack">
+      <button class="btn primary" data-brew="v60" style="height: 80px; font-size: 14px;">◆ V60 — POUR OVER</button>
+      <button class="btn primary" data-brew="brikka" style="height: 80px; font-size: 14px;">◆ BRIKKA — MOKA POT</button>
+    </div>
+  `;
+  wrap.addEventListener("click", e => {
+    const b = e.target.dataset.brew;
+    if (!b) return;
+    state.brewType = b;
+    state.screen = "method";
+    render();
+  });
+  return wrap;
+}
+
+// ==========================================================
+// METHOD — hot/iced or neat/americano
+// ==========================================================
+function renderMethod() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+  const opts = state.brewType === "v60" ?
+    [{ id: "hot", label: "Hot" }, { id: "iced", label: "Iced (50:50)" }] :
+    [{ id: "neat", label: "Neat" }, { id: "americano", label: "Americano" }];
+  wrap.innerHTML = `
+    <h2>Method</h2>
+    <div class="btn-stack">
+      ${opts.map(o => `<button class="btn primary" data-method="${o.id}" style="height: 70px;">${o.label}</button>`).join("")}
+      <button class="btn ghost" data-back="1" style="margin-top: 16px;">← Back</button>
+    </div>
+  `;
+  wrap.addEventListener("click", e => {
+    if (e.target.dataset.back) { state.screen = "home"; render(); return; }
+    const m = e.target.dataset.method;
+    if (!m) return;
+    state.method = m;
+    state.screen = "bean";
+    render();
+  });
+  return wrap;
+}
+
+// ==========================================================
+// BEAN PICKER
+// ==========================================================
+function renderBeanPicker() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+
+  // Filter beans relevant for this brewer
+  const recipeKey = recipeKeyFor(state.brewType, state.method);
+  const beans = allBeans();
+
+  let html = `<h2>Select bean</h2><div class="bean-grid">`;
+  for (const bean of beans) {
+    const hasPreset = bean.recipes?.[recipeKey] != null;
+    const isCustom = bean.custom;
+    html += `
+      <div class="card ${isCustom ? "custom" : ""}" data-bean="${bean.id}">
+        <span class="card-label">${bean.roaster ? bean.roaster + " · " : ""}${bean.roast.intent.toUpperCase()}${hasPreset ? " · DIALED" : ""}</span>
+        <div class="bean-name">${bean.name}</div>
+        <div class="bean-meta">
+          ${bean.origins[0].country}${bean.origins.length > 1 ? ` +${bean.origins.length - 1}` : ""}
+          <span class="sep">·</span>
+          ${bean.origins[0].process}
+          <span class="sep">·</span>
+          ${bean.roast.level}
+        </div>
+      </div>
+    `;
   }
-  html+=`</div></div>`;
-  return html;
-}
-function bindHistory(){
-  document.getElementById('backBtn').onclick=()=>{state.showHistory=false;render()};
-  const clr=document.getElementById('clearHistBtn');
-  if(clr)clr.onclick=()=>{LS(SK.history,[]);render()};
+  html += `</div><button class="btn ghost" data-back="1" style="margin-top: 16px;">← Back</button>`;
+
+  wrap.innerHTML = html;
+  wrap.addEventListener("click", e => {
+    if (e.target.dataset.back) { state.screen = "method"; render(); return; }
+    const card = e.target.closest("[data-bean]");
+    if (!card) return;
+    state.selectedBean = findBean(card.dataset.bean);
+    state.screen = "dose";
+    render();
+  });
+  return wrap;
 }
 
-// ===== SETTINGS =====
-function renderSettings(){
-  const key=getApiKey();const masked=key?key.slice(0,10)+'...'+key.slice(-4):'';
-  const overrides=getOverrides();const ovrCount=Object.keys(overrides).length;
-  return`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Settings</h1><div class="sub">API key & data</div></div></div></div><div class="pad">
-  <div class="label">Anthropic API Key</div>
-  <input class="input" type="password" id="apiInput" placeholder="sk-ant-..." value="${key}" style="margin-bottom:8px">
-  <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">${key?'✓ Key saved: '+masked:'Required for AI Advice feature'}</div>
-  <button class="btn primary" id="saveKeyBtn">Save API Key</button>
-  <div class="settings-banner" style="margin-top:20px"><strong style="color:var(--accent)">How to get an API key:</strong><br>1. Go to console.anthropic.com<br>2. Create account & add ~$5 credit<br>3. Generate API key<br>4. Paste above<br><br>Key stored locally on device only.</div>
-  <div style="margin-top:24px"><div class="label">Data</div>
-  <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px">${state.beans.filter(b=>b.id.startsWith('custom-')).length} custom beans · ${ovrCount} recipe overrides · ${getHistory().length} brew logs</div>
-  <button class="btn secondary" id="clearBeansBtn" style="margin-bottom:8px">Clear Custom Beans</button>
-  <button class="btn secondary" id="clearOvrBtn" style="margin-bottom:8px">Reset All Recipe Overrides</button>
-  <button class="btn danger" id="clearAllBtn">Clear All Data</button></div>
-  </div></div>`;
-}
-function bindSettings(){
-  document.getElementById('backBtn').onclick=()=>{state.showSettings=false;render()};
-  document.getElementById('saveKeyBtn').onclick=()=>{setApiKey(document.getElementById('apiInput').value.trim());render()};
-  document.getElementById('clearBeansBtn').onclick=()=>{state.beans=[...PRESETS];LS(SK.beans,null);render()};
-  document.getElementById('clearOvrBtn').onclick=()=>{LS(SK.overrides,null);render()};
-  document.getElementById('clearAllBtn').onclick=()=>{Object.values(SK).forEach(k=>localStorage.removeItem(k));state.beans=[...PRESETS];render()};
+// ==========================================================
+// DOSE
+// ==========================================================
+function renderDose() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+  const isV60 = state.brewType === "v60";
+  const defaultDose = isV60 ? state.settings.defaultV60Dose : state.settings.defaultBrikkaDose;
+  state.dose = state.dose || defaultDose;
+  state.ratio = state.ratio || 15;
+
+  wrap.innerHTML = `
+    <div class="card">
+      <span class="card-label">DOSE</span>
+      <div class="form-row">
+        <label>Coffee weight (grams)</label>
+        <input type="number" id="dose-input" value="${state.dose}" min="8" max="30" step="1">
+        <div class="helper-text">Typical V60: 14–20g · Brikka: 15–16g</div>
+      </div>
+      ${isV60 ? `
+      <div class="form-row">
+        <label>Ratio (1:X water)</label>
+        <div class="three-toggle" id="ratio-toggle">
+          ${[14, 15, 16, 17].map(r =>
+            `<button data-ratio="${r}" class="${state.ratio === r ? "selected" : ""}">1:${r}</button>`
+          ).join("")}
+        </div>
+        <div class="helper-text">Total water will be ${state.dose * state.ratio}g</div>
+      </div>` : ""}
+    </div>
+
+    <button class="btn primary" id="go-btn">◆ GENERATE RECIPE</button>
+    <button class="btn ghost" data-back="1" style="margin-top: 8px;">← Back</button>
+  `;
+
+  wrap.querySelector("#dose-input").addEventListener("input", e => {
+    state.dose = parseInt(e.target.value) || defaultDose;
+    if (isV60) {
+      const helper = wrap.querySelector(".helper-text:last-of-type");
+      if (helper && helper.textContent.startsWith("Total")) {
+        helper.textContent = `Total water will be ${state.dose * state.ratio}g`;
+      }
+    }
+  });
+
+  if (isV60) {
+    wrap.querySelector("#ratio-toggle").addEventListener("click", e => {
+      const r = parseInt(e.target.dataset.ratio);
+      if (!r) return;
+      state.ratio = r;
+      render();
+    });
+  }
+
+  wrap.querySelector("#go-btn").addEventListener("click", generateRecipe);
+  wrap.querySelector("[data-back]").addEventListener("click", () => { state.screen = "bean"; render(); });
+  return wrap;
 }
 
-// ===== ADD BEAN =====
-function renderAddBean(){
-  return`<div class="screen"><div class="header"><div class="header-inner"><button class="back-btn" id="backBtn">${I.back}</button><div><h1>Add New Bean</h1></div></div></div><div class="pad" style="display:flex;flex-direction:column;gap:16px">
-  ${[{k:'name',l:'Bean Name',p:'e.g. Colombia Gesha Honey'},{k:'origin',l:'Origin',p:'e.g. Colombia, Ethiopia'},{k:'variety',l:'Variety',p:'e.g. Caturra, Typica'},{k:'process',l:'Process',p:'e.g. Washed, Natural, Cofermented'},{k:'notes',l:'Tasting Notes',p:'e.g. Berry, chocolate, caramel'}].map(f=>`<div><label class="label">${f.l}</label><input class="input" id="field_${f.k}" placeholder="${f.p}"></div>`).join('')}
-  <div><label class="label">Roast Level</label><div class="wrap">${['Light','Light-Medium','Medium','Medium-Dark','Dark'].map(r=>`<button class="chip ${r==='Medium'?'active':'inactive'}" data-roast="${r}">${r}</button>`).join('')}</div></div>
-  <button class="btn primary" id="saveBeanBtn">Save Bean</button>
-  <div class="settings-banner">${I.spark} New beans get smart defaults based on origin, process, and tasting notes. AI refines on first brew.</div>
-  </div></div>`;
-}
-function bindAddBean(){
-  let roast='Medium';
-  document.getElementById('backBtn').onclick=()=>{state.showAddBean=false;render()};
-  document.querySelectorAll('[data-roast]').forEach(el=>{el.onclick=()=>{roast=el.dataset.roast;document.querySelectorAll('[data-roast]').forEach(e=>{e.className='chip '+(e.dataset.roast===roast?'active':'inactive')})}});
-  document.getElementById('saveBeanBtn').onclick=()=>{
-    const name=document.getElementById('field_name').value.trim();if(!name)return;
-    const notesStr=document.getElementById('field_notes').value.trim();
-    const bean={id:'custom-'+Date.now(),name,
-      origin:document.getElementById('field_origin').value.trim()||'Unknown',
-      variety:document.getElementById('field_variety').value.trim()||'Unknown',
-      process:document.getElementById('field_process').value.trim()||'Unknown',
-      roast,notes:notesStr||'',
-      tastingNotes:notesStr?notesStr.split(',').map(n=>n.trim()):[],
-      v60:null,brikka:null,caffeineLevel:'Unknown'};
-    state.beans.push(bean);saveCustomBeans();state.showAddBean=false;render();
+// ==========================================================
+// GENERATE RECIPE
+// ==========================================================
+function generateRecipe() {
+  const bean = state.selectedBean;
+  const recipeKey = recipeKeyFor(state.brewType, state.method);
+  state.recipeKey = recipeKey;
+  const result = getRecipeForBean(bean, recipeKey, state.brewType);
+  if (!result) { toast("Cannot generate recipe"); return; }
+
+  state.recipe = { ...result.recipe, ratio: state.ratio };
+  state.engineMeta = {
+    basis: result.basis,
+    reasons: result.meta?.reasons || [],
+    confidence: result.meta?.confidence || "high",
+    aiInvoked: false,
+    aiRationale: null
   };
+
+  // Build pour schedule for V60
+  if (state.brewType === "v60") {
+    state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle);
+  }
+
+  // Auto-invoke AI if smart_default confidence low and API key present
+  if (result.basis === "smart_default" && result.meta?.confidence === "low" && state.apiKey) {
+    state.aiLoading = true;
+    state.screen = "recipe";
+    render();
+    askAdvisor({
+      bean,
+      recipeKey,
+      currentRecipe: state.recipe,
+      feedbackHistory: [],
+      mode: "fill",
+      apiKey: state.apiKey
+    }).then(res => {
+      state.aiLoading = false;
+      state.aiResult = res;
+      if (res.ok) {
+        state.engineMeta.aiInvoked = true;
+        state.engineMeta.aiRationale = res.rationale;
+        // Apply AI suggestion
+        state.recipe.clicks = res.clicks;
+        state.recipe.temp = res.temp;
+        state.recipe.pourStyle = res.pourStyle;
+        state.recipe.ratio = res.ratio;
+        if (state.brewType === "v60") {
+          state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle);
+        }
+      }
+      render();
+    });
+    return;
+  }
+
+  state.screen = "recipe";
+  render();
 }
 
-// ===== INIT =====
-loadData();render();
+// ==========================================================
+// RECIPE SCREEN
+// ==========================================================
+function renderRecipe() {
+  const wrap = document.createElement("div");
+  const r = state.recipe;
+  const bean = state.selectedBean;
+  const isV60 = state.brewType === "v60";
+
+  const recipeCard = document.createElement("div");
+  recipeCard.className = "section";
+
+  let cardHtml = `
+    <div class="card ${r.locked ? "locked" : ""}">
+      <span class="card-label">EXTRACTION ${state.method.toUpperCase()}</span>
+      ${r.locked ? `<span class="lock-marker">LOCKED</span>` : ""}
+      <div class="bean-name">${bean.name}</div>
+      <div class="bean-meta">
+        <span class="roast-intent">${bean.roast.intent}</span>
+        <span class="sep">·</span>
+        ${bean.origins.map(o => o.country).join(" + ")}
+        <span class="sep">·</span>
+        ${bean.roast.level}
+      </div>
+      ${bean.tastingNotes?.length ? `
+      <div class="bean-notes">
+        ${bean.tastingNotes.map(n => `<span class="note-chip">${n}</span>`).join("")}
+      </div>` : ""}
+      <div class="data-grid">
+        <div class="data-cell">
+          <div class="label">Dose</div>
+          <div class="value large">${state.dose}<span class="unit">g</span></div>
+        </div>
+        <div class="data-cell">
+          <div class="label">${isV60 ? "Water" : "Base water"}</div>
+          <div class="value large">${isV60 ? state.dose * state.ratio : 150}<span class="unit">g</span></div>
+        </div>
+        ${isV60 ? `
+        <div class="data-cell">
+          <div class="label">Temp</div>
+          <div class="value">${r.temp}<span class="unit">°C</span></div>
+        </div>` : `
+        <div class="data-cell">
+          <div class="label">Water start</div>
+          <div class="value" style="font-size: 14px;">${r.baseWaterTemp === "boiling" ? "Boiling" : "95°C / cool 30s"}</div>
+        </div>`}
+        <div class="data-cell">
+          <div class="label">Grind / Commandante</div>
+          <div class="value">${r.clicks}<span class="unit">clicks</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // AI loading or result
+  if (state.aiLoading) {
+    cardHtml += `<div class="card" style="border-style: dashed;"><span class="card-label">AI ADVISOR</span><div class="loading" style="font-family: var(--mono); font-size: 12px; color: var(--gold);">◇ Consulting Haiku…</div></div>`;
+  } else if (state.aiResult?.ok && state.engineMeta?.aiInvoked) {
+    cardHtml += `
+      <div class="card" style="border-color: var(--gold-deep);">
+        <span class="card-label" style="color: var(--gold);">AI ADVISOR · ${state.aiResult.confidence.toUpperCase()}</span>
+        <div style="font-family: var(--mono); font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+          ${state.aiResult.rationale}
+        </div>
+      </div>
+    `;
+  } else if (state.aiResult && !state.aiResult.ok) {
+    cardHtml += `
+      <div class="card" style="border-color: var(--red-miss);">
+        <span class="card-label" style="color: var(--red-miss);">AI ERROR</span>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">${state.aiResult.error}</div>
+      </div>
+    `;
+  }
+
+  // Engine reasoning (always visible for transparency in phantom trial)
+  if (state.engineMeta?.reasons?.length) {
+    cardHtml += `
+      <div class="card">
+        <span class="card-label">ENGINE BASIS · ${state.engineMeta.basis.replace("_", " ").toUpperCase()}</span>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted); line-height: 1.7;">
+          ${state.engineMeta.reasons.map(r => `→ ${r}`).join("<br>")}
+        </div>
+        <div style="font-family: var(--mono); font-size: 10px; margin-top: 8px; color: var(--text-ghost); letter-spacing: 0.1em;">
+          CONFIDENCE: ${state.engineMeta.confidence.toUpperCase()}
+        </div>
+      </div>
+    `;
+  }
+
+  recipeCard.innerHTML = cardHtml;
+  wrap.appendChild(recipeCard);
+
+  // Pour schedule for V60
+  if (isV60 && state.pourSchedule) {
+    const pourCard = document.createElement("div");
+    pourCard.className = "section";
+    pourCard.innerHTML = `
+      <div class="card">
+        <span class="card-label">POUR SCHEDULE · ${r.pourStyle.toUpperCase().replace("_", " ")}</span>
+        <div class="pour-timeline">
+          ${state.pourSchedule.steps.map(s => `
+            <div class="pour-step">
+              <div class="time">${fmtTime(s.t)}</div>
+              <div>
+                <div class="weight">+ ${s.add}g → ${s.running}g</div>
+                <div class="instr">${s.instr}</div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <div style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em;">
+          TARGET DRAWDOWN: ${fmtTime(state.pourSchedule.drawdown)}
+        </div>
+      </div>
+    `;
+    wrap.appendChild(pourCard);
+  }
+
+  // Brikka steps for Brikka
+  if (!isV60) {
+    const brikkaSteps = document.createElement("div");
+    brikkaSteps.className = "section";
+    brikkaSteps.innerHTML = `
+      <div class="card">
+        <span class="card-label">BRIKKA PROTOCOL</span>
+        <div class="pour-timeline">
+          <div class="pour-step"><div class="time">0:00</div><div><div class="weight">Boil 150ml</div><div class="instr">Pour ${r.baseWaterTemp === "boiling" ? "boiling" : "95°C (cool 30s)"} water into Brikka base.</div></div></div>
+          <div class="pour-step"><div class="time">0:30</div><div><div class="weight">Grind ${state.dose}g · ${r.clicks} clicks</div><div class="instr">Fill basket. Level with finger. NO TAMPING.</div></div></div>
+          <div class="pour-step"><div class="time">0:45</div><div><div class="weight">Assemble</div><div class="instr">Towel on hot base. Screw firmly.</div></div></div>
+          <div class="pour-step"><div class="time">1:00</div><div><div class="weight">Ignite 1600W IR</div><div class="instr">Let it rip. ~5–6 min total.</div></div></div>
+          ${state.method === "americano" ? `
+          <div class="pour-step"><div class="time">5:00</div><div><div class="weight">Pre-heat cup</div><div class="instr">Boiling water in serving cup. Discard before pour.</div></div></div>
+          <div class="pour-step"><div class="time">6:00</div><div><div class="weight">Pour concentrate + 110ml at 87°C</div><div class="instr">Concentrate first, then hot water.</div></div></div>` : ""}
+        </div>
+      </div>
+    `;
+    wrap.appendChild(brikkaSteps);
+  }
+
+  // Actions
+  const actions = document.createElement("div");
+  actions.className = "section";
+  actions.innerHTML = `
+    <div class="btn-stack">
+      <button class="btn primary" id="rate-btn">◆ RATE THIS BREW</button>
+      <button class="btn ghost" id="newbrew-btn">← New brew</button>
+    </div>
+  `;
+  actions.querySelector("#rate-btn").addEventListener("click", () => {
+    state.feedback = [];
+    state.taggedNotes = {};
+    state.adjustment = null;
+    state.pendingDevNote = "";
+    state.screen = "feedback";
+    render();
+  });
+  actions.querySelector("#newbrew-btn").addEventListener("click", () => {
+    state.selectedBean = null;
+    state.brewType = null;
+    state.method = null;
+    state.recipe = null;
+    state.engineMeta = null;
+    state.aiResult = null;
+    state.pourSchedule = null;
+    state.screen = "home";
+    render();
+  });
+  wrap.appendChild(actions);
+
+  return wrap;
+}
+
+// ==========================================================
+// FEEDBACK
+// ==========================================================
+function renderFeedback() {
+  const wrap = document.createElement("div");
+  const r = state.recipe;
+
+  const card = document.createElement("div");
+  card.className = "section";
+
+  let html = `
+    <div class="card">
+      <span class="card-label">TASTE REPORT</span>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">How did this cup land?</p>
+      <div class="feedback-grid" id="fb-grid">
+        ${FEEDBACK_OPTIONS.map(o => `
+          <button class="chip ${state.feedback.includes(o.id) ? "selected" : ""}" data-fb="${o.id}">${o.label}</button>
+        `).join("")}
+        <button class="chip perfect" data-fb="perfect">Perfect — lock recipe</button>
+      </div>
+  `;
+
+  // Tasting notes verification
+  if (state.selectedBean.tastingNotes?.length) {
+    html += `
+      <div style="margin-top: 18px;">
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Tasting notes (tap to mark)</div>
+        <div class="bean-notes" id="notes-row">
+          ${state.selectedBean.tastingNotes.map(n => {
+            const status = state.taggedNotes[n];
+            return `<span class="note-chip ${status === "achieved" ? "achieved" : status === "missed" ? "missed" : ""}" data-note="${n}">${n}</span>`;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  // Adjustment preview
+  if (state.adjustment) {
+    if (state.adjustment.type === "channeling") {
+      html += `
+        <div class="adjustment" style="border-left-color: var(--red-miss);">
+          <div class="head" style="color: var(--red-miss);">CHANNELING DETECTED</div>
+          <div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action}</div>
+        </div>
+      `;
+    } else if (state.adjustment.type === "no-change") {
+      html += `
+        <div class="adjustment">
+          <div class="head">NO CHANGE</div>
+          <div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action || ""}</div>
+        </div>
+      `;
+    } else if (state.adjustment.type === "adjustment") {
+      const adj = state.adjustment.adjustment;
+      html += `
+        <div class="adjustment">
+          <div class="head">PROPOSED ADJUSTMENT</div>
+          <div class="change">
+            Clicks <span class="arrow">${r.clicks}</span><span class="arrow">→</span><span class="new">${adj.clicks}</span>
+            ${adj.temp !== null ? `<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${adj.temp}°C</span>` : ""}
+          </div>
+          <div class="why">${state.adjustment.diagnosis}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Dev note
+  html += `
+    <button class="dev-note-toggle ${state.pendingDevNote ? "open" : ""}" id="dev-toggle">dev note</button>
+    <div class="dev-note-area ${state.pendingDevNote ? "open" : ""}" id="dev-area">
+      <textarea id="dev-note-input" placeholder="What surprised you? Was the engine off? Calibration notes..." rows="3">${state.pendingDevNote}</textarea>
+    </div>
+  `;
+
+  html += `</div>`;
+
+  // Actions
+  html += `
+    <div class="btn-row" style="margin-top: 14px;">
+      <button class="btn" id="discard-btn">Cancel</button>
+      <button class="btn primary" id="apply-btn">${state.feedback.includes("perfect") ? "Lock & save" : "Apply & save"}</button>
+    </div>
+  `;
+
+  card.innerHTML = html;
+  wrap.appendChild(card);
+
+  // Feedback chip handlers
+  card.querySelector("#fb-grid").addEventListener("click", e => {
+    const fb = e.target.dataset.fb;
+    if (!fb) return;
+    if (fb === "perfect") {
+      state.feedback = ["perfect"];
+      state.adjustment = null;
+    } else {
+      state.feedback = state.feedback.filter(f => f !== "perfect");
+      if (state.feedback.includes(fb)) {
+        state.feedback = state.feedback.filter(f => f !== fb);
+      } else {
+        state.feedback.push(fb);
+      }
+      state.adjustment = state.feedback.length ? processFeedback({ currentRecipe: r, feedback: state.feedback }) : null;
+    }
+    render();
+  });
+
+  // Note tap cycle
+  const notesRow = card.querySelector("#notes-row");
+  if (notesRow) {
+    notesRow.addEventListener("click", e => {
+      const note = e.target.dataset.note;
+      if (!note) return;
+      const cur = state.taggedNotes[note];
+      state.taggedNotes[note] = cur === "achieved" ? "missed" : cur === "missed" ? undefined : "achieved";
+      render();
+    });
+  }
+
+  // Dev note toggle
+  card.querySelector("#dev-toggle").addEventListener("click", () => {
+    const area = card.querySelector("#dev-area");
+    const tog = card.querySelector("#dev-toggle");
+    area.classList.toggle("open");
+    tog.classList.toggle("open");
+    if (area.classList.contains("open")) {
+      card.querySelector("#dev-note-input").focus();
+    }
+  });
+  card.querySelector("#dev-note-input").addEventListener("input", e => {
+    state.pendingDevNote = e.target.value;
+  });
+
+  // Apply / discard
+  card.querySelector("#discard-btn").addEventListener("click", () => {
+    state.screen = "recipe";
+    render();
+  });
+  card.querySelector("#apply-btn").addEventListener("click", applyFeedback);
+
+  return wrap;
+}
+
+function applyFeedback() {
+  const r = state.recipe;
+  const bean = state.selectedBean;
+  const isPerfect = state.feedback.includes("perfect");
+
+  // Build history entry
+  const entry = {
+    id: "brew-" + Date.now(),
+    date: new Date().toISOString(),
+    beanId: bean.id,
+    beanName: bean.name,
+    recipeKey: state.recipeKey,
+    dose: state.dose,
+    ratio: state.ratio,
+    settings: { clicks: r.clicks, temp: r.temp, pourStyle: r.pourStyle },
+    feedback: state.feedback,
+    notes: { ...state.taggedNotes },
+    adjustment: state.adjustment?.adjustment || null,
+    adjustmentApplied: state.adjustment?.type === "adjustment",
+    engineMeta: state.engineMeta,
+    devNote: state.pendingDevNote || null
+  };
+  state.history.unshift(entry);
+  if (state.history.length > 100) state.history.length = 100;
+  save(KEYS.history, state.history);
+
+  // Update the bean's recipe slot
+  if (isPerfect) {
+    persistBeanRecipe(bean, state.recipeKey, { ...r, locked: true });
+    toast("Recipe locked.");
+  } else if (state.adjustment?.type === "adjustment") {
+    const adj = state.adjustment.adjustment;
+    persistBeanRecipe(bean, state.recipeKey, { ...r, clicks: adj.clicks, temp: adj.temp || r.temp });
+    toast(`Saved: ${adj.clicks}c, ${adj.temp || r.temp}°C`);
+  } else {
+    toast("Saved to history.");
+  }
+
+  state.screen = "history";
+  state.feedback = [];
+  state.taggedNotes = {};
+  state.adjustment = null;
+  state.pendingDevNote = "";
+  state.recipe = null;
+  state.selectedBean = null;
+  state.brewType = null;
+  state.method = null;
+  render();
+}
+
+function persistBeanRecipe(bean, recipeKey, recipe) {
+  // If preset, store the customisation in customBeans as a copy
+  const existing = state.customBeans.find(b => b.id === bean.id);
+  if (existing) {
+    existing.recipes = existing.recipes || {};
+    existing.recipes[recipeKey] = recipe;
+    save(KEYS.beans, state.customBeans);
+  } else if (!bean.custom) {
+    // Clone preset into customBeans to record the override
+    const clone = JSON.parse(JSON.stringify(bean));
+    clone.recipes = clone.recipes || {};
+    clone.recipes[recipeKey] = recipe;
+    clone.id = bean.id; // keep same id, customBeans takes precedence in findBean via PRESET fallback
+    // Mark to prefer custom version: store under same id
+    // Replace PRESET-matched id in state.customBeans
+    state.customBeans.push(clone);
+    save(KEYS.beans, state.customBeans);
+  } else {
+    // Already custom
+    bean.recipes = bean.recipes || {};
+    bean.recipes[recipeKey] = recipe;
+    save(KEYS.beans, state.customBeans);
+  }
+}
+
+// allBeans needs to prefer customBeans over presets when ids collide
+function allBeansResolved() {
+  const customIds = new Set(state.customBeans.map(b => b.id));
+  const presetsFiltered = PRESETS.filter(p => !customIds.has(p.id));
+  return [...presetsFiltered, ...state.customBeans];
+}
+// override
+allBeans = allBeansResolved;
+
+// ==========================================================
+// HISTORY
+// ==========================================================
+function renderHistory() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+  if (!state.history.length) {
+    wrap.innerHTML = `<div class="empty-state">No brews logged yet.<br>Brew, then rate to start your history.</div>`;
+    return wrap;
+  }
+  let html = `<h2>Recent brews · ${state.history.length}</h2>`;
+  for (const h of state.history.slice(0, 30)) {
+    html += `
+      <div class="history-entry">
+        <div class="head">
+          <div>
+            <span class="bean">${h.beanName}</span>
+            <span style="color: var(--text-muted); font-size: 11px; font-family: var(--mono); margin-left: 6px;">${h.recipeKey.toUpperCase().replace("_", " ")}</span>
+          </div>
+          <div class="date">${fmtDate(h.date)}</div>
+        </div>
+        <div class="settings">${h.dose}g · ${h.settings.clicks}c · ${h.settings.temp || "—"}°C · ${h.settings.pourStyle || "—"}</div>
+        <div class="feedback">${h.feedback.length ? h.feedback.join(", ") : "—"}</div>
+        ${h.devNote ? `<div class="dev-note">${h.devNote}</div>` : ""}
+      </div>
+    `;
+  }
+  wrap.innerHTML = html;
+  return wrap;
+}
+
+// ==========================================================
+// SETTINGS
+// ==========================================================
+function renderSettings() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+  wrap.innerHTML = `
+    <div class="card">
+      <span class="card-label">ANTHROPIC API KEY</span>
+      <div class="form-row">
+        <input type="password" id="apikey-input" value="${state.apiKey}" placeholder="sk-ant-...">
+        <div class="helper-text">Used for AI advisor (Haiku 4.5). Stored on this device only.</div>
+      </div>
+      <button class="btn" id="save-key">Save key</button>
+    </div>
+
+    <div class="card">
+      <span class="card-label">DEV LOG</span>
+      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+        Export your brews + dev notes as markdown. Paste into chat for next-session calibration.
+      </div>
+      <button class="btn primary" id="export-log">◆ Copy dev log to clipboard</button>
+      <button class="btn ghost" id="clear-history" style="margin-top: 8px;">Clear all history</button>
+    </div>
+
+    <div class="card">
+      <span class="card-label">DEFAULTS</span>
+      <div class="form-row">
+        <label>V60 default dose (g)</label>
+        <input type="number" id="def-v60" value="${state.settings.defaultV60Dose}" min="8" max="30">
+      </div>
+      <div class="form-row">
+        <label>Brikka default dose (g)</label>
+        <input type="number" id="def-brikka" value="${state.settings.defaultBrikkaDose}" min="10" max="20">
+      </div>
+      <div class="form-row">
+        <label>Default ratio</label>
+        <select id="def-ratio">
+          ${[14, 15, 16, 17].map(r => `<option value="${r}" ${state.settings.defaultRatio === r ? "selected" : ""}>1:${r}</option>`).join("")}
+        </select>
+      </div>
+      <button class="btn" id="save-defaults">Save defaults</button>
+    </div>
+
+    <div class="card">
+      <span class="card-label">DANGER ZONE</span>
+      <button class="btn danger" id="clear-all">Erase everything (beans, history, key)</button>
+    </div>
+  `;
+  wrap.querySelector("#save-key").addEventListener("click", () => {
+    state.apiKey = wrap.querySelector("#apikey-input").value.trim();
+    localStorage.setItem(KEYS.apiKey, state.apiKey);
+    toast("API key saved");
+  });
+  wrap.querySelector("#save-defaults").addEventListener("click", () => {
+    state.settings.defaultV60Dose = parseInt(wrap.querySelector("#def-v60").value) || 16;
+    state.settings.defaultBrikkaDose = parseInt(wrap.querySelector("#def-brikka").value) || 16;
+    state.settings.defaultRatio = parseInt(wrap.querySelector("#def-ratio").value) || 15;
+    save(KEYS.settings, state.settings);
+    toast("Defaults saved");
+  });
+  wrap.querySelector("#export-log").addEventListener("click", exportDevLog);
+  wrap.querySelector("#clear-history").addEventListener("click", () => {
+    if (confirm("Clear all brew history?")) {
+      state.history = [];
+      save(KEYS.history, state.history);
+      render();
+      toast("History cleared");
+    }
+  });
+  wrap.querySelector("#clear-all").addEventListener("click", () => {
+    if (confirm("Erase ALL data (beans, history, API key)? Cannot undo.")) {
+      Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem(KEYS.apiKey);
+      location.reload();
+    }
+  });
+  return wrap;
+}
+
+function exportDevLog() {
+  const lines = [];
+  lines.push(`BREW LAB DEV LOG`);
+  lines.push(`Exported: ${new Date().toISOString()}`);
+  lines.push(`Brews logged: ${state.history.length}`);
+  lines.push(`==========================================`);
+  lines.push("");
+  for (const h of state.history) {
+    lines.push(`# ${h.beanName} · ${h.recipeKey} · ${fmtDate(h.date)}`);
+    lines.push(`Recipe: ${h.dose}g · ${h.settings.clicks} clicks · ${h.settings.temp || "—"}°C · ${h.settings.pourStyle || "—"} · 1:${h.ratio}`);
+    if (h.engineMeta) {
+      lines.push(`Basis: ${h.engineMeta.basis} (confidence: ${h.engineMeta.confidence})`);
+      if (h.engineMeta.reasons?.length) {
+        lines.push(`  Reasons:`);
+        h.engineMeta.reasons.forEach(r => lines.push(`    → ${r}`));
+      }
+      if (h.engineMeta.aiInvoked) {
+        lines.push(`  AI rationale: ${h.engineMeta.aiRationale || "—"}`);
+      }
+    }
+    const tagged = Object.entries(h.notes || {}).filter(([k, v]) => v);
+    if (tagged.length) {
+      lines.push(`Tasting notes: ${tagged.map(([k, v]) => `${k}=${v}`).join(", ")}`);
+    }
+    lines.push(`Feedback: ${h.feedback?.length ? h.feedback.join(", ") : "—"}`);
+    if (h.adjustment) {
+      lines.push(`Adjustment applied: ${h.adjustment.clicks} clicks, ${h.adjustment.temp}°C`);
+    }
+    if (h.devNote) {
+      lines.push(`DEV NOTE: ${h.devNote}`);
+    }
+    lines.push("");
+  }
+  const text = lines.join("\n");
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(
+      () => toast("Dev log copied!"),
+      () => fallbackCopy(text)
+    );
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); toast("Dev log copied!"); }
+  catch { toast("Copy failed — try again"); }
+  document.body.removeChild(ta);
+}
+
+// ==========================================================
+// ADD / EDIT BEAN
+// ==========================================================
+function renderAddBean() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+
+  // Working draft
+  if (!wrap._draft) {
+    wrap._draft = {
+      name: "",
+      roaster: "",
+      origins: [{ country: "", variety: "", process: "Washed", share: 100 }],
+      roast: { level: "Medium", intent: "Filter" },
+      tastingNotes: []
+    };
+  }
+  const d = wrap._draft;
+
+  wrap.innerHTML = `
+    <div class="card">
+      <span class="card-label">ADD CUSTOM BEAN</span>
+
+      <div class="form-row">
+        <label>Bean name</label>
+        <input id="b-name" value="${d.name}" placeholder="e.g. Ethiopia Yirgacheffe">
+      </div>
+      <div class="form-row">
+        <label>Roaster (optional)</label>
+        <input id="b-roaster" value="${d.roaster}" placeholder="e.g. Pirates of Coffee">
+      </div>
+
+      <div class="form-row">
+        <label>Origin country</label>
+        <input id="b-country" value="${d.origins[0].country}" placeholder="e.g. Colombia">
+      </div>
+      <div class="form-row">
+        <label>Variety</label>
+        <input id="b-variety" value="${d.origins[0].variety}" placeholder="e.g. Castillo, Heirloom, Caturra">
+      </div>
+      <div class="form-row">
+        <label>Process</label>
+        <select id="b-process">
+          ${["Washed", "Natural", "Honey", "Cofermentation", "Anaerobic", "Wet-hulled", "Experimental"].map(p =>
+            `<option value="${p}" ${d.origins[0].process === p ? "selected" : ""}>${p}</option>`
+          ).join("")}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Roast level</label>
+        <select id="b-level">
+          ${["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark"].map(l =>
+            `<option value="${l}" ${d.roast.level === l ? "selected" : ""}>${l}</option>`
+          ).join("")}
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Roast intent</label>
+        <div class="three-toggle" id="b-intent">
+          <button data-intent="Filter" class="${d.roast.intent === "Filter" ? "selected" : ""}">Filter</button>
+          <button data-intent="Espresso" class="${d.roast.intent === "Espresso" ? "selected" : ""}">Espresso</button>
+          <button data-intent="Omni" class="${d.roast.intent === "Omni" ? "selected" : ""}">Omni</button>
+        </div>
+        <div class="helper-text">
+          <strong style="color: var(--gold);">Filter</strong>: roasted for V60 / Chemex. Standard.<br>
+          <strong style="color: var(--gold);">Espresso</strong>: roasted darker for pressure. <em>More soluble on V60 — engine will go coarser + cooler.</em><br>
+          <strong style="color: var(--gold);">Omni</strong>: designed for both. Treated as Filter unless context overrides.
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Tasting notes (comma-separated)</label>
+        <input id="b-notes" value="${d.tastingNotes.join(", ")}" placeholder="berry, lemongrass, caramel">
+      </div>
+
+      <button class="btn primary" id="save-bean">◆ Save bean</button>
+      <button class="btn ghost" id="cancel-bean" style="margin-top: 8px;">Cancel</button>
+    </div>
+  `;
+
+  wrap.querySelector("#b-intent").addEventListener("click", e => {
+    const i = e.target.dataset.intent;
+    if (!i) return;
+    d.roast.intent = i;
+    render();
+  });
+
+  wrap.querySelector("#save-bean").addEventListener("click", () => {
+    const name = wrap.querySelector("#b-name").value.trim();
+    const country = wrap.querySelector("#b-country").value.trim();
+    if (!name || !country) { toast("Name and origin country required"); return; }
+    const bean = {
+      id: "custom-" + uid(),
+      name,
+      roaster: wrap.querySelector("#b-roaster").value.trim() || null,
+      custom: true,
+      origins: [{
+        country,
+        variety: wrap.querySelector("#b-variety").value.trim() || "",
+        process: wrap.querySelector("#b-process").value,
+        share: 100
+      }],
+      roast: {
+        level: wrap.querySelector("#b-level").value,
+        intent: d.roast.intent
+      },
+      tastingNotes: wrap.querySelector("#b-notes").value.split(",").map(s => s.trim()).filter(Boolean),
+      recipes: { v60_hot: null, v60_iced: null, brikka: null }
+    };
+    state.customBeans.push(bean);
+    save(KEYS.beans, state.customBeans);
+    toast("Bean added");
+    state.screen = "home";
+    render();
+  });
+  wrap.querySelector("#cancel-bean").addEventListener("click", () => {
+    state.screen = "home";
+    render();
+  });
+
+  return wrap;
+}
+
+// ==========================================================
+// VERSION TAP HANDLER (long press for dev log export shortcut)
+// ==========================================================
+let versionPressTimer = null;
+function onVersionTap() {
+  state.versionTapCount++;
+  if (state.versionTapCount >= 5) {
+    state.versionTapCount = 0;
+    exportDevLog();
+  }
+  setTimeout(() => state.versionTapCount = 0, 2000);
+}
+
+// ==========================================================
+// BOOT
+// ==========================================================
+render();
 </script>
 </body>
 </html>
