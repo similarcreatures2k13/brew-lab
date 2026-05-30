@@ -704,28 +704,71 @@ ${feedbackCtx}
 
 ${AI_ROLES[mode]}
 
-OUTPUT — return ONLY this JSON object. No preamble, no markdown fences, no commentary.
+${recipeKey && recipeKey.startsWith("brikka") ? `
+OUTPUT — return ONLY this JSON object for a BRIKKA MOKA POT recipe. No preamble, no markdown, no commentary.
+
+{"clicks": INT_12_TO_15, "temp": null, "pourStyle": "even", "ratio": null, "rationale": "STRING max 50 words", "confidence": "high" OR "medium" OR "low"}
+
+HARD RULES (BRIKKA):
+1. Click numbers only between 12 and 15. No text grind descriptions.
+2. temp, ratio, pourStyle are NOT used for Brikka — set temp=null, ratio=null, pourStyle="even".
+3. ${mode === "adjust" ? "ADJUST MODE: " : ""}Stay within 1 click of current recipe.${currentRecipe ? ` Current is ${currentRecipe.clicks} clicks — your output must be in [${Math.max(12, currentRecipe.clicks - 1)}, ${Math.min(15, currentRecipe.clicks + 1)}].` : ""}
+4. Brikka extraction is short and aggressive (1.5 bar, ~6 min). Finer = sweeter, more body. Coarser = brighter, less bitter.
+` : `
+OUTPUT — return ONLY this JSON object for a V60 POUR-OVER recipe. No preamble, no markdown, no commentary.
 
 {"clicks": INT_12_TO_26, "temp": INT_88_TO_96, "pourStyle": "layered" OR "descending" OR "even" OR "custom_even", "ratio": INT_14_TO_17, "rationale": "STRING max 50 words", "confidence": "high" OR "medium" OR "low"}
 
-HARD RULES:
+HARD RULES (V60):
 1. Click numbers only. Never text grind descriptions ("medium-fine" is forbidden).
 2. ${mode === "adjust" ? "ADJUST MODE: " : ""}Stay within 2 clicks and 2°C of current recipe.${currentRecipe ? ` Current is ${currentRecipe.clicks} clicks, ${currentRecipe.temp}°C — your output must be in [${Math.max(12, currentRecipe.clicks - 2)}, ${Math.min(26, currentRecipe.clicks + 2)}] clicks and [${Math.max(88, (currentRecipe.temp || 92) - 2)}, ${Math.min(96, (currentRecipe.temp || 92) + 2)}]°C.` : ""}
-3. For Brikka, use clicks 12-15. Set temp to ${currentRecipe?.temp || 92} and pourStyle to "even".
-4. Espresso roast on V60 needs COARSER and COOLER than filter roast. Counterintuitive but critical.`;
+3. ratio must be an integer (14, 15, 16, or 17) — NOT a string like "1:15".
+4. Espresso roast on V60 needs COARSER and COOLER than filter roast. Counterintuitive but critical.
+`}`;
 }
 
-function parseAIResponse(text) {
+function parseAIResponse(text, recipeKey) {
   let cleaned = text.replace(/```json|```/g, "").trim();
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
   if (start >= 0 && end > start) cleaned = cleaned.slice(start, end + 1);
   try {
     const p = JSON.parse(cleaned);
-    if (typeof p.clicks !== "number" || p.clicks < 12 || p.clicks > 26) throw new Error(`clicks out of range: ${p.clicks}`);
-    if (typeof p.temp !== "number" || p.temp < 88 || p.temp > 96) throw new Error(`temp out of range: ${p.temp}`);
-    if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) throw new Error(`bad pourStyle: ${p.pourStyle}`);
-    if (typeof p.ratio !== "number" || p.ratio < 14 || p.ratio > 17) throw new Error(`ratio out of range: ${p.ratio}`);
+    const isBrikka = recipeKey && recipeKey.startsWith("brikka");
+
+    // Coerce common string-number issues (e.g. "1:15" or "15" instead of 15)
+    if (typeof p.ratio === "string") {
+      const m = p.ratio.match(/(\d+)\s*$/);
+      if (m) p.ratio = parseInt(m[1]);
+    }
+    if (typeof p.clicks === "string") p.clicks = parseInt(p.clicks);
+    if (typeof p.temp === "string") p.temp = parseInt(p.temp);
+
+    // Click range is universal (12-26 = Brikka 12-15 + V60 12-26)
+    const minClicks = isBrikka ? 11 : 12;
+    const maxClicks = isBrikka ? 16 : 26;
+    if (typeof p.clicks !== "number" || isNaN(p.clicks) || p.clicks < minClicks || p.clicks > maxClicks) {
+      throw new Error(`clicks out of range: ${p.clicks}`);
+    }
+
+    // Temp only validated for V60 (Brikka has no controlled temp)
+    if (!isBrikka) {
+      if (typeof p.temp !== "number" || isNaN(p.temp) || p.temp < 88 || p.temp > 96) {
+        throw new Error(`temp out of range: ${p.temp}`);
+      }
+      if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) {
+        throw new Error(`bad pourStyle: ${p.pourStyle}`);
+      }
+      if (typeof p.ratio !== "number" || isNaN(p.ratio) || p.ratio < 14 || p.ratio > 17) {
+        throw new Error(`ratio out of range: ${p.ratio}`);
+      }
+    } else {
+      // For Brikka: fill in safe defaults so applyFeedback doesn't blow up
+      if (typeof p.temp !== "number" || isNaN(p.temp)) p.temp = null;
+      if (typeof p.ratio !== "number" || isNaN(p.ratio)) p.ratio = null;
+      if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) p.pourStyle = null;
+    }
+
     if (!["high", "medium", "low"].includes(p.confidence)) p.confidence = "medium";
     if (typeof p.rationale !== "string") p.rationale = "";
     return { ok: true, ...p };
@@ -765,7 +808,7 @@ async function askAdvisor({ bean, recipeKey, currentRecipe, feedbackHistory, mod
     }
     const data = await response.json();
     const text = data.content?.[0]?.text || "";
-    return parseAIResponse("{" + text);
+    return parseAIResponse("{" + text, recipeKey);
   } catch (e) {
     return { ok: false, error: `Network error: ${e.message}` };
   }
@@ -1596,13 +1639,16 @@ function renderFeedback() {
   // AI adjustment result (if user asked AI on this feedback)
   if (state.aiAdjustment) {
     if (state.aiAdjustment.ok) {
+      const showTemp = state.aiAdjustment.temp != null && state.aiAdjustment.temp !== r.temp;
+      const showPour = state.aiAdjustment.pourStyle != null && state.aiAdjustment.pourStyle !== r.pourStyle;
       html += `
         <div class="adjustment" style="border-left-color: var(--gold-glow);">
           <div class="head" style="color: var(--gold-glow);">AI ADVISOR · ${state.aiAdjustment.confidence.toUpperCase()}</div>
           <div class="change">
             Clicks <span class="arrow">${r.clicks}</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.clicks}</span>
-            ${state.aiAdjustment.temp ? `<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.temp}°C</span>` : ""}
-            ${state.aiAdjustment.pourStyle !== r.pourStyle ? `<br>Pour <span class="arrow">${r.pourStyle}</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.pourStyle}</span>` : ""}
+            ${showTemp ? `<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.temp}°C</span>` : ""}
+            ${showPour ? `<br>Pour <span class="arrow">${r.pourStyle}</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.pourStyle}</span>` : ""}
+            ${state.aiAdjustment.clicks === r.clicks && !showTemp && !showPour ? `<br><span style="color: var(--text-muted); font-style: italic;">No change suggested — current looks right.</span>` : ""}
           </div>
           <div class="why">${state.aiAdjustment.rationale}</div>
         </div>
@@ -1738,8 +1784,9 @@ function applyFeedback() {
     appliedSource = "locked";
   } else if (useAI) {
     finalClicks = state.aiAdjustment.clicks;
-    finalTemp = state.aiAdjustment.temp;
-    finalPourStyle = state.aiAdjustment.pourStyle;
+    // For Brikka, AI returns null for temp/pourStyle — keep current
+    finalTemp = state.aiAdjustment.temp != null ? state.aiAdjustment.temp : r.temp;
+    finalPourStyle = state.aiAdjustment.pourStyle != null ? state.aiAdjustment.pourStyle : r.pourStyle;
     appliedSource = "ai";
   } else if (state.adjustment?.type === "adjustment") {
     finalClicks = state.adjustment.adjustment.clicks;
