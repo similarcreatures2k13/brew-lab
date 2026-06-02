@@ -534,8 +534,10 @@ function roundTo(n, step = 5) { return Math.round(n / step) * step; }
 function pourCount(dose) { if (dose <= 12) return 3; if (dose <= 18) return 4; return 5; }
 function bloomG(dose) { return roundTo(dose * 2.5, 5); }
 
-function buildLayered(dose, ratio) {
-  const total = dose * ratio, bloom = bloomG(dose), pours = pourCount(dose);
+function buildLayered(dose, ratio, iced) {
+  const total = roundTo(dose * ratio * (iced ? 0.5 : 1), 5);
+  const bloom = bloomG(dose);
+  const pours = pourCount(dose);
   const remaining = total - bloom;
   const weights = pours === 3 ? [0.6, 0.4] : pours === 4 ? [0.4, 0.35, 0.25] : [0.32, 0.28, 0.22, 0.18];
   const steps = [{ t: 0, add: bloom, running: bloom, instr: "Bloom. Gentle spiral, swirl." }];
@@ -549,13 +551,15 @@ function buildLayered(dose, ratio) {
   const last = steps[steps.length - 1];
   last.add += total - last.running;
   last.running = total;
-  return { steps, total, drawdown: t + 30 };
+  return { steps, total, drawdown: t + 30, iced };
 }
-function buildDescending(dose, ratio) {
-  const total = dose * ratio, bloom = roundTo(dose * 3, 5), pours = pourCount(dose);
+function buildDescending(dose, ratio, iced) {
+  const total = roundTo(dose * ratio * (iced ? 0.5 : 1), 5);
+  const bloom = roundTo(dose * (iced ? 2.5 : 3), 5);
+  const pours = pourCount(dose);
   const remaining = total - bloom;
   const weights = pours === 3 ? [0.6, 0.4] : pours === 4 ? [0.42, 0.32, 0.26] : [0.34, 0.26, 0.22, 0.18];
-  const steps = [{ t: 0, add: bloom, running: bloom, instr: "Big bloom. Spiral, swirl firmly." }];
+  const steps = [{ t: 0, add: bloom, running: bloom, instr: iced ? "Bloom. Gentle spiral, swirl. Bloom is smaller for iced." : "Big bloom. Spiral, swirl firmly." }];
   let running = bloom, t = 50;
   weights.forEach((w, i) => {
     const add = roundTo(remaining * w, 5);
@@ -566,10 +570,12 @@ function buildDescending(dose, ratio) {
   const last = steps[steps.length - 1];
   last.add += total - last.running;
   last.running = total;
-  return { steps, total, drawdown: t + 30 };
+  return { steps, total, drawdown: t + 30, iced };
 }
-function buildEven(dose, ratio) {
-  const total = dose * ratio, bloom = bloomG(dose), pours = pourCount(dose);
+function buildEven(dose, ratio, iced) {
+  const total = roundTo(dose * ratio * (iced ? 0.5 : 1), 5);
+  const bloom = bloomG(dose);
+  const pours = pourCount(dose);
   const remaining = total - bloom;
   const each = roundTo(remaining / (pours - 1), 5);
   const steps = [{ t: 0, add: bloom, running: bloom, instr: "Bloom. Gentle spiral, swirl." }];
@@ -580,10 +586,10 @@ function buildEven(dose, ratio) {
     steps.push({ t, add, running, instr: `Equal pour ${i + 1}. Steady concentric pour.` });
     t += 25;
   }
-  return { steps, total, drawdown: t + 30 };
+  return { steps, total, drawdown: t + 30, iced };
 }
-function buildCustomEven(dose, ratio, pulseG = 26) {
-  const total = dose * ratio;
+function buildCustomEven(dose, ratio, iced, pulseG = 26) {
+  const total = roundTo(dose * ratio * (iced ? 0.5 : 1), 5);
   const count = Math.ceil(total / pulseG);
   const each = roundTo(total / count, 5);
   const steps = [];
@@ -594,14 +600,14 @@ function buildCustomEven(dose, ratio, pulseG = 26) {
     steps.push({ t, add, running, instr: i === 0 ? "First pulse. Saturate fully." : `Pulse ${i + 1}. Same volume, same rhythm.` });
     t += 25;
   }
-  return { steps, total, drawdown: t + 30 };
+  return { steps, total, drawdown: t + 30, iced };
 }
-function generatePourSchedule(dose, ratio, pourStyle) {
+function generatePourSchedule(dose, ratio, pourStyle, iced = false) {
   switch (pourStyle) {
-    case "descending": return buildDescending(dose, ratio);
-    case "even": return buildEven(dose, ratio);
-    case "custom_even": return buildCustomEven(dose, ratio);
-    default: return buildLayered(dose, ratio);
+    case "descending": return buildDescending(dose, ratio, iced);
+    case "even": return buildEven(dose, ratio, iced);
+    case "custom_even": return buildCustomEven(dose, ratio, iced);
+    default: return buildLayered(dose, ratio, iced);
   }
 }
 function fmtTime(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; }
@@ -609,7 +615,7 @@ function fmtTime(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")
 // ==========================================================
 // ENGINE: Feedback
 // ==========================================================
-const FEEDBACK_RULES = {
+const FEEDBACK_RULES_V60 = {
   sour: { clicks: -1, temp: +1, note: "Underextracted — finer + warmer" },
   bitter: { clicks: +1, temp: -1, note: "Overextracted — coarser + cooler" },
   acrid: { clicks: +1, temp: -1, note: "Harsh overextraction — coarser + cooler" },
@@ -618,6 +624,18 @@ const FEEDBACK_RULES = {
   "flat-muddy": { clicks: +1, temp: 0, note: "Muddied flavors — coarser" },
   "missing-notes": { clicks: -1, temp: +1, note: "Under-extracted aromatics — finer + warmer" }
 };
+
+// Brikka adjustments are grind-only + technique notes (temp/heat are fixed by hardware)
+const FEEDBACK_RULES_BRIKKA = {
+  sour:           { clicks: -1, note: "Underextracted — finer grind, ensure boiling water start" },
+  bitter:         { clicks: +1, note: "Overextracted — coarser, pull off at first sputter" },
+  acrid:          { clicks: +1, note: "Harsh overextraction — coarser, lower heat or pull off sooner" },
+  thin:           { clicks: -1, note: "Underextracted body — finer, or check basket is level-full" },
+  "too-acidic":   { clicks: +1, note: "Brikka can't add heat — coarsen 1 click for sweeter pull, or extend brew slightly" },
+  "flat-muddy":   { clicks: +1, note: "Pulled too long — coarser, pull at first sputter not full sputter" },
+  "missing-notes":{ clicks: -1, note: "Aromatics need more contact — finer grind, ensure no channelling" }
+};
+
 const CHANNELING_PAIRS = [["sour", "bitter"], ["sour", "acrid"]];
 const FEEDBACK_OPTIONS = [
   { id: "sour", label: "Sour" },
@@ -629,28 +647,47 @@ const FEEDBACK_OPTIONS = [
   { id: "missing-notes", label: "Missing notes" }
 ];
 
-function processFeedback({ currentRecipe, feedback }) {
+function processFeedback({ currentRecipe, feedback, recipeKey }) {
+  const isBrikka = recipeKey && recipeKey.startsWith("brikka");
+  const rules = isBrikka ? FEEDBACK_RULES_BRIKKA : FEEDBACK_RULES_V60;
+  const maxClicks = isBrikka ? 15 : 26;
+  const minClicks = isBrikka ? 12 : 12;
+
   for (const [a, b] of CHANNELING_PAIRS) {
     if (feedback.includes(a) && feedback.includes(b)) {
-      return { type: "channeling", diagnosis: "Sour + bitter together = channeling. Bed prep issue, not grind or temp.", action: "Try: wet WDT, level bed, slower bloom. Same settings.", adjustment: null };
+      return {
+        type: "channeling",
+        diagnosis: isBrikka
+          ? "Sour + bitter on Brikka = channeling. Coffee bed isn't sealing — level grounds (no tamping), check basket isn't overfilled, ensure top half is screwed firm."
+          : "Sour + bitter together = channeling. Bed prep issue, not grind or temp.",
+        action: isBrikka
+          ? "Same clicks. Re-pour at level fill, no tamping, swirl basket gently before assembly."
+          : "Try: wet WDT, level bed, slower bloom. Same settings.",
+        adjustment: null
+      };
     }
   }
+
   let clicksDelta = 0, tempDelta = 0;
   const reasons = [];
   for (const f of feedback) {
-    const rule = FEEDBACK_RULES[f];
+    const rule = rules[f];
     if (!rule) continue;
-    clicksDelta += rule.clicks; tempDelta += rule.temp;
+    clicksDelta += rule.clicks;
+    if (!isBrikka) tempDelta += rule.temp || 0;
     reasons.push(rule.note);
   }
-  if (clicksDelta === 0 && tempDelta === 0) {
+
+  if (clicksDelta === 0 && (isBrikka || tempDelta === 0)) {
     return { type: "no-change", diagnosis: "Feedback signals cancel. No clear direction.", action: "Re-brew same settings, focus technique.", adjustment: null };
   }
-  clicksDelta = clamp(clicksDelta, -2, 2);
+
+  clicksDelta = clamp(clicksDelta, isBrikka ? -1 : -2, isBrikka ? 1 : 2);
   tempDelta = clamp(tempDelta, -2, 2);
+
   const adjustment = {
-    clicks: clamp(currentRecipe.clicks + clicksDelta, 12, 26),
-    temp: currentRecipe.temp ? clamp(currentRecipe.temp + tempDelta, 88, 96) : null
+    clicks: clamp(currentRecipe.clicks + clicksDelta, minClicks, maxClicks),
+    temp: (!isBrikka && currentRecipe.temp) ? clamp(currentRecipe.temp + tempDelta, 88, 96) : null
   };
   return { type: "adjustment", diagnosis: reasons.join(". "), adjustment, delta: { clicks: clicksDelta, temp: tempDelta } };
 }
@@ -1030,6 +1067,8 @@ const state = {
   aiLoading: false,
   aiResult: null,
   aiAdjustment: null,
+  // forms
+  beanDraft: null,
   // ui
   versionTapCount: 0
 };
@@ -1348,7 +1387,8 @@ function generateRecipe() {
 
   // Build pour schedule for V60
   if (state.brewType === "v60") {
-    state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle);
+    const isIced = state.method === "iced";
+    state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, isIced);
   }
 
   // Auto-invoke AI if smart_default confidence low and API key present
@@ -1375,7 +1415,8 @@ function generateRecipe() {
         state.recipe.pourStyle = res.pourStyle;
         state.recipe.ratio = res.ratio;
         if (state.brewType === "v60") {
-          state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle);
+          const isIced = state.method === "iced";
+          state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, isIced);
         }
       }
       render();
@@ -1420,15 +1461,31 @@ function renderRecipe() {
           <div class="label">Dose</div>
           <div class="value large">${state.dose}<span class="unit">g</span></div>
         </div>
+        ${isV60 && state.method === "iced" ? `
         <div class="data-cell">
-          <div class="label">${isV60 ? "Water" : "Base water"}</div>
-          <div class="value large">${isV60 ? state.dose * state.ratio : 150}<span class="unit">g</span></div>
+          <div class="label">Hot water</div>
+          <div class="value large">${Math.round(state.dose * state.ratio * 0.5 / 5) * 5}<span class="unit">g</span></div>
         </div>
-        ${isV60 ? `
+        <div class="data-cell">
+          <div class="label">Ice (in server)</div>
+          <div class="value large" style="color: var(--blue-cool);">${Math.round(state.dose * state.ratio * 0.5 / 5) * 5}<span class="unit">g</span></div>
+        </div>
+        <div class="data-cell">
+          <div class="label">Temp</div>
+          <div class="value">${r.temp}<span class="unit">°C</span></div>
+        </div>` : isV60 ? `
+        <div class="data-cell">
+          <div class="label">Water</div>
+          <div class="value large">${state.dose * state.ratio}<span class="unit">g</span></div>
+        </div>
         <div class="data-cell">
           <div class="label">Temp</div>
           <div class="value">${r.temp}<span class="unit">°C</span></div>
         </div>` : `
+        <div class="data-cell">
+          <div class="label">Base water</div>
+          <div class="value large">150<span class="unit">g</span></div>
+        </div>
         <div class="data-cell">
           <div class="label">Water start</div>
           <div class="value" style="font-size: 14px;">${r.baseWaterTemp === "boiling" ? "Boiling" : "95°C / cool 30s"}</div>
@@ -1484,22 +1541,40 @@ function renderRecipe() {
   if (isV60 && state.pourSchedule) {
     const pourCard = document.createElement("div");
     pourCard.className = "section";
+    const iceG = Math.round(state.dose * state.ratio * 0.5 / 5) * 5;
+    const isIced = state.method === "iced";
     pourCard.innerHTML = `
       <div class="card">
-        <span class="card-label">POUR SCHEDULE · ${r.pourStyle.toUpperCase().replace("_", " ")}</span>
+        <span class="card-label">POUR SCHEDULE · ${r.pourStyle.toUpperCase().replace("_", " ")}${isIced ? " · ICED" : ""}</span>
         <div class="pour-timeline">
+          ${isIced ? `
+          <div class="pour-step" style="border-bottom-color: var(--blue-cool);">
+            <div class="time" style="color: var(--blue-cool);">PREP</div>
+            <div>
+              <div class="weight">${iceG}g ice in server</div>
+              <div class="instr">Place ice in V60 server before brewing. Rinse filter with hot water and discard.</div>
+            </div>
+          </div>` : ""}
           ${state.pourSchedule.steps.map(s => `
             <div class="pour-step">
               <div class="time">${fmtTime(s.t)}</div>
               <div>
-                <div class="weight">+ ${s.add}g → ${s.running}g</div>
+                <div class="weight">+ ${s.add}g → ${s.running}g${isIced ? " <span style='color: var(--text-ghost);'>(hot water)</span>" : ""}</div>
                 <div class="instr">${s.instr}</div>
               </div>
             </div>
           `).join("")}
+          ${isIced ? `
+          <div class="pour-step" style="border-bottom: none;">
+            <div class="time" style="color: var(--blue-cool);">SERVE</div>
+            <div>
+              <div class="weight">Swirl server, pour over fresh ice</div>
+              <div class="instr">Total beverage: ${state.dose * state.ratio}g (${iceG}g hot water + ${iceG}g ice). Let ice melt fully into the brew.</div>
+            </div>
+          </div>` : ""}
         </div>
         <div style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em;">
-          TARGET DRAWDOWN: ${fmtTime(state.pourSchedule.drawdown)}
+          TARGET DRAWDOWN: ${fmtTime(state.pourSchedule.drawdown)}${isIced ? ` · HOT WATER ${state.pourSchedule.total}g` : ""}
         </div>
       </div>
     `;
@@ -1697,7 +1772,7 @@ function renderFeedback() {
       } else {
         state.feedback.push(fb);
       }
-      state.adjustment = state.feedback.length ? processFeedback({ currentRecipe: r, feedback: state.feedback }) : null;
+      state.adjustment = state.feedback.length ? processFeedback({ currentRecipe: r, feedback: state.feedback, recipeKey: state.recipeKey }) : null;
     }
     render();
   });
@@ -2064,17 +2139,31 @@ function renderAddBean() {
   const wrap = document.createElement("div");
   wrap.className = "section";
 
-  // Working draft
-  if (!wrap._draft) {
-    wrap._draft = {
+  // Persistent draft lives on state, survives re-renders
+  if (!state.beanDraft) {
+    state.beanDraft = {
       name: "",
       roaster: "",
       origins: [{ country: "", variety: "", process: "Washed", share: 100 }],
       roast: { level: "Medium", intent: "Filter" },
-      tastingNotes: []
+      tastingNotes: ""
     };
   }
-  const d = wrap._draft;
+  const d = state.beanDraft;
+
+  // Helper: capture all current input values into draft before re-render
+  // (so user typing isn't lost when they tap intent buttons)
+  function syncDraftFromInputs() {
+    const nameEl = wrap.querySelector("#b-name");
+    if (!nameEl) return;
+    d.name = nameEl.value;
+    d.roaster = wrap.querySelector("#b-roaster").value;
+    d.origins[0].country = wrap.querySelector("#b-country").value;
+    d.origins[0].variety = wrap.querySelector("#b-variety").value;
+    d.origins[0].process = wrap.querySelector("#b-process").value;
+    d.roast.level = wrap.querySelector("#b-level").value;
+    d.tastingNotes = wrap.querySelector("#b-notes").value;
+  }
 
   wrap.innerHTML = `
     <div class="card">
@@ -2095,7 +2184,7 @@ function renderAddBean() {
       </div>
       <div class="form-row">
         <label>Variety</label>
-        <input id="b-variety" value="${d.origins[0].variety}" placeholder="e.g. Castillo, Heirloom, Caturra">
+        <input id="b-variety" value="${d.origins[0].variety}" placeholder="e.g. Castillo, Heirloom, Caturra (leave blank if unknown)">
       </div>
       <div class="form-row">
         <label>Process</label>
@@ -2116,11 +2205,11 @@ function renderAddBean() {
       </div>
 
       <div class="form-row">
-        <label>Roast intent</label>
+        <label>Roast intent &nbsp;<span style="color: var(--gold); font-family: var(--mono); font-size: 9px;">[ ${d.roast.intent.toUpperCase()} ]</span></label>
         <div class="three-toggle" id="b-intent">
-          <button data-intent="Filter" class="${d.roast.intent === "Filter" ? "selected" : ""}">Filter</button>
-          <button data-intent="Espresso" class="${d.roast.intent === "Espresso" ? "selected" : ""}">Espresso</button>
-          <button data-intent="Omni" class="${d.roast.intent === "Omni" ? "selected" : ""}">Omni</button>
+          <button type="button" data-intent="Filter" class="${d.roast.intent === "Filter" ? "selected" : ""}">Filter</button>
+          <button type="button" data-intent="Espresso" class="${d.roast.intent === "Espresso" ? "selected" : ""}">Espresso</button>
+          <button type="button" data-intent="Omni" class="${d.roast.intent === "Omni" ? "selected" : ""}">Omni</button>
         </div>
         <div class="helper-text">
           <strong style="color: var(--gold);">Filter</strong>: roasted for V60 / Chemex. Standard.<br>
@@ -2131,7 +2220,7 @@ function renderAddBean() {
 
       <div class="form-row">
         <label>Tasting notes (comma-separated)</label>
-        <input id="b-notes" value="${d.tastingNotes.join(", ")}" placeholder="berry, lemongrass, caramel">
+        <input id="b-notes" value="${d.tastingNotes}" placeholder="berry, lemongrass, caramel — or leave blank if unknown">
       </div>
 
       <button class="btn primary" id="save-bean">◆ Save bean</button>
@@ -2139,42 +2228,47 @@ function renderAddBean() {
     </div>
   `;
 
+  // Roast intent toggle — sync inputs before re-render so they don't reset
   wrap.querySelector("#b-intent").addEventListener("click", e => {
-    const i = e.target.dataset.intent;
-    if (!i) return;
-    d.roast.intent = i;
+    const btn = e.target.closest("[data-intent]");
+    if (!btn) return;
+    syncDraftFromInputs();
+    d.roast.intent = btn.dataset.intent;
     render();
   });
 
   wrap.querySelector("#save-bean").addEventListener("click", () => {
-    const name = wrap.querySelector("#b-name").value.trim();
-    const country = wrap.querySelector("#b-country").value.trim();
+    syncDraftFromInputs();
+    const name = d.name.trim();
+    const country = d.origins[0].country.trim();
     if (!name || !country) { toast("Name and origin country required"); return; }
     const bean = {
       id: "custom-" + uid(),
       name,
-      roaster: wrap.querySelector("#b-roaster").value.trim() || null,
+      roaster: d.roaster.trim() || null,
       custom: true,
       origins: [{
         country,
-        variety: wrap.querySelector("#b-variety").value.trim() || "",
-        process: wrap.querySelector("#b-process").value,
+        variety: d.origins[0].variety.trim() || "",
+        process: d.origins[0].process,
         share: 100
       }],
       roast: {
-        level: wrap.querySelector("#b-level").value,
+        level: d.roast.level,
         intent: d.roast.intent
       },
-      tastingNotes: wrap.querySelector("#b-notes").value.split(",").map(s => s.trim()).filter(Boolean),
+      tastingNotes: d.tastingNotes.split(",").map(s => s.trim()).filter(Boolean),
       recipes: { v60_hot: null, v60_iced: null, brikka: null }
     };
     state.customBeans.push(bean);
     save(KEYS.beans, state.customBeans);
+    state.beanDraft = null;  // reset for next time
     toast("Bean added");
     state.screen = "home";
     render();
   });
   wrap.querySelector("#cancel-bean").addEventListener("click", () => {
+    state.beanDraft = null;  // reset for next time
     state.screen = "home";
     render();
   });
