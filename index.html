@@ -6,8 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Lab">
-<meta name="theme-color" content="#1a1612">
-<title>Brew Lab V3.5</title>
+<meta name="theme-color" content="#0d0a08">
+<title>Brew Lab V4.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -25,8 +25,11 @@
     --gold: #c8956c;
     --gold-glow: #e5b380;
     --gold-deep: #8a6240;
+    --amber: #d4742a;
+    --amber-bright: #f08c35;
     --green-lock: #6b8e5a;
     --red-miss: #8e5a5a;
+    --red-hot: #c43322;
     --blue-cool: #5a7a8e;
     --mono: 'JetBrains Mono', ui-monospace, monospace;
     --ui: 'Inter Tight', -apple-system, sans-serif;
@@ -41,7 +44,7 @@
     line-height: 1.5;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  button { font-family: inherit; cursor: pointer; }
+  button { font-family: inherit; cursor: pointer; border-radius: 0; }
   input, textarea, select {
     font-family: inherit;
     background: var(--bg-shell);
@@ -50,53 +53,97 @@
     padding: 12px;
     font-size: 15px;
     width: 100%;
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
   }
   input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold); }
   textarea { resize: vertical; min-height: 80px; }
 
-  /* status bar */
-  .status-bar {
-    position: sticky; top: 0;
+  /* ── HUD BAR — replaces status-bar + app-header ──── */
+  .hud-bar {
+    position: sticky; top: 0; z-index: 10;
     background: var(--bg-deepest);
-    border-bottom: 1px solid var(--line-faint);
-    padding: 10px 16px;
-    padding-top: calc(10px + env(safe-area-inset-top));
-    display: flex; align-items: center; gap: 10px;
+    border-bottom: 2px solid var(--line-strong);
+    display: flex;
+    align-items: stretch;
+    padding-top: env(safe-area-inset-top);
+    min-height: calc(52px + env(safe-area-inset-top));
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px
+    );
+  }
+  .hud-bar.locked { border-bottom-color: var(--green-lock); }
+  .hud-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px 10px;
+    border-right: 1px solid var(--line-faint);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .hud-cell:last-child { border-right: none; }
+  .hud-cell.brand {
+    min-width: 72px;
+    border-right: 2px solid var(--line-strong);
+    cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .hud-cell.brand:active { background: var(--bg-raised); }
+  .hud-cell.hc-bean { flex: 1; min-width: 0; }
+  .hud-cell.hc-sys { width: 82px; }
+  .hud-cell.hc-status { width: 84px; }
+  .hud-label {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 7px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    z-index: 10;
+    letter-spacing: 0.15em;
+    color: var(--text-ghost);
+    margin-bottom: 3px;
+    line-height: 1;
   }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
-  .status-bar .sep { color: var(--text-ghost); }
-  .status-bar .crumb { color: var(--text-primary); }
-  .status-bar .right { margin-left: auto; }
-  .status-bar.locked .status-dot { background: var(--green-lock); }
+  .hud-value {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hud-value.brand-name {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--amber);
+  }
+  .hud-ver {
+    font-family: var(--mono);
+    font-size: 7px;
+    color: var(--text-ghost);
+    letter-spacing: 0.06em;
+    line-height: 1;
+    margin-top: 3px;
+  }
+  .hud-value.sv-active { color: var(--amber); }
+  .hud-value.sv-locked { color: var(--green-lock); }
+  .hud-value.sv-nav { color: var(--text-muted); }
 
-  /* app header */
-  .app-header {
-    padding: 20px 16px 8px;
-    display: flex; justify-content: space-between; align-items: flex-end;
-  }
-  .app-header h1 {
-    font-family: var(--mono); font-weight: 700;
-    font-size: 22px; letter-spacing: 0.02em;
-  }
-  .app-header .version {
-    font-family: var(--mono); font-size: 10px;
-    color: var(--text-ghost); letter-spacing: 0.1em;
-  }
-
+  /* ── SECTIONS ─────────────────────────────────────── */
   .section { padding: 12px 16px; }
   .section h2 {
     font-family: var(--mono); font-size: 10px;
     text-transform: uppercase; letter-spacing: 0.15em;
-    color: var(--text-muted); margin-bottom: 10px;
+    color: var(--text-muted); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
   }
+  .section h2::before { content: "▸"; color: var(--gold); flex-shrink: 0; }
 
-  /* card pattern */
+  /* ── CARDS ────────────────────────────────────────── */
   .card {
     position: relative;
     border: 1px solid var(--line-faint);
@@ -121,6 +168,7 @@
   }
   .lock-marker::before { content: "◆ "; }
 
+  /* ── BEAN DISPLAY ─────────────────────────────────── */
   .bean-name {
     font-size: 19px; font-weight: 600;
     letter-spacing: -0.01em; margin-bottom: 4px;
@@ -131,9 +179,7 @@
     letter-spacing: 0.08em;
   }
   .bean-meta .sep { color: var(--text-ghost); margin: 0 6px; }
-  .bean-meta .roast-intent {
-    color: var(--gold); font-weight: 500;
-  }
+  .bean-meta .roast-intent { color: var(--gold); font-weight: 500; }
   .bean-notes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .note-chip {
     font-family: var(--mono); font-size: 10px;
@@ -144,30 +190,25 @@
   .note-chip.achieved { color: var(--green-lock); border-color: var(--green-lock); }
   .note-chip.missed { color: var(--red-miss); border-color: var(--red-miss); }
 
-  /* data grid */
+  /* ── DATA GRID ────────────────────────────────────── */
   .data-grid {
     display: grid; grid-template-columns: 1fr 1fr;
     margin-top: 12px; border-top: 1px solid var(--line-faint);
   }
-  .data-cell {
-    padding: 12px;
-    border-bottom: 1px solid var(--line-faint);
-  }
+  .data-cell { padding: 12px; border-bottom: 1px solid var(--line-faint); }
   .data-cell:nth-child(odd) { border-right: 1px solid var(--line-faint); }
-  .data-cell:last-child, .data-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .data-cell:last-child,
+  .data-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
   .data-cell .label {
     font-family: var(--mono); font-size: 9px;
     text-transform: uppercase; letter-spacing: 0.15em;
     color: var(--text-muted); margin-bottom: 4px;
   }
-  .data-cell .value {
-    font-family: var(--mono); font-size: 18px;
-    font-weight: 500;
-  }
+  .data-cell .value { font-family: var(--mono); font-size: 18px; font-weight: 500; }
   .data-cell .value.large { font-size: 24px; font-weight: 600; }
   .data-cell .value .unit { font-size: 11px; color: var(--text-muted); margin-left: 3px; }
 
-  /* pour timeline */
+  /* ── POUR TIMELINE ────────────────────────────────── */
   .pour-timeline { margin-top: 6px; }
   .pour-step {
     display: grid; grid-template-columns: 60px 1fr;
@@ -187,17 +228,11 @@
     border: 1px solid var(--gold); background: var(--bg-shell);
     transform: rotate(45deg);
   }
-  .pour-step .time {
-    font-family: var(--mono); font-size: 12px;
-    color: var(--gold); font-weight: 500;
-  }
-  .pour-step .weight {
-    font-family: var(--mono); font-size: 14px;
-    font-weight: 500; margin-bottom: 2px;
-  }
+  .pour-step .time { font-family: var(--mono); font-size: 12px; color: var(--gold); font-weight: 500; }
+  .pour-step .weight { font-family: var(--mono); font-size: 14px; font-weight: 500; margin-bottom: 2px; }
   .pour-step .instr { font-size: 12px; color: var(--text-muted); }
 
-  /* buttons */
+  /* ── BUTTONS ──────────────────────────────────────── */
   .btn {
     min-height: 48px; padding: 12px 16px;
     background: transparent; border: 1px solid var(--line-strong);
@@ -215,8 +250,86 @@
   .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .btn-row.three { grid-template-columns: repeat(3, 1fr); }
   .btn-stack > .btn { margin-bottom: 8px; }
+  .btn-stack > .btn:last-child { margin-bottom: 0; }
 
-  /* chips */
+  /* Protocol-select big buttons */
+  .btn.protocol {
+    height: 82px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    padding: 14px 18px;
+    border-color: var(--line-strong);
+    border-width: 1px;
+    background: var(--bg-shell);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn.protocol::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--amber);
+  }
+  .btn.protocol:active { border-color: var(--amber); background: var(--bg-raised); }
+  .proto-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+    text-align: left;
+  }
+  .proto-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-align: left;
+  }
+
+  /* Method-select buttons */
+  .btn.method-btn {
+    height: 72px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px 16px;
+    border-color: var(--line-strong);
+    background: var(--bg-shell);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn.method-btn::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--gold-deep);
+  }
+  .btn.method-btn:active { border-color: var(--gold); background: var(--bg-raised); }
+  .method-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    text-align: left;
+  }
+  .method-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-align: left;
+  }
+
+  /* ── CHIPS ────────────────────────────────────────── */
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
     padding: 10px 14px;
@@ -228,44 +341,35 @@
     display: inline-flex; align-items: center; gap: 6px;
   }
   .chip::before { content: "◇"; color: var(--text-ghost); }
-  .chip.selected {
-    border-color: var(--gold); color: var(--gold);
-    background: var(--bg-raised);
-  }
+  .chip.selected { border-color: var(--gold); color: var(--gold); background: var(--bg-raised); }
   .chip.selected::before { content: "◆"; color: var(--gold); }
   .chip.perfect {
     border-color: var(--green-lock); color: var(--green-lock);
     width: 100%; justify-content: center;
+    background: rgba(107, 142, 90, 0.07);
+    letter-spacing: 0.12em;
   }
-  .chip.perfect::before { content: "✓"; }
+  .chip.perfect::before { content: "◆"; color: var(--green-lock); }
 
-  /* feedback grid */
+  /* ── FEEDBACK GRID ────────────────────────────────── */
   .feedback-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
     margin-top: 8px;
   }
-  .feedback-grid .chip {
-    padding: 12px 10px;
-    text-align: left; justify-content: flex-start;
-  }
+  .feedback-grid .chip { padding: 12px 10px; text-align: left; justify-content: flex-start; }
   .feedback-grid .chip.perfect { grid-column: 1 / -1; }
 
-  /* bean grid */
-  .bean-grid {
-    display: grid; grid-template-columns: 1fr; gap: 10px;
-  }
+  /* ── BEAN GRID ────────────────────────────────────── */
+  .bean-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
   .bean-grid .card {
     padding: 14px 14px 12px;
     cursor: pointer;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.12s ease;
   }
   .bean-grid .card:active { border-color: var(--gold); }
-  .bean-grid .card.custom .card-label::after {
-    content: " · CUSTOM";
-    color: var(--gold-deep);
-  }
+  .bean-grid .card.custom .card-label::after { content: " · CUSTOM"; color: var(--gold-deep); }
 
-  /* adjustment preview */
+  /* ── ADJUSTMENT PREVIEW ───────────────────────────── */
   .adjustment {
     margin-top: 14px; padding: 12px;
     border-left: 2px solid var(--gold);
@@ -284,7 +388,7 @@
     font-family: var(--ui); line-height: 1.5;
   }
 
-  /* dev note */
+  /* ── DEV / FIELD NOTE ─────────────────────────────── */
   .dev-note-toggle {
     margin-top: 12px;
     font-family: var(--mono); font-size: 10px;
@@ -295,9 +399,7 @@
   .dev-note-toggle::before { content: "[+ "; color: var(--text-ghost); }
   .dev-note-toggle::after { content: " ]"; color: var(--text-ghost); }
   .dev-note-toggle.open::before { content: "[− "; }
-  .dev-note-area {
-    margin-top: 8px; display: none;
-  }
+  .dev-note-area { margin-top: 8px; display: none; }
   .dev-note-area.open { display: block; }
   .dev-note-area textarea {
     background: var(--bg-deepest);
@@ -305,7 +407,7 @@
     font-family: var(--mono); font-size: 12px;
   }
 
-  /* form bits */
+  /* ── FORM ─────────────────────────────────────────── */
   .form-row { margin-bottom: 14px; }
   .form-row label {
     display: block; margin-bottom: 6px;
@@ -325,100 +427,113 @@
     border-right: 1px solid var(--line-strong);
   }
   .three-toggle button:last-child { border-right: none; }
-  .three-toggle button.selected {
-    background: var(--bg-raised); color: var(--gold);
-  }
-  .helper-text {
-    font-size: 11px; color: var(--text-muted);
-    margin-top: 6px; line-height: 1.4;
-  }
+  .three-toggle button.selected { background: var(--bg-raised); color: var(--gold); }
+  .helper-text { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
 
-  /* tab bar */
+  /* ── TAB BAR ──────────────────────────────────────── */
   .tab-bar {
     position: sticky; bottom: 0;
     background: var(--bg-deepest);
-    border-top: 1px solid var(--line-faint);
+    border-top: 2px solid var(--line-strong);
     display: grid; grid-template-columns: repeat(4, 1fr);
     padding-bottom: env(safe-area-inset-bottom);
   }
   .tab {
-    padding: 14px 0; text-align: center;
-    font-family: var(--mono); font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 13px 0 11px; text-align: center;
+    font-family: var(--mono); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.14em;
     color: var(--text-muted);
     border: none; background: transparent;
     border-top: 2px solid transparent;
   }
-  .tab.active { color: var(--gold); border-top-color: var(--gold); }
+  .tab.active { color: var(--amber); border-top-color: var(--amber); }
 
-  /* hidden version long-press for dev log */
-  .version-tap {
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  /* history entry */
-  .history-entry {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--line-faint);
-  }
+  /* ── HISTORY ENTRIES ──────────────────────────────── */
+  .history-entry { padding: 12px 0; border-bottom: 1px solid var(--line-faint); }
   .history-entry .head {
     display: flex; justify-content: space-between;
     margin-bottom: 6px; align-items: baseline;
   }
   .history-entry .bean { font-weight: 600; }
-  .history-entry .date {
-    font-family: var(--mono); font-size: 10px;
-    color: var(--text-muted);
-  }
-  .history-entry .settings {
-    font-family: var(--mono); font-size: 12px;
-    color: var(--text-muted);
-  }
-  .history-entry .feedback {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
+  .history-entry .date { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+  .history-entry .settings { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+  .history-entry .feedback { margin-top: 4px; font-size: 12px; color: var(--text-muted); }
   .history-entry .dev-note {
-    margin-top: 6px;
-    padding: 6px 8px;
+    margin-top: 6px; padding: 6px 8px;
     background: var(--bg-deepest);
     border-left: 2px solid var(--gold-deep);
-    font-family: var(--mono); font-size: 11px;
-    color: var(--text-primary);
+    font-family: var(--mono); font-size: 11px; color: var(--text-primary);
   }
 
+  /* ── EMPTY STATE ──────────────────────────────────── */
   .empty-state {
-    padding: 40px 20px; text-align: center;
-    color: var(--text-muted); font-size: 13px;
+    margin: 16px 0;
+    padding: 32px 20px;
+    text-align: center;
+    border: 1px solid var(--line-faint);
+    background: var(--bg-deepest);
+  }
+  .empty-state .es-icon {
+    font-family: var(--mono);
+    font-size: 32px;
+    color: var(--text-ghost);
+    margin-bottom: 16px;
+    display: block;
+    letter-spacing: 0.08em;
+  }
+  .empty-state .es-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .empty-state .es-sub {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-ghost);
+    line-height: 2.2;
   }
 
-  /* toast */
+  /* ── TOAST ────────────────────────────────────────── */
   .toast {
     position: fixed; bottom: 80px; left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-raised);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    padding: 12px 20px;
+    background: var(--bg-deepest);
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    padding: 10px 18px;
     font-family: var(--mono); font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.1em;
+    text-transform: uppercase; letter-spacing: 0.12em;
     z-index: 100;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.15s;
     pointer-events: none;
+    white-space: nowrap;
   }
   .toast.show { opacity: 1; }
 
-  /* loading */
+  /* ── LOADING ──────────────────────────────────────── */
   .loading {
     display: inline-block;
-    animation: pulse 1.4s ease-in-out infinite;
+    animation: pulse 1.2s ease-in-out infinite;
   }
   @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
+    0%, 100% { opacity: 0.3; }
     50% { opacity: 1; }
+  }
+
+  /* ── DECORATIVE DIVIDER ───────────────────────────── */
+  .proto-divider {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-ghost);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 0;
   }
 </style>
 </head>
@@ -512,13 +627,13 @@ function smartDefaultsBrikka(bean) {
   const { roast = {}, origins = [] } = bean;
   const profile = weightedOriginProfile(origins);
   let clicks = 13, baseWaterTemp = "boiling";
-  let icedStyle = "straight";  // default: concentrate straight over ice
+  let icedStyle = "straight";
   let hybridHotMl = 70;
   const reasons = [];
   if (/^light\b/i.test(roast.level || "") && roast.intent !== "Espresso") {
     clicks = 14;
     baseWaterTemp = "95C-cool-30s";
-    icedStyle = "hybrid";       // delicate beans need hot water to open up
+    icedStyle = "hybrid";
     hybridHotMl = 100;
     reasons.push("light filter → finer + cooler base, hybrid iced style");
   }
@@ -625,7 +740,6 @@ const FEEDBACK_RULES_V60 = {
   "missing-notes": { clicks: -1, temp: +1, note: "Under-extracted aromatics — finer + warmer" }
 };
 
-// Brikka adjustments are grind-only + technique notes (temp/heat are fixed by hardware)
 const FEEDBACK_RULES_BRIKKA = {
   sour:           { clicks: -1, note: "Underextracted — finer grind, ensure boiling water start" },
   bitter:         { clicks: +1, note: "Overextracted — coarser, pull off at first sputter" },
@@ -773,7 +887,6 @@ function parseAIResponse(text, recipeKey) {
     const p = JSON.parse(cleaned);
     const isBrikka = recipeKey && recipeKey.startsWith("brikka");
 
-    // Coerce common string-number issues (e.g. "1:15" or "15" instead of 15)
     if (typeof p.ratio === "string") {
       const m = p.ratio.match(/(\d+)\s*$/);
       if (m) p.ratio = parseInt(m[1]);
@@ -781,14 +894,12 @@ function parseAIResponse(text, recipeKey) {
     if (typeof p.clicks === "string") p.clicks = parseInt(p.clicks);
     if (typeof p.temp === "string") p.temp = parseInt(p.temp);
 
-    // Click range is universal (12-26 = Brikka 12-15 + V60 12-26)
     const minClicks = isBrikka ? 11 : 12;
     const maxClicks = isBrikka ? 16 : 26;
     if (typeof p.clicks !== "number" || isNaN(p.clicks) || p.clicks < minClicks || p.clicks > maxClicks) {
       throw new Error(`clicks out of range: ${p.clicks}`);
     }
 
-    // Temp only validated for V60 (Brikka has no controlled temp)
     if (!isBrikka) {
       if (typeof p.temp !== "number" || isNaN(p.temp) || p.temp < 88 || p.temp > 96) {
         throw new Error(`temp out of range: ${p.temp}`);
@@ -800,7 +911,6 @@ function parseAIResponse(text, recipeKey) {
         throw new Error(`ratio out of range: ${p.ratio}`);
       }
     } else {
-      // For Brikka: fill in safe defaults so applyFeedback doesn't blow up
       if (typeof p.temp !== "number" || isNaN(p.temp)) p.temp = null;
       if (typeof p.ratio !== "number" || isNaN(p.ratio)) p.ratio = null;
       if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) p.pourStyle = null;
@@ -959,7 +1069,6 @@ const PRESETS = [
       brikka: null
     }
   },
-  // Brikka-focused presets
   {
     id: "brazil-yellow-cat", name: "Brazil Yellow Catuai Infused", roaster: null, custom: false,
     origins: [{ country: "Brazil", variety: "Yellow Catuai", process: "Natural", share: 100 }],
@@ -1043,33 +1152,28 @@ function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 // APP STATE
 // ==========================================================
 const state = {
-  screen: "home",          // home | method | bean | dose | recipe | feedback | history | settings | addBean
+  screen: "home",
   customBeans: load(KEYS.beans, []),
   history: load(KEYS.history, []),
   settings: load(KEYS.settings, { defaultRatio: 15, defaultV60Dose: 16, defaultBrikkaDose: 16 }),
   apiKey: localStorage.getItem(KEYS.apiKey) || "",
-  // current flow
-  brewType: null,          // "v60" | "brikka"
-  method: null,            // "hot" | "iced" | "neat" | "americano"
+  brewType: null,
+  method: null,
   selectedBean: null,
   dose: 16,
   ratio: 15,
   recipe: null,
   recipeKey: null,
   pourSchedule: null,
-  engineMeta: null,        // captured per-brew: reasons[], aiInvoked, aiRationale, confidence
-  // feedback
+  engineMeta: null,
   feedback: [],
   taggedNotes: {},
   adjustment: null,
   pendingDevNote: "",
-  // ai
   aiLoading: false,
   aiResult: null,
   aiAdjustment: null,
-  // forms
   beanDraft: null,
-  // ui
   versionTapCount: 0
 };
 
@@ -1104,7 +1208,6 @@ function recipeKeyFor(brewType, method) {
 function getRecipeForBean(bean, recipeKey, brewType) {
   const existing = bean.recipes?.[recipeKey];
   if (existing) return { recipe: existing, basis: "preset", meta: null };
-  // fallback to smart defaults
   if (recipeKey.startsWith("v60")) {
     const sd = smartDefaultsV60(bean, recipeKey === "v60_iced" ? "iced" : "hot");
     return { recipe: sd, basis: "smart_default", meta: sd };
@@ -1123,7 +1226,6 @@ function render() {
   const app = document.getElementById("app");
   app.innerHTML = "";
   app.appendChild(renderStatusBar());
-  app.appendChild(renderHeader());
 
   const screens = {
     home: renderHome,
@@ -1145,54 +1247,79 @@ function render() {
   window.scrollTo(0, 0);
 }
 
+// ==========================================================
+// HUD BAR (replaces status bar + app header)
+// ==========================================================
 function renderStatusBar() {
   const el = document.createElement("div");
-  el.className = "status-bar";
-  const parts = [];
-  parts.push(`<span class="status-dot"></span>`);
-  if (state.selectedBean) {
-    parts.push(`<span class="crumb">${state.selectedBean.name.toUpperCase()}</span>`);
-    if (state.brewType) {
-      parts.push(`<span class="sep">/</span>`);
-      parts.push(`<span>${state.brewType.toUpperCase()}${state.method ? " " + state.method.toUpperCase() : ""}</span>`);
-    }
-  } else {
-    parts.push(`<span class="crumb">BREW LAB</span>`);
-    parts.push(`<span class="sep">/</span>`);
-    parts.push(`<span>${state.screen.toUpperCase()}</span>`);
-  }
-  if (state.recipe?.locked) {
-    el.classList.add("locked");
-    parts.push(`<span class="right" style="color: var(--green-lock);">LOCKED</span>`);
-  }
-  el.innerHTML = parts.join("");
-  return el;
-}
+  el.className = "hud-bar";
 
-function renderHeader() {
-  const h = document.createElement("header");
-  h.className = "app-header";
-  h.innerHTML = `
-    <h1>BREW LAB</h1>
-    <span class="version version-tap" id="version-tap">V3.5 / PHANTOM</span>
+  let statusText = "STANDBY";
+  let statusClass = "";
+
+  if (state.recipe?.locked) {
+    statusText = "DIALED";
+    statusClass = "sv-locked";
+    el.classList.add("locked");
+  } else if (state.recipe) {
+    statusText = "ACTIVE";
+    statusClass = "sv-active";
+  } else if (state.screen === "history") {
+    statusText = "ARCHIVE";
+    statusClass = "sv-nav";
+  } else if (state.screen === "settings") {
+    statusText = "SYSTEM";
+    statusClass = "sv-nav";
+  } else if (state.screen === "addBean") {
+    statusText = "REGISTER";
+    statusClass = "sv-nav";
+  } else if (state.aiLoading) {
+    statusText = "COMPILING";
+    statusClass = "sv-active";
+  }
+
+  const rawName = state.selectedBean ? state.selectedBean.name.toUpperCase() : "—";
+  const beanName = rawName.length > 16 ? rawName.slice(0, 14) + "…" : rawName;
+
+  let sysText = "—";
+  if (state.brewType && state.method) {
+    const m = state.method.replace("_", " ").toUpperCase();
+    sysText = `${state.brewType.toUpperCase()} ${m}`;
+  } else if (state.brewType) {
+    sysText = state.brewType.toUpperCase();
+  }
+
+  el.innerHTML = `
+    <div class="hud-cell brand" id="version-tap">
+      <div class="hud-value brand-name">BREW LAB</div>
+      <div class="hud-ver">V4.0 / PHANTOM</div>
+    </div>
+    <div class="hud-cell hc-bean">
+      <div class="hud-label">BEAN</div>
+      <div class="hud-value">${beanName}</div>
+    </div>
+    <div class="hud-cell hc-sys">
+      <div class="hud-label">PROTOCOL</div>
+      <div class="hud-value">${sysText}</div>
+    </div>
+    <div class="hud-cell hc-status">
+      <div class="hud-label">STATUS</div>
+      <div class="hud-value ${statusClass}">◆ ${statusText}</div>
+    </div>
   `;
-  setTimeout(() => {
-    const tap = h.querySelector("#version-tap");
-    if (tap) {
-      tap.addEventListener("click", onVersionTap);
-    }
-  }, 0);
-  return h;
+
+  el.querySelector("#version-tap").addEventListener("click", onVersionTap);
+  return el;
 }
 
 function renderTabBar() {
   const nav = document.createElement("nav");
   nav.className = "tab-bar";
   const tabs = [
-    { id: "home", label: "Brew" },
-    { id: "history", label: "History" },
-    { id: "addBean", label: "+ Bean" },
-    { id: "settings", label: "Settings" }
+    { id: "home", label: "BREW" },
+    { id: "history", label: "ARCHIVE" },
+    { id: "addBean", label: "REG." },
+    { id: "settings", label: "SYS" }
   ];
   nav.innerHTML = tabs.map(t =>
     `<button class="tab ${state.screen === t.id ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`
@@ -1211,20 +1338,27 @@ function renderTabBar() {
 }
 
 // ==========================================================
-// HOME — pick method
+// HOME
 // ==========================================================
 function renderHome() {
   const wrap = document.createElement("div");
   wrap.className = "section";
   wrap.innerHTML = `
-    <h2>Select brewer</h2>
-    <div class="btn-stack">
-      <button class="btn primary" data-brew="v60" style="height: 80px; font-size: 14px;">◆ V60 — POUR OVER</button>
-      <button class="btn primary" data-brew="brikka" style="height: 80px; font-size: 14px;">◆ BRIKKA — MOKA POT</button>
+    <div class="proto-divider">── EXTRACTION PROTOCOLS ──────────────────</div>
+    <div class="btn-stack" style="margin-top: 14px;">
+      <button class="btn protocol" data-brew="v60">
+        <div class="proto-name">◆ V60 — POUR OVER</div>
+        <div class="proto-sub">MANUAL FILTER · DIAL-IN PRECISION</div>
+      </button>
+      <button class="btn protocol" data-brew="brikka" style="margin-top: 10px;">
+        <div class="proto-name">◆ BRIKKA — MOKA POT</div>
+        <div class="proto-sub">PRESSURE EXTRACT · CONCENTRATE PULL</div>
+      </button>
     </div>
+    <div class="proto-divider" style="margin-top: 14px; text-align: center;">◇ SELECT PROTOCOL TO CONTINUE ◇</div>
   `;
   wrap.addEventListener("click", e => {
-    const b = e.target.dataset.brew;
+    const b = e.target.closest("[data-brew]")?.dataset.brew;
     if (!b) return;
     state.brewType = b;
     state.screen = "method";
@@ -1234,28 +1368,36 @@ function renderHome() {
 }
 
 // ==========================================================
-// METHOD — hot/iced or neat/americano
+// METHOD
 // ==========================================================
 function renderMethod() {
   const wrap = document.createElement("div");
   wrap.className = "section";
   const opts = state.brewType === "v60" ?
-    [{ id: "hot", label: "Hot" }, { id: "iced", label: "Iced (50:50)" }] :
     [
-      { id: "neat", label: "Neat (espresso shot)" },
-      { id: "americano", label: "Hot Americano" },
-      { id: "iced_americano", label: "Iced Americano" }
+      { id: "hot", label: "◆ HOT EXTRACTION", sub: "FULL POUR · 1:14–17 RATIO" },
+      { id: "iced", label: "◆ ICED EXTRACTION", sub: "50:50 DILUTION · FLASH CHILL" }
+    ] :
+    [
+      { id: "neat", label: "◆ NEAT", sub: "CONCENTRATE · STRAIGHT PULL" },
+      { id: "americano", label: "◆ HOT AMERICANO", sub: "CONCENTRATE + HOT WATER" },
+      { id: "iced_americano", label: "◆ ICED AMERICANO", sub: "OVER ICE · STRAIGHT OR HYBRID" }
     ];
   wrap.innerHTML = `
-    <h2>Method</h2>
+    <h2>SELECT METHOD</h2>
     <div class="btn-stack">
-      ${opts.map(o => `<button class="btn primary" data-method="${o.id}" style="height: 70px;">${o.label}</button>`).join("")}
+      ${opts.map(o => `
+        <button class="btn method-btn" data-method="${o.id}">
+          <div class="method-name">${o.label}</div>
+          <div class="method-sub">${o.sub}</div>
+        </button>
+      `).join("")}
       <button class="btn ghost" data-back="1" style="margin-top: 16px;">← Back</button>
     </div>
   `;
   wrap.addEventListener("click", e => {
-    if (e.target.dataset.back) { state.screen = "home"; render(); return; }
-    const m = e.target.dataset.method;
+    if (e.target.closest("[data-back]")) { state.screen = "home"; render(); return; }
+    const m = e.target.closest("[data-method]")?.dataset.method;
     if (!m) return;
     state.method = m;
     state.screen = "bean";
@@ -1271,11 +1413,10 @@ function renderBeanPicker() {
   const wrap = document.createElement("div");
   wrap.className = "section";
 
-  // Filter beans relevant for this brewer
   const recipeKey = recipeKeyFor(state.brewType, state.method);
   const beans = allBeans();
 
-  let html = `<h2>Select bean</h2><div class="bean-grid">`;
+  let html = `<h2>SELECT LOADOUT</h2><div class="bean-grid">`;
   for (const bean of beans) {
     const hasPreset = bean.recipes?.[recipeKey] != null;
     const isCustom = bean.custom;
@@ -1297,7 +1438,7 @@ function renderBeanPicker() {
 
   wrap.innerHTML = html;
   wrap.addEventListener("click", e => {
-    if (e.target.dataset.back) { state.screen = "method"; render(); return; }
+    if (e.target.closest("[data-back]")) { state.screen = "method"; render(); return; }
     const card = e.target.closest("[data-bean]");
     if (!card) return;
     state.selectedBean = findBean(card.dataset.bean);
@@ -1320,7 +1461,7 @@ function renderDose() {
 
   wrap.innerHTML = `
     <div class="card">
-      <span class="card-label">DOSE</span>
+      <span class="card-label">DOSE CONFIG</span>
       <div class="form-row">
         <label>Coffee weight (grams)</label>
         <input type="number" id="dose-input" value="${state.dose}" min="8" max="30" step="1">
@@ -1338,7 +1479,7 @@ function renderDose() {
       </div>` : ""}
     </div>
 
-    <button class="btn primary" id="go-btn">◆ GENERATE RECIPE</button>
+    <button class="btn primary" id="go-btn">◆ COMPILE PROTOCOL</button>
     <button class="btn ghost" data-back="1" style="margin-top: 8px;">← Back</button>
   `;
 
@@ -1385,13 +1526,11 @@ function generateRecipe() {
     aiRationale: null
   };
 
-  // Build pour schedule for V60
   if (state.brewType === "v60") {
     const isIced = state.method === "iced";
     state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, isIced);
   }
 
-  // Auto-invoke AI if smart_default confidence low and API key present
   if (result.basis === "smart_default" && result.meta?.confidence === "low" && state.apiKey) {
     state.aiLoading = true;
     state.screen = "recipe";
@@ -1409,7 +1548,6 @@ function generateRecipe() {
       if (res.ok) {
         state.engineMeta.aiInvoked = true;
         state.engineMeta.aiRationale = res.rationale;
-        // Apply AI suggestion
         state.recipe.clicks = res.clicks;
         state.recipe.temp = res.temp;
         state.recipe.pourStyle = res.pourStyle;
@@ -1443,7 +1581,7 @@ function renderRecipe() {
   let cardHtml = `
     <div class="card ${r.locked ? "locked" : ""}">
       <span class="card-label">EXTRACTION ${state.method.toUpperCase()}</span>
-      ${r.locked ? `<span class="lock-marker">LOCKED</span>` : ""}
+      ${r.locked ? `<span class="lock-marker">DIALED</span>` : ""}
       <div class="bean-name">${bean.name}</div>
       <div class="bean-meta">
         <span class="roast-intent">${bean.roast.intent}</span>
@@ -1498,9 +1636,12 @@ function renderRecipe() {
     </div>
   `;
 
-  // AI loading or result
   if (state.aiLoading) {
-    cardHtml += `<div class="card" style="border-style: dashed;"><span class="card-label">AI ADVISOR</span><div class="loading" style="font-family: var(--mono); font-size: 12px; color: var(--gold);">◇ Consulting Haiku…</div></div>`;
+    cardHtml += `
+      <div class="card" style="border-style: dashed;">
+        <span class="card-label">AI ADVISOR</span>
+        <div class="loading" style="font-family: var(--mono); font-size: 12px; color: var(--gold);">◇ COMPILING ADVISORY...</div>
+      </div>`;
   } else if (state.aiResult?.ok && state.engineMeta?.aiInvoked) {
     cardHtml += `
       <div class="card" style="border-color: var(--gold-deep);">
@@ -1519,7 +1660,6 @@ function renderRecipe() {
     `;
   }
 
-  // Engine reasoning (always visible for transparency in phantom trial)
   if (state.engineMeta?.reasons?.length) {
     cardHtml += `
       <div class="card">
@@ -1537,7 +1677,6 @@ function renderRecipe() {
   recipeCard.innerHTML = cardHtml;
   wrap.appendChild(recipeCard);
 
-  // Pour schedule for V60
   if (isV60 && state.pourSchedule) {
     const pourCard = document.createElement("div");
     pourCard.className = "section";
@@ -1581,7 +1720,6 @@ function renderRecipe() {
     wrap.appendChild(pourCard);
   }
 
-  // Brikka steps for Brikka
   if (!isV60) {
     const brikkaSteps = document.createElement("div");
     brikkaSteps.className = "section";
@@ -1609,12 +1747,11 @@ function renderRecipe() {
     wrap.appendChild(brikkaSteps);
   }
 
-  // Actions
   const actions = document.createElement("div");
   actions.className = "section";
   actions.innerHTML = `
     <div class="btn-stack">
-      <button class="btn primary" id="rate-btn">◆ RATE THIS BREW</button>
+      <button class="btn primary" id="rate-btn">◆ FILE REPORT</button>
       <button class="btn ghost" id="newbrew-btn">← New brew</button>
     </div>
   `;
@@ -1655,17 +1792,16 @@ function renderFeedback() {
 
   let html = `
     <div class="card">
-      <span class="card-label">TASTE REPORT</span>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">How did this cup land?</p>
+      <span class="card-label">THREAT ASSESSMENT</span>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">Assess this extraction:</p>
       <div class="feedback-grid" id="fb-grid">
         ${FEEDBACK_OPTIONS.map(o => `
           <button class="chip ${state.feedback.includes(o.id) ? "selected" : ""}" data-fb="${o.id}">${o.label}</button>
         `).join("")}
-        <button class="chip perfect" data-fb="perfect">Perfect — lock recipe</button>
+        <button class="chip perfect" data-fb="perfect">◆ KILL ZONE — LOCK PROTOCOL</button>
       </div>
   `;
 
-  // Tasting notes verification
   if (state.selectedBean.tastingNotes?.length) {
     html += `
       <div style="margin-top: 18px;">
@@ -1680,7 +1816,6 @@ function renderFeedback() {
     `;
   }
 
-  // Adjustment preview
   if (state.adjustment) {
     if (state.adjustment.type === "channeling") {
       html += `
@@ -1692,7 +1827,7 @@ function renderFeedback() {
     } else if (state.adjustment.type === "no-change") {
       html += `
         <div class="adjustment">
-          <div class="head">NO CHANGE</div>
+          <div class="head">NO CLEAR DIRECTION</div>
           <div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action || ""}</div>
         </div>
       `;
@@ -1711,7 +1846,6 @@ function renderFeedback() {
     }
   }
 
-  // AI adjustment result (if user asked AI on this feedback)
   if (state.aiAdjustment) {
     if (state.aiAdjustment.ok) {
       const showTemp = state.aiAdjustment.temp != null && state.aiAdjustment.temp !== r.temp;
@@ -1733,9 +1867,8 @@ function renderFeedback() {
     }
   }
 
-  // Dev note
   html += `
-    <button class="dev-note-toggle ${state.pendingDevNote ? "open" : ""}" id="dev-toggle">dev note</button>
+    <button class="dev-note-toggle ${state.pendingDevNote ? "open" : ""}" id="dev-toggle">field note</button>
     <div class="dev-note-area ${state.pendingDevNote ? "open" : ""}" id="dev-area">
       <textarea id="dev-note-input" placeholder="What surprised you? Was the engine off? Calibration notes..." rows="3">${state.pendingDevNote}</textarea>
     </div>
@@ -1743,25 +1876,27 @@ function renderFeedback() {
 
   html += `</div>`;
 
-  // Actions
   const showAskAI = state.feedback.length > 0 && !state.feedback.includes("perfect") && state.apiKey;
+  const applyLabel = state.feedback.includes("perfect")
+    ? "LOCK & FILE"
+    : (state.aiAdjustment?.ok ? "APPLY AI · FILE" : "APPLY & FILE");
+
   html += `
     <div class="btn-row" style="margin-top: 14px;">
-      <button class="btn" id="discard-btn">Cancel</button>
-      <button class="btn primary" id="apply-btn">${state.feedback.includes("perfect") ? "Lock & save" : (state.aiAdjustment?.ok ? "Apply AI & save" : "Apply & save")}</button>
+      <button class="btn ghost" id="discard-btn">DISCARD</button>
+      <button class="btn primary" id="apply-btn">${applyLabel}</button>
     </div>
-    ${showAskAI ? `<button class="btn ghost" id="ask-ai-btn" style="margin-top: 8px;">${state.aiLoading ? "◇ Asking…" : "◇ Ask AI for sanity check"}</button>` : ""}
-    ${!state.apiKey && state.feedback.length > 0 && !state.feedback.includes("perfect") ? `<div class="helper-text" style="margin-top: 8px; text-align: center;">Set API key in Settings to enable AI advisor</div>` : ""}
+    ${showAskAI ? `<button class="btn ghost" id="ask-ai-btn" style="margin-top: 8px;">${state.aiLoading ? "◇ COMPILING..." : "◇ AI SANITY CHECK"}</button>` : ""}
+    ${!state.apiKey && state.feedback.length > 0 && !state.feedback.includes("perfect") ? `<div class="helper-text" style="margin-top: 8px; text-align: center;">Set API key in SYS to enable AI advisor</div>` : ""}
   `;
 
   card.innerHTML = html;
   wrap.appendChild(card);
 
-  // Feedback chip handlers
   card.querySelector("#fb-grid").addEventListener("click", e => {
     const fb = e.target.dataset.fb;
     if (!fb) return;
-    state.aiAdjustment = null;  // clear AI result if user changes feedback
+    state.aiAdjustment = null;
     if (fb === "perfect") {
       state.feedback = ["perfect"];
       state.adjustment = null;
@@ -1777,7 +1912,6 @@ function renderFeedback() {
     render();
   });
 
-  // Note tap cycle
   const notesRow = card.querySelector("#notes-row");
   if (notesRow) {
     notesRow.addEventListener("click", e => {
@@ -1789,7 +1923,6 @@ function renderFeedback() {
     });
   }
 
-  // Dev note toggle
   card.querySelector("#dev-toggle").addEventListener("click", () => {
     const area = card.querySelector("#dev-area");
     const tog = card.querySelector("#dev-toggle");
@@ -1803,21 +1936,18 @@ function renderFeedback() {
     state.pendingDevNote = e.target.value;
   });
 
-  // Apply / discard
   card.querySelector("#discard-btn").addEventListener("click", () => {
     state.screen = "recipe";
     render();
   });
   card.querySelector("#apply-btn").addEventListener("click", applyFeedback);
 
-  // Ask AI button
   const askBtn = card.querySelector("#ask-ai-btn");
   if (askBtn) {
     askBtn.addEventListener("click", async () => {
       if (state.aiLoading) return;
       state.aiLoading = true;
       render();
-      // Build a synthetic feedback history entry for current brew
       const fbEntry = { settings: { clicks: r.clicks, temp: r.temp }, feedback: state.feedback };
       const res = await askAdvisor({
         bean: state.selectedBean,
@@ -1829,7 +1959,6 @@ function renderFeedback() {
       });
       state.aiLoading = false;
       state.aiAdjustment = res;
-      // Capture into engineMeta for log export
       if (res.ok) {
         state.engineMeta = state.engineMeta || {};
         state.engineMeta.aiInvoked = true;
@@ -1848,18 +1977,15 @@ function applyFeedback() {
   const isPerfect = state.feedback.includes("perfect");
   const useAI = state.aiAdjustment?.ok;
 
-  // Decide what to write
   let finalClicks = r.clicks;
   let finalTemp = r.temp;
   let finalPourStyle = r.pourStyle;
   let appliedSource = null;
 
   if (isPerfect) {
-    // Lock current
     appliedSource = "locked";
   } else if (useAI) {
     finalClicks = state.aiAdjustment.clicks;
-    // For Brikka, AI returns null for temp/pourStyle — keep current
     finalTemp = state.aiAdjustment.temp != null ? state.aiAdjustment.temp : r.temp;
     finalPourStyle = state.aiAdjustment.pourStyle != null ? state.aiAdjustment.pourStyle : r.pourStyle;
     appliedSource = "ai";
@@ -1869,7 +1995,6 @@ function applyFeedback() {
     appliedSource = "local";
   }
 
-  // Build history entry
   const entry = {
     id: "brew-" + Date.now(),
     date: new Date().toISOString(),
@@ -1899,18 +2024,17 @@ function applyFeedback() {
   if (state.history.length > 100) state.history.length = 100;
   save(KEYS.history, state.history);
 
-  // Update the bean's recipe slot
   if (isPerfect) {
     persistBeanRecipe(bean, state.recipeKey, { ...r, locked: true });
-    toast("Recipe locked.");
+    toast("◆ DIALED. PROTOCOL LOCKED.");
   } else if (appliedSource === "ai") {
     persistBeanRecipe(bean, state.recipeKey, { ...r, clicks: finalClicks, temp: finalTemp, pourStyle: finalPourStyle });
-    toast(`AI applied: ${finalClicks}c, ${finalTemp}°C`);
+    toast(`AI APPLIED: ${finalClicks}c${finalTemp ? ", " + finalTemp + "°C" : ""}`);
   } else if (appliedSource === "local") {
     persistBeanRecipe(bean, state.recipeKey, { ...r, clicks: finalClicks, temp: finalTemp });
-    toast(`Saved: ${finalClicks}c, ${finalTemp}°C`);
+    toast(`FILED: ${finalClicks}c${finalTemp ? ", " + finalTemp + "°C" : ""}`);
   } else {
-    toast("Saved to history.");
+    toast("FILED.");
   }
 
   state.screen = "history";
@@ -1927,50 +2051,49 @@ function applyFeedback() {
 }
 
 function persistBeanRecipe(bean, recipeKey, recipe) {
-  // If preset, store the customisation in customBeans as a copy
   const existing = state.customBeans.find(b => b.id === bean.id);
   if (existing) {
     existing.recipes = existing.recipes || {};
     existing.recipes[recipeKey] = recipe;
     save(KEYS.beans, state.customBeans);
   } else if (!bean.custom) {
-    // Clone preset into customBeans to record the override
     const clone = JSON.parse(JSON.stringify(bean));
     clone.recipes = clone.recipes || {};
     clone.recipes[recipeKey] = recipe;
-    clone.id = bean.id; // keep same id, customBeans takes precedence in findBean via PRESET fallback
-    // Mark to prefer custom version: store under same id
-    // Replace PRESET-matched id in state.customBeans
+    clone.id = bean.id;
     state.customBeans.push(clone);
     save(KEYS.beans, state.customBeans);
   } else {
-    // Already custom
     bean.recipes = bean.recipes || {};
     bean.recipes[recipeKey] = recipe;
     save(KEYS.beans, state.customBeans);
   }
 }
 
-// allBeans needs to prefer customBeans over presets when ids collide
 function allBeansResolved() {
   const customIds = new Set(state.customBeans.map(b => b.id));
   const presetsFiltered = PRESETS.filter(p => !customIds.has(p.id));
   return [...presetsFiltered, ...state.customBeans];
 }
-// override
 allBeans = allBeansResolved;
 
 // ==========================================================
-// HISTORY
+// HISTORY (ARCHIVE)
 // ==========================================================
 function renderHistory() {
   const wrap = document.createElement("div");
   wrap.className = "section";
   if (!state.history.length) {
-    wrap.innerHTML = `<div class="empty-state">No brews logged yet.<br>Brew, then rate to start your history.</div>`;
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <span class="es-icon">◇</span>
+        <div class="es-title">VOID.LOG EMPTY</div>
+        <div class="es-sub">── NO PROTOCOLS ON RECORD ──<br>BREW · RATE · FILE TO BEGIN</div>
+      </div>
+    `;
     return wrap;
   }
-  let html = `<h2>Recent brews · ${state.history.length}</h2>`;
+  let html = `<h2>ARCHIVE · ${state.history.length} PROTOCOLS</h2>`;
   for (const h of state.history.slice(0, 30)) {
     html += `
       <div class="history-entry">
@@ -1992,7 +2115,7 @@ function renderHistory() {
 }
 
 // ==========================================================
-// SETTINGS
+// SETTINGS (SYSTEM)
 // ==========================================================
 function renderSettings() {
   const wrap = document.createElement("div");
@@ -2008,16 +2131,16 @@ function renderSettings() {
     </div>
 
     <div class="card">
-      <span class="card-label">DEV LOG</span>
+      <span class="card-label">VOID.LOG</span>
       <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-        Export your brews + dev notes as markdown. Paste into chat for next-session calibration.
+        Export VOID.LOG as markdown. Feed to AI for next-session calibration.
       </div>
-      <button class="btn primary" id="export-log">◆ Copy dev log to clipboard</button>
-      <button class="btn ghost" id="clear-history" style="margin-top: 8px;">Clear all history</button>
+      <button class="btn primary" id="export-log">◆ EXPORT VOID.LOG</button>
+      <button class="btn ghost" id="clear-history" style="margin-top: 8px;">PURGE ARCHIVE</button>
     </div>
 
     <div class="card">
-      <span class="card-label">DEFAULTS</span>
+      <span class="card-label">LOADOUT DEFAULTS</span>
       <div class="form-row">
         <label>V60 default dose (g)</label>
         <input type="number" id="def-v60" value="${state.settings.defaultV60Dose}" min="8" max="30">
@@ -2036,29 +2159,29 @@ function renderSettings() {
     </div>
 
     <div class="card">
-      <span class="card-label">DANGER ZONE</span>
-      <button class="btn danger" id="clear-all">Erase everything (beans, history, key)</button>
+      <span class="card-label">PURGE ZONE</span>
+      <button class="btn danger" id="clear-all">◆ SYSTEM PURGE — ERASE ALL DATA</button>
     </div>
   `;
   wrap.querySelector("#save-key").addEventListener("click", () => {
     state.apiKey = wrap.querySelector("#apikey-input").value.trim();
     localStorage.setItem(KEYS.apiKey, state.apiKey);
-    toast("API key saved");
+    toast("KEY STORED");
   });
   wrap.querySelector("#save-defaults").addEventListener("click", () => {
     state.settings.defaultV60Dose = parseInt(wrap.querySelector("#def-v60").value) || 16;
     state.settings.defaultBrikkaDose = parseInt(wrap.querySelector("#def-brikka").value) || 16;
     state.settings.defaultRatio = parseInt(wrap.querySelector("#def-ratio").value) || 15;
     save(KEYS.settings, state.settings);
-    toast("Defaults saved");
+    toast("DEFAULTS UPDATED");
   });
   wrap.querySelector("#export-log").addEventListener("click", exportDevLog);
   wrap.querySelector("#clear-history").addEventListener("click", () => {
-    if (confirm("Clear all brew history?")) {
+    if (confirm("Purge all brew history?")) {
       state.history = [];
       save(KEYS.history, state.history);
       render();
-      toast("History cleared");
+      toast("ARCHIVE PURGED");
     }
   });
   wrap.querySelector("#clear-all").addEventListener("click", () => {
@@ -2073,9 +2196,9 @@ function renderSettings() {
 
 function exportDevLog() {
   const lines = [];
-  lines.push(`BREW LAB DEV LOG`);
+  lines.push(`BREW LAB — VOID.LOG`);
   lines.push(`Exported: ${new Date().toISOString()}`);
-  lines.push(`Brews logged: ${state.history.length}`);
+  lines.push(`Protocols filed: ${state.history.length}`);
   lines.push(`==========================================`);
   lines.push("");
   for (const h of state.history) {
@@ -2105,14 +2228,14 @@ function exportDevLog() {
       lines.push(`  AI rationale: ${h.aiAdjustment.rationale}`);
     }
     if (h.devNote) {
-      lines.push(`DEV NOTE: ${h.devNote}`);
+      lines.push(`FIELD NOTE: ${h.devNote}`);
     }
     lines.push("");
   }
   const text = lines.join("\n");
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(
-      () => toast("Dev log copied!"),
+      () => toast("VOID.LOG EXPORTED"),
       () => fallbackCopy(text)
     );
   } else {
@@ -2127,19 +2250,18 @@ function fallbackCopy(text) {
   ta.style.opacity = "0";
   document.body.appendChild(ta);
   ta.select();
-  try { document.execCommand("copy"); toast("Dev log copied!"); }
+  try { document.execCommand("copy"); toast("VOID.LOG EXPORTED"); }
   catch { toast("Copy failed — try again"); }
   document.body.removeChild(ta);
 }
 
 // ==========================================================
-// ADD / EDIT BEAN
+// REGISTER BEAN
 // ==========================================================
 function renderAddBean() {
   const wrap = document.createElement("div");
   wrap.className = "section";
 
-  // Persistent draft lives on state, survives re-renders
   if (!state.beanDraft) {
     state.beanDraft = {
       name: "",
@@ -2151,8 +2273,6 @@ function renderAddBean() {
   }
   const d = state.beanDraft;
 
-  // Helper: capture all current input values into draft before re-render
-  // (so user typing isn't lost when they tap intent buttons)
   function syncDraftFromInputs() {
     const nameEl = wrap.querySelector("#b-name");
     if (!nameEl) return;
@@ -2167,7 +2287,7 @@ function renderAddBean() {
 
   wrap.innerHTML = `
     <div class="card">
-      <span class="card-label">ADD CUSTOM BEAN</span>
+      <span class="card-label">REGISTER NEW BEAN</span>
 
       <div class="form-row">
         <label>Bean name</label>
@@ -2212,8 +2332,8 @@ function renderAddBean() {
           <button type="button" data-intent="Omni" class="${d.roast.intent === "Omni" ? "selected" : ""}">Omni</button>
         </div>
         <div class="helper-text">
-          <strong style="color: var(--gold);">Filter</strong>: roasted for V60 / Chemex. Standard.<br>
-          <strong style="color: var(--gold);">Espresso</strong>: roasted darker for pressure. <em>More soluble on V60 — engine will go coarser + cooler.</em><br>
+          <strong style="color: var(--gold);">Filter</strong>: roasted for V60 / Chemex. Standard protocol.<br>
+          <strong style="color: var(--gold);">Espresso</strong>: darker roast for pressure. <em>More soluble on V60 — engine compensates.</em><br>
           <strong style="color: var(--gold);">Omni</strong>: designed for both. Treated as Filter unless context overrides.
         </div>
       </div>
@@ -2223,12 +2343,11 @@ function renderAddBean() {
         <input id="b-notes" value="${d.tastingNotes}" placeholder="berry, lemongrass, caramel — or leave blank if unknown">
       </div>
 
-      <button class="btn primary" id="save-bean">◆ Save bean</button>
-      <button class="btn ghost" id="cancel-bean" style="margin-top: 8px;">Cancel</button>
+      <button class="btn primary" id="save-bean">◆ REGISTER BEAN</button>
+      <button class="btn ghost" id="cancel-bean" style="margin-top: 8px;">ABORT</button>
     </div>
   `;
 
-  // Roast intent toggle — sync inputs before re-render so they don't reset
   wrap.querySelector("#b-intent").addEventListener("click", e => {
     const btn = e.target.closest("[data-intent]");
     if (!btn) return;
@@ -2262,13 +2381,13 @@ function renderAddBean() {
     };
     state.customBeans.push(bean);
     save(KEYS.beans, state.customBeans);
-    state.beanDraft = null;  // reset for next time
-    toast("Bean added");
+    state.beanDraft = null;
+    toast("BEAN REGISTERED");
     state.screen = "home";
     render();
   });
   wrap.querySelector("#cancel-bean").addEventListener("click", () => {
-    state.beanDraft = null;  // reset for next time
+    state.beanDraft = null;
     state.screen = "home";
     render();
   });
@@ -2277,7 +2396,7 @@ function renderAddBean() {
 }
 
 // ==========================================================
-// VERSION TAP HANDLER (long press for dev log export shortcut)
+// VERSION TAP (5 taps → export VOID.LOG)
 // ==========================================================
 let versionPressTimer = null;
 function onVersionTap() {
