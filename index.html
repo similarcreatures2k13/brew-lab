@@ -7,13 +7,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Lab">
 <meta name="theme-color" content="#050811">
-<title>Brew Lab V3.7</title>
+<title>Brew Lab V3.8</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ═══════════════════════════════════════════════════════
-     PALETTE — INDUSTRIAL VOID // V3.7
+     PALETTE — INDUSTRIAL VOID // V3.8
   ═══════════════════════════════════════════════════════ */
   :root {
     /* Surfaces */
@@ -681,6 +681,43 @@
   }
   .toast.show { opacity:1; }
   .loading { display:inline-block; animation:pulse 1.2s ease-in-out infinite; }
+
+  /* ═══════════════════════════════════════════════════════
+     DUKE SCREEN
+  ═══════════════════════════════════════════════════════ */
+  .duke-card { border-color:var(--neon-magenta); box-shadow:0 0 18px rgba(255,61,168,.15); }
+  .duke-label { color:var(--neon-magenta); background:var(--void); }
+  .duke-portrait {
+    font-family:var(--mono); font-size:11px; line-height:1.4;
+    color:var(--hud-cyan); text-shadow:0 0 8px var(--hud-cyan);
+    text-align:center; margin:14px 0; white-space:pre; overflow-x:auto;
+  }
+  .duke-quote {
+    padding:12px 14px; border:1px solid var(--neon-magenta);
+    margin:12px 0; cursor:pointer; background:rgba(255,61,168,.04);
+    transition:background .1s;
+  }
+  .duke-quote:active { background:rgba(255,61,168,.1); }
+  .duke-quote-text {
+    font-family:var(--mono); font-size:13px; font-weight:600;
+    color:var(--neon-magenta); letter-spacing:.03em; line-height:1.5;
+    margin-bottom:5px;
+  }
+  .duke-quote-hint { font-family:var(--mono); font-size:8px; color:var(--text-ghost); letter-spacing:.15em; text-transform:uppercase; }
+  .duke-stats { margin:12px 0; }
+  .ds-row { display:flex; justify-content:space-between; align-items:baseline; padding:7px 0; border-bottom:1px solid var(--chrome-line); font-family:var(--mono); font-size:10px; }
+  .ds-row:last-child { border-bottom:none; }
+  .ds-key { color:var(--text-dim); letter-spacing:.1em; text-transform:uppercase; }
+  .ds-val { color:var(--hud-cyan); font-weight:600; font-size:14px; }
+  .duke-fieldnote {
+    padding:10px 14px; border-left:3px solid var(--hazard-yellow);
+    background:var(--steel-deep); font-family:var(--ui);
+    font-size:12px; color:var(--text-dim); line-height:1.7; margin:12px 0;
+  }
+  .duke-credits { text-align:center; font-family:var(--mono); font-size:9px; color:var(--text-ghost); letter-spacing:.2em; margin-top:16px; padding-bottom:4px; }
+  /* expanded LED hit-area for 10-tap easter egg */
+  .status-led { cursor:pointer; }
+  .status-led::before { content:""; position:absolute; top:-12px; right:-12px; bottom:-12px; left:-12px; }
 </style>
 </head>
 <body>
@@ -689,6 +726,108 @@
 
 <script>
 "use strict";
+
+
+// ==========================================================
+// SOUND ENGINE — V3.8 // synthesised, no external files
+// ==========================================================
+const SoundEngine = (() => {
+  let ctx = null, master = null;
+  let _enabled = localStorage.getItem("bl_sound_enabled") === "true";
+
+  function _init() {
+    if (ctx) return;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.25; // hard cap
+      master.connect(ctx.destination);
+    } catch(e) { ctx = null; }
+  }
+
+  // freq, type, dur, attack, gainVal, detune, slideTo
+  function _t(freq, type, dur, attack, gainVal, detune, slideTo) {
+    if (!ctx || !_enabled) return;
+    try {
+      const now = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type || "sine"; o.frequency.value = freq;
+      if (detune) o.detune.value = detune;
+      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(gainVal || 0.4, now + (attack || 0.005));
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g); g.connect(master); o.start(now); o.stop(now + dur + 0.02);
+    } catch(e) {}
+  }
+
+  function _n(dur, gainVal, lpFreq) {
+    if (!ctx || !_enabled) return;
+    try {
+      const now = ctx.currentTime, sr = ctx.sampleRate;
+      const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = buf; flt.type = "lowpass"; flt.frequency.value = lpFreq || 2000;
+      g.gain.setValueAtTime(gainVal || 0.3, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      src.connect(flt); flt.connect(g); g.connect(master); src.start(now); src.stop(now + dur + 0.01);
+    } catch(e) {}
+  }
+
+  const _at = (ms, fn) => setTimeout(fn, ms);
+
+  return {
+    unlock() {
+      _init();
+      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+    },
+    setEnabled(v) { _enabled = !!v; localStorage.setItem("bl_sound_enabled", _enabled ? "true" : "false"); },
+    isEnabled() { return _enabled; },
+
+    tap()    { if (!_enabled||!ctx) return; _t(1200,"square",0.04,0.001,0.3); _n(0.02,0.15,3000); },
+    engage() { if (!_enabled||!ctx) return; _t(220,"sawtooth",0.18,0.01,0.4,0,660); _at(170,()=>_t(880,"triangle",0.12,0.005,0.3)); },
+    targetAcquired() {
+      if (!_enabled||!ctx) return;
+      [440,554,659].forEach((f,i)=>_at(i*90,()=>_t(f,"triangle",0.1,0.005,0.35)));
+      _at(350,()=>_t(880,"triangle",0.3,0.01,0.2));
+    },
+    denied() { if (!_enabled||!ctx) return; _t(110,"square",0.12,0.001,0.4); _at(120,()=>_t(95,"square",0.1,0.001,0.3,-30)); },
+    boot()   {
+      if (!_enabled||!ctx) return;
+      [200,800,1200].forEach((f,i)=>_at(i*120,()=>_t(f,"sine",0.1,0.01,0.25)));
+    },
+    toggle() { if (!_enabled||!ctx) return; _n(0.03,0.3,1500); _at(40,()=>_n(0.03,0.25,1200)); },
+    select() { if (!_enabled||!ctx) return; _t(1500,"sine",0.03,0.001,0.2); },
+    dukeHail() {
+      if (!_enabled||!ctx) return;
+      _t(60,"sine",0.4,0.005,0.8,0,30);
+      _at(50, ()=>_t(140,"sawtooth",0.25,0.01,0.4));
+      _at(200,()=>_t(880,"square",0.12,0.002,0.3));
+      _at(250,()=>_t(1320,"triangle",0.1,0.002,0.25));
+      _at(350,()=>_n(0.08,0.4,800));
+    }
+  };
+})();
+
+// ==========================================================
+// DUKE NUKEM QUOTES (original homages)
+// ==========================================================
+const DUKE_QUOTES = [
+  "HAIL TO THE BREW, BABY.",
+  "GROOVY. ANOTHER PERFECT EXTRACTION.",
+  "DAMN, I'M GOOD. BUT THIS COFFEE'S BETTER.",
+  "IT'S TIME TO BREW. AND DRINK SOME COFFEE.",
+  "I'VE GOT BALLS OF STEEL. AND BEANS OF COLOMBIA.",
+  "COME GET SOME. EXTRACTION.",
+  "BORN TO BE WILD. ROASTED TO BE LIGHT-MEDIUM.",
+  "WHO WANTS SOME? FRESHLY GROUND.",
+  "I'M HERE TO BREW COFFEE AND KICK ASS. AND I'M ALL OUT OF MEDIOCRE BEANS.",
+  "PIECE OF CAKE. CAKE GOES GREAT WITH COFFEE.",
+  "SHAKE IT, BABY. THE BREWING WATER, I MEAN.",
+  "MY NAME'S DUKE. AND DON'T YOU FORGET WHO'S DIALING THIS RECIPE."
+];
 
 // ==========================================================
 // DATA: Origin Profiles
@@ -1063,8 +1202,7 @@ const state = {
       defaultV60Dose:    s.defaultV60Dose    ?? 16,
       defaultBrikkaDose: s.defaultBrikkaDose ?? 16,
       crtMode:           s.crtMode           ?? true,   // default ON
-      skipBoot:          s.skipBoot          ?? false,
-      soundEnabled:      s.soundEnabled      ?? false
+      skipBoot:          s.skipBoot          ?? false
     };
   })(),
   apiKey: localStorage.getItem(KEYS.apiKey) || "",
@@ -1073,7 +1211,8 @@ const state = {
   pourSchedule: null, engineMeta: null,
   feedback: [], taggedNotes: {}, adjustment: null, pendingDevNote: "",
   aiLoading: false, aiResult: null, aiAdjustment: null,
-  beanDraft: null, versionTapCount: 0, justLockedId: null
+  beanDraft: null, versionTapCount: 0, justLockedId: null,
+  dukeTaps: 0, dukeResetTimer: null, dukeQuoteIdx: 0
 };
 
 // ==========================================================
@@ -1151,7 +1290,7 @@ function bootSequence(onComplete) {
 
   const beanCount = allBeans().length, histCount = state.history.length;
   const lines = [
-    { text:"BREW LAB V3.7 // PHANTOM TRIAL", cls:"title" },
+    { text:"BREW LAB V3.8 // PHANTOM TRIAL", cls:"title" },
     { text:"─────────────────────────────────────", cls:"dim" },
     { text:"" },
     { text:`> INIT EXTRACTION ENGINE............  `, ok:"OK" },
@@ -1196,7 +1335,6 @@ function bootSequence(onComplete) {
 
 // TARGET ACQUIRED overlay
 function showAcquiredOverlay(recipe, callback) {
-  playSound("lock");
   const parts = [`[ ${recipe.clicks} CLICKS ]`];
   if (recipe.temp)  parts.push(`[ ${recipe.temp}°C ]`);
   if (recipe.ratio) parts.push(`[ 1:${recipe.ratio} ]`);
@@ -1217,48 +1355,7 @@ function showAcquiredOverlay(recipe, callback) {
   }, 1500);
 }
 
-// ==========================================================
-// SOUND ENGINE (Web Audio API — stretch goal)
-// ==========================================================
-let _audioCtx = null;
-function getAudioCtx() {
-  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (_audioCtx.state === "suspended") _audioCtx.resume();
-  return _audioCtx;
-}
-
-function playSound(type) {
-  if (!state.settings.soundEnabled) return;
-  try {
-    const ctx = getAudioCtx();
-    const now = ctx.currentTime;
-    if (type === "tap") {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "sine"; o.frequency.value = 380;
-      g.gain.setValueAtTime(.25, now); g.gain.exponentialRampToValueAtTime(.001, now + .06);
-      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + .07);
-    } else if (type === "engage") {
-      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-      o.type = "sawtooth"; f.type = "lowpass"; f.frequency.value = 900;
-      o.frequency.setValueAtTime(180, now); o.frequency.exponentialRampToValueAtTime(520, now + .13);
-      g.gain.setValueAtTime(.18, now); g.gain.exponentialRampToValueAtTime(.001, now + .18);
-      o.connect(f); f.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + .2);
-    } else if (type === "lock") {
-      [440, 554, 660, 880].forEach((freq, i) => {
-        const o = ctx.createOscillator(), g = ctx.createGain(), t = now + i * .045;
-        o.type = "square"; o.frequency.value = freq;
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12, t + .01);
-        g.gain.exponentialRampToValueAtTime(.001, t + .1);
-        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + .12);
-      });
-    } else if (type === "error") {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "square"; o.frequency.setValueAtTime(200, now); o.frequency.setValueAtTime(130, now + .05);
-      g.gain.setValueAtTime(.2, now); g.gain.exponentialRampToValueAtTime(.001, now + .14);
-      o.connect(g); g.connect(ctx.destination); o.start(now); o.stop(now + .15);
-    }
-  } catch { /* audio not available */ }
-}
+// old playSound removed — replaced by SoundEngine
 
 // ==========================================================
 // RENDER ROUTER
@@ -1273,7 +1370,7 @@ function render() {
     home: renderHome, method: renderMethod, bean: renderBeanPicker,
     dose: renderDose, recipe: renderRecipe, feedback: renderFeedback,
     history: renderHistory, settings: renderSettings,
-    addBean: renderAddBean, voidlog: renderVoidLog
+    addBean: renderAddBean, voidlog: renderVoidLog, duke: renderDuke
   };
   const fn = screens[state.screen] || renderHome;
   const screenEl = fn();
@@ -1317,7 +1414,7 @@ function renderStatusBar() {
         <div class="status-led ${ledClass}"></div>
         <div class="hud-value brand-name">BREW LAB</div>
       </div>
-      <div class="hud-ver">V3.7 // PHANTOM</div>
+      <div class="hud-ver">V3.8 // PHANTOM</div>
     </div>
     <div class="hud-cell hc-bean">
       <div class="hud-label">${beanLabel}</div>
@@ -1342,6 +1439,23 @@ function renderStatusBar() {
   brand.addEventListener("touchend",   () => { clearTimeout(lpTimer); lpTimer=null; });
   brand.addEventListener("touchmove",  () => { clearTimeout(lpTimer); lpTimer=null; }, { passive:true });
   brand.addEventListener("click",      () => { if (!lpFired) onVersionTap(); lpFired=false; });
+
+  // 10-tap LED → Duke easter egg
+  const led = el.querySelector(".status-led");
+  if (led) {
+    led.addEventListener("click", e => {
+      e.stopPropagation();
+      state.dukeTaps = (state.dukeTaps || 0) + 1;
+      clearTimeout(state.dukeResetTimer);
+      if (state.dukeTaps >= 10) {
+        state.dukeTaps = 0;
+        SoundEngine.dukeHail();
+        state.dukeQuoteIdx = Math.floor(Math.random() * DUKE_QUOTES.length);
+        state.screen = "duke"; render(); return;
+      }
+      state.dukeResetTimer = setTimeout(() => { state.dukeTaps = 0; }, 1500);
+    });
+  }
 
   return el;
 }
@@ -1495,11 +1609,11 @@ function generateRecipe() {
   const bean=state.selectedBean, recipeKey=recipeKeyFor(state.brewType, state.method);
   state.recipeKey=recipeKey;
   const result=getRecipeForBean(bean, recipeKey, state.brewType);
-  if (!result) { toast("Cannot generate recipe"); playSound("error"); return; }
+  if (!result) { toast("Cannot generate recipe"); SoundEngine.denied(); return; }
   state.recipe={...result.recipe, ratio:state.ratio};
   state.engineMeta={ basis:result.basis, reasons:result.meta?.reasons||[], confidence:result.meta?.confidence||"high", aiInvoked:false, aiRationale:null };
   if (state.brewType==="v60") state.pourSchedule=generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, state.method==="iced");
-  playSound("engage");
+  SoundEngine.engage();
   if (result.basis==="smart_default" && result.meta?.confidence==="low" && state.apiKey) {
     state.aiLoading=true; state.screen="recipe"; render();
     askAdvisor({ bean, recipeKey, currentRecipe:state.recipe, feedbackHistory:[], mode:"fill", apiKey:state.apiKey })
@@ -1715,6 +1829,7 @@ function renderFeedback() {
       state.feedback=state.feedback.filter(f=>f!=="perfect");
       state.feedback.includes(fb)?state.feedback.splice(state.feedback.indexOf(fb),1):state.feedback.push(fb);
       state.adjustment=state.feedback.length?processFeedback({currentRecipe:r,feedback:state.feedback,recipeKey:state.recipeKey}):null;
+      if (state.adjustment?.type==="channeling") SoundEngine.denied();
     }
     render();
   });
@@ -1740,6 +1855,7 @@ function renderFeedback() {
     const res=await askAdvisor({bean:state.selectedBean,recipeKey:state.recipeKey,currentRecipe:r,feedbackHistory:[fbEntry],mode:"adjust",apiKey:state.apiKey});
     state.aiLoading=false; state.aiAdjustment=res;
     if (res.ok) { state.engineMeta=state.engineMeta||{}; state.engineMeta.aiInvoked=true; state.engineMeta.aiRationale=res.rationale; }
+    else SoundEngine.denied();
     render();
   });
   return wrap;
@@ -1781,6 +1897,7 @@ function applyFeedback() {
   state.pendingDevNote=""; state.recipe=null; state.selectedBean=null; state.brewType=null; state.method=null;
 
   if (isPerfect) {
+    SoundEngine.targetAcquired();
     state.justLockedId=entry.id;
     showAcquiredOverlay(entry.settings, () => { toast("◆ DIALED. PROTOCOL LOCKED."); state.screen="history"; render(); });
   } else {
@@ -1854,6 +1971,15 @@ function renderSettings() {
     </div>
     <button class="btn" id="save-key" style="margin-bottom:10px;">Save key</button>
 
+    <div class="options-header">╤ AUDIO ╤</div>
+    <div class="options-row" style="align-items:flex-start;gap:12px;">
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:4px;">Sound Effects</div>
+        <div style="font-family:var(--ui);font-size:11px;color:var(--text-ghost);line-height:1.4;">Synthesised Duke-flavoured UI feedback. Default OFF.</div>
+      </div>
+      <button class="option-toggle${SoundEngine.isEnabled()?" on":""}" id="sound-toggle" style="flex-shrink:0;min-width:64px;">${SoundEngine.isEnabled()?"◆ ON":"◇ OFF"}</button>
+    </div>
+
     <div class="options-header">╤ VOID.LOG ╤</div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;font-family:var(--ui);">Export VOID.LOG as markdown. Feed to AI for calibration.</div>
     <button class="btn primary" id="export-log" style="margin-bottom:8px;">◆ EXPORT VOID.LOG</button>
@@ -1887,10 +2013,6 @@ function renderSettings() {
       <span class="options-key">BOOT SEQUENCE</span>
       <button class="option-toggle${!state.settings.skipBoot?" on":""}" id="boot-toggle">${state.settings.skipBoot?"SKIP":"ENABLED"}</button>
     </div>
-    <div class="options-row">
-      <span class="options-key">SOUND FX</span>
-      <button class="option-toggle${state.settings.soundEnabled?" on":""}" id="sound-toggle">${state.settings.soundEnabled?"ON":"OFF"}</button>
-    </div>
 
     <div class="hazard-tape"></div>
     <div class="options-header danger">╤ PURGE ZONE ╤</div>
@@ -1915,7 +2037,7 @@ function renderSettings() {
     if (confirm("Purge all brew history?")) { state.history=[]; save(KEYS.history,state.history); render(); toast("ARCHIVE PURGED"); }
   });
   wrap.querySelector("#crt-toggle").addEventListener("click", () => {
-    state.settings.crtMode=!state.settings.crtMode; save(KEYS.settings,state.settings); render();
+    state.settings.crtMode=!state.settings.crtMode; save(KEYS.settings,state.settings); SoundEngine.toggle(); render();
   });
   wrap.querySelector("#boot-toggle").addEventListener("click", () => {
     state.settings.skipBoot=!state.settings.skipBoot;
@@ -1923,7 +2045,10 @@ function renderSettings() {
     save(KEYS.settings,state.settings); render();
   });
   wrap.querySelector("#sound-toggle").addEventListener("click", () => {
-    state.settings.soundEnabled=!state.settings.soundEnabled; save(KEYS.settings,state.settings); render();
+    const was = SoundEngine.isEnabled();
+    SoundEngine.setEnabled(!was);
+    if (!was) SoundEngine.engage(); // confirmation on enable
+    render();
   });
   wrap.querySelector("#clear-all").addEventListener("click", () => {
     if (confirm("Erase ALL data (beans, history, API key)? Cannot undo.")) {
@@ -2013,7 +2138,7 @@ function renderAddBean() {
   wrap.querySelector("#save-bean").addEventListener("click", () => {
     syncDraftFromInputs();
     const name=d.name.trim(), country=d.origins[0].country.trim();
-    if (!name||!country) { toast("Name and origin country required"); playSound("error"); return; }
+    if (!name||!country) { toast("Name and origin country required"); SoundEngine.denied(); return; }
     const bean={ id:"custom-"+uid(), name, roaster:d.roaster.trim()||null, custom:true,
       origins:[{country,variety:d.origins[0].variety.trim()||"",process:d.origins[0].process,share:100}],
       roast:{level:d.roast.level,intent:d.roast.intent},
@@ -2076,6 +2201,77 @@ function renderVoidLog() {
   return wrap;
 }
 
+
+// ==========================================================
+// DUKE EASTER EGG SCREEN — [ CLASSIFIED // SC2K13 ]
+// ==========================================================
+function renderDuke() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+
+  const total   = state.history.length;
+  const perfect = state.history.filter(h=>h.feedback?.includes("perfect")).length;
+  const warCrimes = state.history.filter(h=>
+    h.feedback && (h.feedback.includes("sour")||h.feedback.includes("acrid")||h.feedback.includes("flat-muddy"))
+  ).length;
+  const lastDate = state.history[0] ? fmtDate(state.history[0].date) : "—";
+  const quote = DUKE_QUOTES[state.dukeQuoteIdx % DUKE_QUOTES.length];
+
+  const portrait = `    \u2584\u2584\u2584\u2584\u2584\u2584\u2584\u2584
+  \u2584\u2588\u2580\u2580\u2591\u2591\u2591\u2591\u2580\u2580\u2588\u2584
+ \u2588\u2591\u2591\u2592\u2592\u2591\u2591\u2591\u2591\u2592\u2592\u2591\u2591\u2588
+\u2588\u2591\u2591\u2592\u2588\u2580\u2580\u2591\u2591\u2580\u2580\u2588\u2592\u2591\u2591\u2588
+\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2588
+\u2588\u2591\u2591\u2592\u2591\u2592\u2592\u2592\u2592\u2592\u2592\u2591\u2592\u2591\u2591\u2588
+ \u2588\u2591\u2592\u2591\u2580\u2584\u2584\u2584\u2584\u2580\u2591\u2592\u2591\u2588
+  \u2580\u2584\u2584\u2592\u2592\u2592\u2592\u2592\u2592\u2584\u2584\u2580
+    \u2580\u2580\u2584\u2584\u2584\u2584\u2580\u2580
+   /\u2580\u2580\u2580\u2580\u2580\u2580\u2580\u2580\\
+  /\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 \\
+ /\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 \\
+/\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\\
+    \u258c  \u258c  \u258c
+   \u2550\u2567\u2550\u2550\u2567\u2550\u2550\u2567\u2550
+[ OPERATOR // SC2K13 ]`;
+
+  wrap.innerHTML = `
+    <div class="card duke-card">
+      <span class="card-label duke-label">┤ CLASSIFIED // OPERATOR SC2K13 ├</span>
+      <pre class="duke-portrait">${portrait}</pre>
+
+      <div class="duke-quote" id="duke-quote">
+        <div class="duke-quote-text">"${quote}"</div>
+        <div class="duke-quote-hint">tap to cycle</div>
+      </div>
+
+      <div class="duke-stats">
+        <div class="ds-row"><span class="ds-key">Total Extractions</span><span class="ds-val">${total}</span></div>
+        <div class="ds-row"><span class="ds-key">Perfect Kills</span><span class="ds-val">${perfect}</span></div>
+        <div class="ds-row"><span class="ds-key">War Crimes</span><span class="ds-val">${warCrimes}</span></div>
+        <div class="ds-row"><span class="ds-key">Custom Beans Logged</span><span class="ds-val">${state.customBeans.length}</span></div>
+        <div class="ds-row"><span class="ds-key">Last Incursion</span><span class="ds-val" style="font-size:11px;">${lastDate}</span></div>
+      </div>
+
+      <div class="duke-fieldnote">
+        Once you've tasted a perfect extraction, mediocre coffee becomes an act of war. Drink accordingly.
+      </div>
+    </div>
+
+    <button class="btn primary" id="duke-return" style="margin-top:4px;">◀ RETURN TO STATION</button>
+    <div class="duke-credits">// dedicated to the creatures of the night</div>
+  `;
+
+  wrap.querySelector("#duke-quote").addEventListener("click", () => {
+    SoundEngine.tap();
+    let n; do { n = Math.floor(Math.random() * DUKE_QUOTES.length); } while (n === state.dukeQuoteIdx);
+    state.dukeQuoteIdx = n; render();
+  });
+  wrap.querySelector("#duke-return").addEventListener("click", () => {
+    SoundEngine.tap(); state.screen = "home"; render();
+  });
+  return wrap;
+}
+
 // ==========================================================
 // VERSION TAP — 5 taps = VOID.LOG export
 // ==========================================================
@@ -2086,14 +2282,19 @@ function onVersionTap() {
 }
 
 // ==========================================================
-// BOOT — global sound handler + init
+// BOOT — V3.8
 // ==========================================================
-// lazy audio context init on first touch
-document.addEventListener("touchstart", () => {
-  if (state.settings.soundEnabled) try { getAudioCtx(); } catch { }
-}, { once:true, passive:true });
+// unlock AudioContext on first user gesture (iOS Safari)
+["pointerdown","touchstart"].forEach(ev =>
+  window.addEventListener(ev, () => SoundEngine.unlock(), { once:true, passive:true })
+);
+// universal tap sound — capture phase fires before target handlers
+document.addEventListener("click", e => {
+  if (e.target.closest(".btn, .chip, .tab, .three-toggle button, .note-chip")) SoundEngine.tap();
+}, true);
 
 applyCrtMode();
+SoundEngine.boot(); // queued until first gesture unlocks AudioContext
 bootSequence(render);
 </script>
 </body>
