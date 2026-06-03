@@ -7,13 +7,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Lab">
 <meta name="theme-color" content="#050811">
-<title>Brew Lab V3.9</title>
+<title>Brew Lab V4.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ═══════════════════════════════════════════════════════
-     PALETTE — INDUSTRIAL VOID // V3.9
+     PALETTE — INDUSTRIAL VOID // V4.0
   ═══════════════════════════════════════════════════════ */
   :root {
     /* Surfaces */
@@ -687,11 +687,33 @@
   ═══════════════════════════════════════════════════════ */
   .duke-card { border-color:var(--neon-magenta); box-shadow:0 0 18px rgba(255,61,168,.15); }
   .duke-label { color:var(--neon-magenta); background:var(--void); }
-  .duke-portrait {
-    font-family:var(--mono); font-size:9.5px; line-height:1.15;
-    color:var(--hud-cyan); text-shadow:0 0 6px var(--hud-cyan);
-    text-align:center; margin:16px 0; white-space:pre; overflow-x:auto;
-    letter-spacing:0;
+  /* BREW LAB 3D logo treatment */
+  .duke-logo-wrap { text-align:center; padding:16px 0 8px; }
+  .duke-logo-row {
+    display:block; font-family:var(--mono); font-weight:700;
+    font-size:clamp(40px,13vw,56px); letter-spacing:0.05em; line-height:1.0;
+    background:linear-gradient(180deg,
+      #ffffff 0%,#cff7ff 10%,#00d4ff 32%,#0099cc 58%,#004466 80%,#001122 100%);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent; color:var(--hud-cyan);
+    filter:
+      drop-shadow(0 2px 0 rgba(255,200,0,.55))
+      drop-shadow(2px 3px 0 rgba(0,30,50,.95))
+      drop-shadow(4px 6px 0 rgba(0,15,35,.7))
+      drop-shadow(0 0 10px rgba(0,212,255,.9))
+      drop-shadow(0 0 22px rgba(0,212,255,.45))
+      drop-shadow(0 0 5px rgba(255,61,168,.65));
+  }
+  .duke-logo-accent {
+    height:2px; width:88%; max-width:280px; margin:8px auto;
+    background:linear-gradient(90deg,transparent 0%,#ffcc00 20%,#ff3da8 50%,#00d4ff 80%,transparent 100%);
+    box-shadow:0 0 8px rgba(255,204,0,.5),0 0 14px rgba(255,61,168,.35);
+  }
+  .duke-logo-sub {
+    display:block; font-family:var(--mono); font-size:10px;
+    letter-spacing:.22em; color:var(--hud-cyan);
+    text-shadow:0 0 8px rgba(0,212,255,.7),0 0 20px rgba(0,212,255,.3);
+    text-transform:uppercase; margin-top:10px;
   }
   .duke-quote {
     padding:12px 14px; border:1px solid var(--neon-magenta);
@@ -731,40 +753,39 @@
 
 // ==========================================================
 // ==========================================================
-// SOUND ENGINE — V3.9 // multi-layer synthesis, distortion + reverb
+// SOUND ENGINE — V4.0 // RetroAudioEngine (tanh distortion + conv reverb)
 // ==========================================================
 const SoundEngine = (() => {
   let ctx = null, master = null;
   let _enabled = localStorage.getItem("bl_sound_enabled") === "true";
-  let _rvBufs = {}; // cached reverb impulse buffers
+  let _rvBufs = {};
 
   function _init() {
     if (ctx) return;
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
-      master = ctx.createGain();
-      master.gain.value = 0.25;
+      master = ctx.createGain(); master.gain.value = 0.25;
       master.connect(ctx.destination);
     } catch(e) { ctx = null; }
   }
 
-  // tube distortion WaveShaperNode
+  // Math.tanh soft-clip distortion (analog saturation, amount 1-200)
   function _dist(amount) {
     const ws = ctx.createWaveShaper();
-    const k = amount || 50, n = 44100, curve = new Float32Array(n);
+    const k = Math.max(1, Math.min(amount || 30, 200)), n = 256;
+    const curve = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const x = (i * 2) / n - 1;
-      curve[i] = ((3 + k) * x * 20 * Math.PI / 180) / (Math.PI + k * Math.abs(x));
+      curve[i] = Math.tanh(k * x / 15);
     }
     ws.curve = curve; ws.oversample = "4x"; return ws;
   }
 
-  // synthesised reverb impulse (buffer cached by key)
+  // stereo synthesised reverb impulse (cached by key, no rebuild)
   function _rvBuf(dur, dec) {
     const key = `${dur}_${dec}`;
     if (_rvBufs[key]) return _rvBufs[key];
-    const len = ctx.sampleRate * dur;
-    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    const len = ctx.sampleRate * dur, buf = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let ch = 0; ch < 2; ch++) {
       const d = buf.getChannelData(ch);
       for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, dec);
@@ -772,138 +793,186 @@ const SoundEngine = (() => {
     return (_rvBufs[key] = buf);
   }
 
-  // 3 detuned oscillators → optional dist → optional reverb → master
-  function _fat({ freq, type, dur, gain, det, distort, revDur, revDecay, slideTo, t0 }) {
-    if (!ctx || !_enabled) return;
-    try {
-      const now = ctx.currentTime + (t0 || 0) / 1000, g3 = (gain || 0.3) / 3;
-      let end = master;
-      if (revDur) { const c = ctx.createConvolver(); c.buffer = _rvBuf(revDur, revDecay || 2); c.connect(master); end = c; }
-      if (distort) { const d = _dist(distort); d.connect(end); end = d; }
-      [0, -(det || 7), (det || 7)].forEach(dv => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = type || "sine"; o.frequency.value = freq; o.detune.value = dv;
-        if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
-        g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(g3, now + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-        o.connect(g); g.connect(end); o.start(now); o.stop(now + dur + 0.05);
-      });
-    } catch(e) {}
+  // wet/dry reverb unit — returns input node; self-disconnects after tail
+  function _rv(wet, dur, dec) {
+    const inp = ctx.createGain(), dryG = ctx.createGain(), wetG = ctx.createGain();
+    const conv = ctx.createConvolver();
+    conv.buffer = _rvBuf(dur, dec || 2);
+    dryG.gain.value = 1 - wet; wetG.gain.value = wet;
+    inp.connect(dryG); dryG.connect(master);
+    inp.connect(conv); conv.connect(wetG); wetG.connect(master);
+    setTimeout(() => { try { inp.disconnect(); conv.disconnect(); wetG.disconnect(); dryG.disconnect(); } catch(e){} }, (dur + 2) * 1000);
+    return inp;
   }
 
-  // sub-bass sine thump
-  function _sub({ freq, dur, gain, t0 }) {
-    if (!ctx || !_enabled) return;
-    try {
-      const now = ctx.currentTime + (t0 || 0) / 1000;
+  // 3 detuned oscillators → optional dist → end node
+  function _fat({ freq, type, dur, gain, det, now, dist, end }) {
+    const g3 = (gain || .3) / 3, ep0 = end || master;
+    let ep = ep0;
+    if (dist) {
+      const d = _dist(dist); d.connect(ep); ep = d;
+      setTimeout(() => { try { d.disconnect(); } catch(e){} }, (dur + .5) * 1000);
+    }
+    [0, -(det || 7), (det || 7)].forEach(dv => {
       const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = "sine"; o.frequency.value = freq;
-      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(gain || 0.4, now + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-      o.connect(g); g.connect(master); o.start(now); o.stop(now + dur + 0.05);
-    } catch(e) {}
+      o.type = type || "sine"; o.frequency.value = freq; o.detune.value = dv;
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(g3, now + .008);
+      g.gain.exponentialRampToValueAtTime(.001, now + dur);
+      o.connect(g); g.connect(ep); o.start(now); o.stop(now + dur + .05);
+      o.onended = () => { try { o.disconnect(); g.disconnect(); } catch(e){} };
+    });
   }
 
-  // filtered noise burst, optional grit
-  function _n(dur, gainVal, lpFreq, t0, grit) {
-    if (!ctx || !_enabled) return;
-    try {
-      const now = ctx.currentTime + (t0 || 0) / 1000, sr = ctx.sampleRate;
-      const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
-      const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
-      src.buffer = buf; flt.type = "lowpass"; flt.frequency.value = lpFreq || 2000;
-      g.gain.setValueAtTime(gainVal || 0.3, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-      src.connect(flt); flt.connect(g);
-      if (grit) { const dist = _dist(grit); g.connect(dist); dist.connect(master); }
-      else g.connect(master);
-      src.start(now); src.stop(now + dur + 0.01);
-    } catch(e) {}
+  // sub-bass sine with optional pitch slide
+  function _sub({ freq, dur, gain, now, slide }) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(freq, now);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(slide, 1), now + dur);
+    g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(gain || .4, now + .01);
+    g.gain.exponentialRampToValueAtTime(.001, now + dur);
+    o.connect(g); g.connect(master); o.start(now); o.stop(now + dur + .05);
+    o.onended = () => { try { o.disconnect(); g.disconnect(); } catch(e){} };
+  }
+
+  // filtered noise burst with optional distortion grit
+  function _noise({ dur, gain, fType, fFreq, dist, now, end }) {
+    const sr = ctx.sampleRate, buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
+    const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = buf; flt.type = fType || "lowpass"; flt.frequency.value = fFreq || 2000;
+    g.gain.setValueAtTime(gain || .3, now); g.gain.exponentialRampToValueAtTime(.001, now + dur);
+    src.connect(flt); flt.connect(g);
+    let ep = end || master;
+    if (dist) { const d2 = _dist(dist); d2.connect(ep); ep = d2; setTimeout(() => { try { d2.disconnect(); } catch(e){} }, (dur + .5) * 1000); }
+    g.connect(ep);
+    src.start(now); src.stop(now + dur + .01);
+    src.onended = () => { try { src.disconnect(); flt.disconnect(); g.disconnect(); } catch(e){} };
   }
 
   const _at = (ms, fn) => setTimeout(fn, ms);
-  const _rm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const _rm = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e) { return false; } };
 
   return {
     unlock() { _init(); if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {}); },
     setEnabled(v) { _enabled = !!v; localStorage.setItem("bl_sound_enabled", _enabled ? "true" : "false"); },
     isEnabled() { return _enabled; },
 
+    // Beefy mechanical click: HP-filtered noise clack + descending sine thump
     tap() {
       if (!_enabled || !ctx) return;
-      _fat({ freq:1200, type:"square",   dur:0.04, gain:0.18, det:3,  distort:20 });
-      _n(0.02, 0.1, 4000, 0, 0);
+      const now = ctx.currentTime;
+      _noise({ dur:.04, gain:.22, fType:"highpass", fFreq:1500, now });
+      _sub({ freq:160, dur:.08, gain:.45, now, slide:60 });
     },
 
+    // Weighty power-up: 3-layer detuned sawtooth sweep + sub bass + heavy dist
     engage() {
       if (!_enabled || !ctx) return;
-      _fat({ freq:220, type:"sawtooth", dur:0.2, gain:0.35, det:7, distort:30, revDur:0.3, revDecay:2, slideTo:660 });
-      _sub({ freq:80, dur:0.25, gain:0.3 });
-      _at(80, ()=>_fat({ freq:880, type:"triangle", dur:0.1, gain:0.25, distort:20, revDur:0.3, revDecay:2 }));
+      const now = ctx.currentTime, rvIn = _rv(.25, .4, 3);
+      _fat({ freq:220, type:"sawtooth", dur:.22, gain:.45, det:12, now, dist:60, end:rvIn });
+      _fat({ freq:280, type:"square",   dur:.2,  gain:.35, det:8,  now, dist:40, end:rvIn });
+      const o=ctx.createOscillator(), gn=ctx.createGain(), d=_dist(50);
+      d.connect(rvIn); o.connect(gn); gn.connect(d);
+      o.type="sawtooth"; o.frequency.setValueAtTime(180,now); o.frequency.exponentialRampToValueAtTime(660,now+.22);
+      gn.gain.setValueAtTime(0,now); gn.gain.linearRampToValueAtTime(.15,now+.01); gn.gain.exponentialRampToValueAtTime(.001,now+.22);
+      o.start(now); o.stop(now+.25); o.onended=()=>{ try{o.disconnect();gn.disconnect();d.disconnect();}catch(e){} };
+      _sub({ freq:80, dur:.3, gain:.4, now });
     },
 
+    // Ceremonial: square wave C-E-G-B arpeggio + interval sustain
     targetAcquired() {
       if (!_enabled || !ctx) return;
-      const r = _rm(), step = r ? 60 : 130, dur = r ? 0.06 : 0.15;
-      [440,554,659].forEach((f,i)=>_at(i*step,()=>_fat({freq:f,type:"triangle",dur,gain:0.3,det:5,distort:15,revDur:0.4,revDecay:2.5})));
-      _at(r?120:380, ()=>_sub({ freq:110, dur:r?0.2:0.4, gain:0.35 }));
-      _at(r?200:500, ()=>_fat({ freq:880, type:"sine", dur:r?0.15:0.4, gain:0.2, revDur:0.5, revDecay:3 }));
+      const r = _rm(), now = ctx.currentTime;
+      [262,330,392,494].forEach((freq,i) => _at(i*(r?55:100), () => {
+        const t = ctx.currentTime;
+        _fat({ freq, type:"square", dur:r?.06:.12, gain:.28, det:3, now:t, dist:25 });
+      }));
+      _at(r?220:430, () => {
+        const t=ctx.currentTime, rv=_rv(.3,.5,3);
+        _fat({ freq:392, type:"square", dur:r?.15:.35, gain:.24, det:5, now:t, dist:20, end:rv });
+        _fat({ freq:587, type:"square", dur:r?.15:.35, gain:.2,  det:5, now:t, dist:15, end:rv });
+      });
     },
 
+    // Denied: distorted square buzz + sub bass (dry, aggressive)
     denied() {
       if (!_enabled || !ctx) return;
-      _fat({ freq:110, type:"square", dur:0.2, gain:0.4, det:20, distort:60 });
-      _sub({ freq:55, dur:0.25, gain:0.4 });
-      _at(50,()=>_fat({ freq:95, type:"square", dur:0.15, gain:0.3, det:15, distort:50 }));
+      const now = ctx.currentTime;
+      _fat({ freq:110, type:"square", dur:.2, gain:.4, det:20, now, dist:80 });
+      _sub({ freq:55, dur:.25, gain:.4, now });
+      _at(60, () => { const t=ctx.currentTime; _fat({ freq:90, type:"square", dur:.15, gain:.3, det:15, now:t, dist:60 }); });
     },
 
+    // CRT power-on sequence
     boot() {
       if (!_enabled || !ctx) return;
-      _sub({ freq:60, dur:0.12, gain:0.3 });
-      [200,800,1200].forEach((f,i)=>_at(i*120,()=>{
-        const rv = i===2 ? {revDur:0.3, revDecay:2} : {};
-        _fat({ freq:f, type:"sine", dur:0.1, gain:0.22, distort:10, ...rv });
+      const now = ctx.currentTime;
+      _sub({ freq:60, dur:.15, gain:.3, now });
+      [200,800,1200].forEach((freq,i) => _at(i*120, () => {
+        const t=ctx.currentTime;
+        if (i===2) { const rv=_rv(.2,.3,2); _fat({ freq, type:"sine", dur:.1, gain:.22, det:3, now:t, dist:10, end:rv }); }
+        else _fat({ freq, type:"sine", dur:.1, gain:.22, det:3, now:t, dist:10 });
       }));
     },
 
+    // Physical switch click (high-pass noise)
     toggle() {
       if (!_enabled || !ctx) return;
-      _n(0.015, 0.28, 4000, 0, 15);
-      _at(30, ()=>_n(0.02, 0.22, 4000, 0, 15));
+      const now = ctx.currentTime;
+      _noise({ dur:.015, gain:.28, fType:"highpass", fFreq:4000, now });
+      _at(35, () => { const t=ctx.currentTime; _noise({ dur:.02, gain:.22, fType:"highpass", fFreq:3500, now:t }); });
     },
 
     select() {
       if (!_enabled || !ctx) return;
-      _fat({ freq:1500, type:"sine", dur:0.03, gain:0.15 });
+      const now = ctx.currentTime;
+      _fat({ freq:1500, type:"sine", dur:.03, gain:.15, det:2, now });
     },
 
+    // CINEMATIC Duke reveal: massive sub drop + sawtooth chord + reverb boom (~2s)
     dukeHail() {
       if (!_enabled || !ctx) return;
       if (_rm()) {
-        _sub({ freq:60, dur:0.4, gain:0.4 });
-        _at(50,  ()=>_fat({ freq:140, type:"sawtooth", dur:0.3, gain:0.3, distort:40 }));
-        _at(200, ()=>_fat({ freq:880, type:"square",   dur:0.2, gain:0.25, distort:30, revDur:0.3, revDecay:3 }));
+        const now=ctx.currentTime; _sub({ freq:80, dur:.4, gain:.4, now, slide:25 });
+        _at(50,  () => { const t=ctx.currentTime; _fat({ freq:140, type:"sawtooth", dur:.3, gain:.3, now:t, dist:50 }); });
+        _at(250, () => { const t=ctx.currentTime; const rv=_rv(.35,.5,3); _fat({ freq:880, type:"square", dur:.2, gain:.25, now:t, dist:30, end:rv }); });
         return;
       }
-      // Stage 1 — sub foundation (0ms)
-      _sub({ freq:40, dur:0.5, gain:0.5 });
-      // Stage 2 — aggressive rumble (50ms)
-      _at(50,  ()=>{ _fat({ freq:80,  type:"sawtooth", dur:0.6, gain:0.35, det:15, distort:50 }); _sub({ freq:60, dur:0.5, gain:0.35 }); });
-      // Stage 3 — dirty sweep lead (200ms)
-      _at(200, ()=>_fat({ freq:220, type:"sawtooth", dur:0.4, gain:0.3, det:10, distort:70, slideTo:440, revDur:0.8, revDecay:4 }));
-      // Stage 4 — mechanical clanks (450-510ms)
-      [450,480,510].forEach(t=>_at(t,()=>_n(0.03,0.4,600,0,30)));
-      // Stage 5 — high accent + shimmer (650ms)
-      _at(650, ()=>{
-        _fat({ freq:880,  type:"square",   dur:0.3,  gain:0.3,  det:5, distort:40, revDur:1.0, revDecay:5 });
-        _fat({ freq:1320, type:"triangle", dur:0.25, gain:0.2,        distort:15, revDur:1.0, revDecay:5 });
+      const now = ctx.currentTime;
+      // Stage 1: massive sub drop 100→20Hz
+      _sub({ freq:100, dur:.5, gain:.5, now, slide:20 });
+      // Stage 2: detuned sawtooth chord into long reverb
+      const rvLong = _rv(.4, 1.5, 5);
+      _at(50, () => {
+        const t=ctx.currentTime;
+        _fat({ freq:80,  type:"sawtooth", dur:.6, gain:.35, det:15, now:t, dist:70, end:rvLong });
+        _fat({ freq:100, type:"sawtooth", dur:.6, gain:.3,  det:12, now:t, dist:60, end:rvLong });
+        _sub({ freq:60, dur:.5, gain:.35, now:t });
       });
-      // Stage 6 — closing (1000-1200ms)
-      _at(1000,()=>_sub({ freq:55, dur:0.6, gain:0.4 }));
-      _at(1200,()=>_n(0.08,0.35,400));
+      // Stage 3: dirty sweep lead 200→600Hz
+      _at(200, () => {
+        const t=ctx.currentTime, rv2=_rv(.35,.8,4);
+        const o=ctx.createOscillator(), gn=ctx.createGain(), d=_dist(70);
+        d.connect(rv2); o.connect(gn); gn.connect(d);
+        o.type="sawtooth"; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(600,t+.4);
+        gn.gain.setValueAtTime(0,t); gn.gain.linearRampToValueAtTime(.12,t+.01); gn.gain.exponentialRampToValueAtTime(.001,t+.4);
+        o.start(t); o.stop(t+.45); o.onended=()=>{ try{o.disconnect();gn.disconnect();d.disconnect();}catch(e){} };
+      });
+      // Stage 4: mechanical clanks
+      [450,495,540].forEach(ms => _at(ms, () => { const t=ctx.currentTime; _noise({ dur:.035, gain:.4, fType:"lowpass", fFreq:500, dist:35, now:t }); }));
+      // Stage 5: high accent + shimmer
+      _at(660, () => {
+        const t=ctx.currentTime, rvHi=_rv(.4,1.0,5);
+        _fat({ freq:880,  type:"square",   dur:.3,  gain:.28, det:5, now:t, dist:45, end:rvHi });
+        _fat({ freq:1320, type:"triangle", dur:.25, gain:.2,  det:3, now:t, dist:15, end:rvHi });
+      });
+      // Stage 6: closing
+      _at(1000, () => { const t=ctx.currentTime; _sub({ freq:55, dur:.6, gain:.4, now:t }); });
+      _at(1200, () => { const t=ctx.currentTime; _noise({ dur:.08, gain:.3, fType:"lowpass", fFreq:350, now:t }); });
     }
   };
 })();
+
 
 // ==========================================================
 // DUKE NUKEM QUOTES (original homages)
@@ -1384,7 +1453,7 @@ function bootSequence(onComplete) {
 
   const beanCount = allBeans().length, histCount = state.history.length;
   const lines = [
-    { text:"BREW LAB V3.9 // PHANTOM TRIAL", cls:"title" },
+    { text:"BREW LAB V4.0 // PHANTOM TRIAL", cls:"title" },
     { text:"─────────────────────────────────────", cls:"dim" },
     { text:"" },
     { text:`> INIT EXTRACTION ENGINE............  `, ok:"OK" },
@@ -1508,7 +1577,7 @@ function renderStatusBar() {
         <div class="status-led ${ledClass}"></div>
         <div class="hud-value brand-name">BREW LAB</div>
       </div>
-      <div class="hud-ver">V3.9 // PHANTOM</div>
+      <div class="hud-ver">V4.0 // PHANTOM</div>
     </div>
     <div class="hud-cell hc-bean">
       <div class="hud-label">${beanLabel}</div>
@@ -2311,33 +2380,16 @@ function renderDuke() {
   const lastDate = state.history[0] ? fmtDate(state.history[0].date) : "—";
   const quote = DUKE_QUOTES[state.dukeQuoteIdx % DUKE_QUOTES.length];
 
-  const portrait = `▄▄▄▄▄▄  ▄    ▄  ▄    ▄  ▄▄▄▄▄▄
-█    █  █    █  █   █   █
-█    █  █    █  █  █    █▄▄▄▄
-█    █  █    █  █▄▀     █
-█▄▄▄▄█  ▀▄▄▄▄▀  █  ▀▄   █▄▄▄▄▄
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-▄▄▄▄▄  ▄▄▄▄▄  ▄▄▄▄▄  █     █
-█   █  █   █  █      █     █
-█▄▄▄█  █▄▄▄█  █▄▄▄   █  ▄  █
-█   █  █▀▀▄   █      █ ▀▄▀ █
-█▄▄▄█  █  ▀▄  █▄▄▄▄  ▀▄▀ ▀▄▀
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-      ▄▄▄    ▄▄▄
-    ▄█████  █████▄
-    ████ █████ ████
-    ▀█████████▀
-      ▀▀███▀▀
-        ▀
-╔══════════════════════╗
-║  EXTRACTION PROTOCOL  ║
-║    //  SC2K13  //     ║
-╚══════════════════════╝`;
-
+  
   wrap.innerHTML = `
     <div class="card duke-card">
       <span class="card-label duke-label">┤ CLASSIFIED // OPERATOR SC2K13 ├</span>
-      <pre class="duke-portrait">${portrait}</pre>
+      <div class="duke-logo-wrap">
+        <div class="duke-logo-row">BREW</div>
+        <div class="duke-logo-row">LAB 3D</div>
+        <div class="duke-logo-accent"></div>
+        <div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div>
+      </div>
 
       <div class="duke-quote" id="duke-quote">
         <div class="duke-quote-text">"${quote}"</div>
