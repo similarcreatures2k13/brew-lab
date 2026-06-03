@@ -7,13 +7,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Lab">
 <meta name="theme-color" content="#050811">
-<title>Brew Lab V3.8</title>
+<title>Brew Lab V3.9</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ═══════════════════════════════════════════════════════
-     PALETTE — INDUSTRIAL VOID // V3.8
+     PALETTE — INDUSTRIAL VOID // V3.9
   ═══════════════════════════════════════════════════════ */
   :root {
     /* Surfaces */
@@ -688,9 +688,10 @@
   .duke-card { border-color:var(--neon-magenta); box-shadow:0 0 18px rgba(255,61,168,.15); }
   .duke-label { color:var(--neon-magenta); background:var(--void); }
   .duke-portrait {
-    font-family:var(--mono); font-size:11px; line-height:1.4;
-    color:var(--hud-cyan); text-shadow:0 0 8px var(--hud-cyan);
-    text-align:center; margin:14px 0; white-space:pre; overflow-x:auto;
+    font-family:var(--mono); font-size:9.5px; line-height:1.15;
+    color:var(--hud-cyan); text-shadow:0 0 6px var(--hud-cyan);
+    text-align:center; margin:16px 0; white-space:pre; overflow-x:auto;
+    letter-spacing:0;
   }
   .duke-quote {
     padding:12px 14px; border:1px solid var(--neon-magenta);
@@ -729,84 +730,177 @@
 
 
 // ==========================================================
-// SOUND ENGINE — V3.8 // synthesised, no external files
+// ==========================================================
+// SOUND ENGINE — V3.9 // multi-layer synthesis, distortion + reverb
 // ==========================================================
 const SoundEngine = (() => {
   let ctx = null, master = null;
   let _enabled = localStorage.getItem("bl_sound_enabled") === "true";
+  let _rvBufs = {}; // cached reverb impulse buffers
 
   function _init() {
     if (ctx) return;
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain();
-      master.gain.value = 0.25; // hard cap
+      master.gain.value = 0.25;
       master.connect(ctx.destination);
     } catch(e) { ctx = null; }
   }
 
-  // freq, type, dur, attack, gainVal, detune, slideTo
-  function _t(freq, type, dur, attack, gainVal, detune, slideTo) {
+  // tube distortion WaveShaperNode
+  function _dist(amount) {
+    const ws = ctx.createWaveShaper();
+    const k = amount || 50, n = 44100, curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = ((3 + k) * x * 20 * Math.PI / 180) / (Math.PI + k * Math.abs(x));
+    }
+    ws.curve = curve; ws.oversample = "4x"; return ws;
+  }
+
+  // synthesised reverb impulse (buffer cached by key)
+  function _rvBuf(dur, dec) {
+    const key = `${dur}_${dec}`;
+    if (_rvBufs[key]) return _rvBufs[key];
+    const len = ctx.sampleRate * dur;
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, dec);
+    }
+    return (_rvBufs[key] = buf);
+  }
+
+  // 3 detuned oscillators → optional dist → optional reverb → master
+  function _fat({ freq, type, dur, gain, det, distort, revDur, revDecay, slideTo, t0 }) {
     if (!ctx || !_enabled) return;
     try {
-      const now = ctx.currentTime;
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = type || "sine"; o.frequency.value = freq;
-      if (detune) o.detune.value = detune;
-      if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(gainVal || 0.4, now + (attack || 0.005));
-      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-      o.connect(g); g.connect(master); o.start(now); o.stop(now + dur + 0.02);
+      const now = ctx.currentTime + (t0 || 0) / 1000, g3 = (gain || 0.3) / 3;
+      let end = master;
+      if (revDur) { const c = ctx.createConvolver(); c.buffer = _rvBuf(revDur, revDecay || 2); c.connect(master); end = c; }
+      if (distort) { const d = _dist(distort); d.connect(end); end = d; }
+      [0, -(det || 7), (det || 7)].forEach(dv => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = type || "sine"; o.frequency.value = freq; o.detune.value = dv;
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, now + dur);
+        g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(g3, now + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+        o.connect(g); g.connect(end); o.start(now); o.stop(now + dur + 0.05);
+      });
     } catch(e) {}
   }
 
-  function _n(dur, gainVal, lpFreq) {
+  // sub-bass sine thump
+  function _sub({ freq, dur, gain, t0 }) {
     if (!ctx || !_enabled) return;
     try {
-      const now = ctx.currentTime, sr = ctx.sampleRate;
+      const now = ctx.currentTime + (t0 || 0) / 1000;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(gain || 0.4, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      o.connect(g); g.connect(master); o.start(now); o.stop(now + dur + 0.05);
+    } catch(e) {}
+  }
+
+  // filtered noise burst, optional grit
+  function _n(dur, gainVal, lpFreq, t0, grit) {
+    if (!ctx || !_enabled) return;
+    try {
+      const now = ctx.currentTime + (t0 || 0) / 1000, sr = ctx.sampleRate;
       const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
       src.buffer = buf; flt.type = "lowpass"; flt.frequency.value = lpFreq || 2000;
-      g.gain.setValueAtTime(gainVal || 0.3, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
-      src.connect(flt); flt.connect(g); g.connect(master); src.start(now); src.stop(now + dur + 0.01);
+      g.gain.setValueAtTime(gainVal || 0.3, now); g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      src.connect(flt); flt.connect(g);
+      if (grit) { const dist = _dist(grit); g.connect(dist); dist.connect(master); }
+      else g.connect(master);
+      src.start(now); src.stop(now + dur + 0.01);
     } catch(e) {}
   }
 
   const _at = (ms, fn) => setTimeout(fn, ms);
+  const _rm = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return {
-    unlock() {
-      _init();
-      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
-    },
+    unlock() { _init(); if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {}); },
     setEnabled(v) { _enabled = !!v; localStorage.setItem("bl_sound_enabled", _enabled ? "true" : "false"); },
     isEnabled() { return _enabled; },
 
-    tap()    { if (!_enabled||!ctx) return; _t(1200,"square",0.04,0.001,0.3); _n(0.02,0.15,3000); },
-    engage() { if (!_enabled||!ctx) return; _t(220,"sawtooth",0.18,0.01,0.4,0,660); _at(170,()=>_t(880,"triangle",0.12,0.005,0.3)); },
+    tap() {
+      if (!_enabled || !ctx) return;
+      _fat({ freq:1200, type:"square",   dur:0.04, gain:0.18, det:3,  distort:20 });
+      _n(0.02, 0.1, 4000, 0, 0);
+    },
+
+    engage() {
+      if (!_enabled || !ctx) return;
+      _fat({ freq:220, type:"sawtooth", dur:0.2, gain:0.35, det:7, distort:30, revDur:0.3, revDecay:2, slideTo:660 });
+      _sub({ freq:80, dur:0.25, gain:0.3 });
+      _at(80, ()=>_fat({ freq:880, type:"triangle", dur:0.1, gain:0.25, distort:20, revDur:0.3, revDecay:2 }));
+    },
+
     targetAcquired() {
-      if (!_enabled||!ctx) return;
-      [440,554,659].forEach((f,i)=>_at(i*90,()=>_t(f,"triangle",0.1,0.005,0.35)));
-      _at(350,()=>_t(880,"triangle",0.3,0.01,0.2));
+      if (!_enabled || !ctx) return;
+      const r = _rm(), step = r ? 60 : 130, dur = r ? 0.06 : 0.15;
+      [440,554,659].forEach((f,i)=>_at(i*step,()=>_fat({freq:f,type:"triangle",dur,gain:0.3,det:5,distort:15,revDur:0.4,revDecay:2.5})));
+      _at(r?120:380, ()=>_sub({ freq:110, dur:r?0.2:0.4, gain:0.35 }));
+      _at(r?200:500, ()=>_fat({ freq:880, type:"sine", dur:r?0.15:0.4, gain:0.2, revDur:0.5, revDecay:3 }));
     },
-    denied() { if (!_enabled||!ctx) return; _t(110,"square",0.12,0.001,0.4); _at(120,()=>_t(95,"square",0.1,0.001,0.3,-30)); },
-    boot()   {
-      if (!_enabled||!ctx) return;
-      [200,800,1200].forEach((f,i)=>_at(i*120,()=>_t(f,"sine",0.1,0.01,0.25)));
+
+    denied() {
+      if (!_enabled || !ctx) return;
+      _fat({ freq:110, type:"square", dur:0.2, gain:0.4, det:20, distort:60 });
+      _sub({ freq:55, dur:0.25, gain:0.4 });
+      _at(50,()=>_fat({ freq:95, type:"square", dur:0.15, gain:0.3, det:15, distort:50 }));
     },
-    toggle() { if (!_enabled||!ctx) return; _n(0.03,0.3,1500); _at(40,()=>_n(0.03,0.25,1200)); },
-    select() { if (!_enabled||!ctx) return; _t(1500,"sine",0.03,0.001,0.2); },
+
+    boot() {
+      if (!_enabled || !ctx) return;
+      _sub({ freq:60, dur:0.12, gain:0.3 });
+      [200,800,1200].forEach((f,i)=>_at(i*120,()=>{
+        const rv = i===2 ? {revDur:0.3, revDecay:2} : {};
+        _fat({ freq:f, type:"sine", dur:0.1, gain:0.22, distort:10, ...rv });
+      }));
+    },
+
+    toggle() {
+      if (!_enabled || !ctx) return;
+      _n(0.015, 0.28, 4000, 0, 15);
+      _at(30, ()=>_n(0.02, 0.22, 4000, 0, 15));
+    },
+
+    select() {
+      if (!_enabled || !ctx) return;
+      _fat({ freq:1500, type:"sine", dur:0.03, gain:0.15 });
+    },
+
     dukeHail() {
-      if (!_enabled||!ctx) return;
-      _t(60,"sine",0.4,0.005,0.8,0,30);
-      _at(50, ()=>_t(140,"sawtooth",0.25,0.01,0.4));
-      _at(200,()=>_t(880,"square",0.12,0.002,0.3));
-      _at(250,()=>_t(1320,"triangle",0.1,0.002,0.25));
-      _at(350,()=>_n(0.08,0.4,800));
+      if (!_enabled || !ctx) return;
+      if (_rm()) {
+        _sub({ freq:60, dur:0.4, gain:0.4 });
+        _at(50,  ()=>_fat({ freq:140, type:"sawtooth", dur:0.3, gain:0.3, distort:40 }));
+        _at(200, ()=>_fat({ freq:880, type:"square",   dur:0.2, gain:0.25, distort:30, revDur:0.3, revDecay:3 }));
+        return;
+      }
+      // Stage 1 — sub foundation (0ms)
+      _sub({ freq:40, dur:0.5, gain:0.5 });
+      // Stage 2 — aggressive rumble (50ms)
+      _at(50,  ()=>{ _fat({ freq:80,  type:"sawtooth", dur:0.6, gain:0.35, det:15, distort:50 }); _sub({ freq:60, dur:0.5, gain:0.35 }); });
+      // Stage 3 — dirty sweep lead (200ms)
+      _at(200, ()=>_fat({ freq:220, type:"sawtooth", dur:0.4, gain:0.3, det:10, distort:70, slideTo:440, revDur:0.8, revDecay:4 }));
+      // Stage 4 — mechanical clanks (450-510ms)
+      [450,480,510].forEach(t=>_at(t,()=>_n(0.03,0.4,600,0,30)));
+      // Stage 5 — high accent + shimmer (650ms)
+      _at(650, ()=>{
+        _fat({ freq:880,  type:"square",   dur:0.3,  gain:0.3,  det:5, distort:40, revDur:1.0, revDecay:5 });
+        _fat({ freq:1320, type:"triangle", dur:0.25, gain:0.2,        distort:15, revDur:1.0, revDecay:5 });
+      });
+      // Stage 6 — closing (1000-1200ms)
+      _at(1000,()=>_sub({ freq:55, dur:0.6, gain:0.4 }));
+      _at(1200,()=>_n(0.08,0.35,400));
     }
   };
 })();
@@ -1290,7 +1384,7 @@ function bootSequence(onComplete) {
 
   const beanCount = allBeans().length, histCount = state.history.length;
   const lines = [
-    { text:"BREW LAB V3.8 // PHANTOM TRIAL", cls:"title" },
+    { text:"BREW LAB V3.9 // PHANTOM TRIAL", cls:"title" },
     { text:"─────────────────────────────────────", cls:"dim" },
     { text:"" },
     { text:`> INIT EXTRACTION ENGINE............  `, ok:"OK" },
@@ -1414,7 +1508,7 @@ function renderStatusBar() {
         <div class="status-led ${ledClass}"></div>
         <div class="hud-value brand-name">BREW LAB</div>
       </div>
-      <div class="hud-ver">V3.8 // PHANTOM</div>
+      <div class="hud-ver">V3.9 // PHANTOM</div>
     </div>
     <div class="hud-cell hc-bean">
       <div class="hud-label">${beanLabel}</div>
@@ -2217,22 +2311,28 @@ function renderDuke() {
   const lastDate = state.history[0] ? fmtDate(state.history[0].date) : "—";
   const quote = DUKE_QUOTES[state.dukeQuoteIdx % DUKE_QUOTES.length];
 
-  const portrait = `    \u2584\u2584\u2584\u2584\u2584\u2584\u2584\u2584
-  \u2584\u2588\u2580\u2580\u2591\u2591\u2591\u2591\u2580\u2580\u2588\u2584
- \u2588\u2591\u2591\u2592\u2592\u2591\u2591\u2591\u2591\u2592\u2592\u2591\u2591\u2588
-\u2588\u2591\u2591\u2592\u2588\u2580\u2580\u2591\u2591\u2580\u2580\u2588\u2592\u2591\u2591\u2588
-\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2588
-\u2588\u2591\u2591\u2592\u2591\u2592\u2592\u2592\u2592\u2592\u2592\u2591\u2592\u2591\u2591\u2588
- \u2588\u2591\u2592\u2591\u2580\u2584\u2584\u2584\u2584\u2580\u2591\u2592\u2591\u2588
-  \u2580\u2584\u2584\u2592\u2592\u2592\u2592\u2592\u2592\u2584\u2584\u2580
-    \u2580\u2580\u2584\u2584\u2584\u2584\u2580\u2580
-   /\u2580\u2580\u2580\u2580\u2580\u2580\u2580\u2580\\
-  /\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 \\
- /\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588 \\
-/\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\\
-    \u258c  \u258c  \u258c
-   \u2550\u2567\u2550\u2550\u2567\u2550\u2550\u2567\u2550
-[ OPERATOR // SC2K13 ]`;
+  const portrait = `▄▄▄▄▄▄  ▄    ▄  ▄    ▄  ▄▄▄▄▄▄
+█    █  █    █  █   █   █
+█    █  █    █  █  █    █▄▄▄▄
+█    █  █    █  █▄▀     █
+█▄▄▄▄█  ▀▄▄▄▄▀  █  ▀▄   █▄▄▄▄▄
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+▄▄▄▄▄  ▄▄▄▄▄  ▄▄▄▄▄  █     █
+█   █  █   █  █      █     █
+█▄▄▄█  █▄▄▄█  █▄▄▄   █  ▄  █
+█   █  █▀▀▄   █      █ ▀▄▀ █
+█▄▄▄█  █  ▀▄  █▄▄▄▄  ▀▄▀ ▀▄▀
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+      ▄▄▄    ▄▄▄
+    ▄█████  █████▄
+    ████ █████ ████
+    ▀█████████▀
+      ▀▀███▀▀
+        ▀
+╔══════════════════════╗
+║  EXTRACTION PROTOCOL  ║
+║    //  SC2K13  //     ║
+╚══════════════════════╝`;
 
   wrap.innerHTML = `
     <div class="card duke-card">
