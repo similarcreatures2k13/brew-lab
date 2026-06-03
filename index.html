@@ -6,8 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Brew Lab">
-<meta name="theme-color" content="#1a1612">
-<title>Brew Lab V3.5</title>
+<meta name="theme-color" content="#0d0a08">
+<title>Brew Lab V3.6</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -25,6 +25,7 @@
     --gold: #c8956c;
     --gold-glow: #e5b380;
     --gold-deep: #8a6240;
+    --amber: #d4742a;
     --green-lock: #6b8e5a;
     --red-miss: #8e5a5a;
     --blue-cool: #5a7a8e;
@@ -41,7 +42,7 @@
     line-height: 1.5;
     padding-bottom: env(safe-area-inset-bottom);
   }
-  button { font-family: inherit; cursor: pointer; }
+  button { font-family: inherit; cursor: pointer; border-radius: 0; }
   input, textarea, select {
     font-family: inherit;
     background: var(--bg-shell);
@@ -50,53 +51,150 @@
     padding: 12px;
     font-size: 15px;
     width: 100%;
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
   }
   input:focus, textarea:focus, select:focus { outline: none; border-color: var(--gold); }
   textarea { resize: vertical; min-height: 80px; }
 
-  /* status bar */
-  .status-bar {
-    position: sticky; top: 0;
+  /* ── CRT SCANLINE OVERLAY (body.crt) ────────────── */
+  body.crt::before {
+    content: "";
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 3px,
+      rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── BOOT OVERLAY ───────────────────────────────── */
+  .boot-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--bg-deepest);
-    border-bottom: 1px solid var(--line-faint);
-    padding: 10px 16px;
-    padding-top: calc(10px + env(safe-area-inset-top));
-    display: flex; align-items: center; gap: 10px;
-    font-family: var(--mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    z-index: 10;
+    z-index: 9000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 48px 28px;
+    cursor: pointer;
+    transition: opacity 0.3s ease-out;
   }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
-  .status-bar .sep { color: var(--text-ghost); }
-  .status-bar .crumb { color: var(--text-primary); }
-  .status-bar .right { margin-left: auto; }
-  .status-bar.locked .status-dot { background: var(--green-lock); }
+  .boot-overlay.fade-out { opacity: 0; pointer-events: none; }
+  .boot-inner { width: 100%; max-width: 480px; }
+  .boot-lines { font-family: var(--mono); font-size: 13px; color: var(--text-muted); line-height: 1.9; }
+  .boot-line {
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+    white-space: pre;
+  }
+  .boot-line.on { opacity: 1; transform: translateY(0); }
+  .boot-line.title { color: var(--amber); font-size: 16px; font-weight: 700; letter-spacing: 0.06em; }
+  .boot-line.dim { color: var(--text-ghost); }
+  .boot-skip {
+    margin-top: 28px;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--text-ghost); letter-spacing: 0.18em;
+    text-transform: uppercase; text-align: center;
+    animation: pulse 2s ease-in-out infinite;
+  }
 
-  /* app header */
-  .app-header {
-    padding: 20px 16px 8px;
-    display: flex; justify-content: space-between; align-items: flex-end;
+  /* ── TARGET ACQUIRED OVERLAY ────────────────────── */
+  .acquired-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(5,4,3,0.96);
+    z-index: 8000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 28px;
+    animation: fadeIn 0.25s ease-out;
   }
-  .app-header h1 {
-    font-family: var(--mono); font-weight: 700;
-    font-size: 22px; letter-spacing: 0.02em;
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .acquired-inner { text-align: center; }
+  .acquired-eyebrow {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--green-lock); letter-spacing: 0.3em;
+    margin-bottom: 18px;
   }
-  .app-header .version {
+  .acquired-title {
+    font-family: var(--mono); font-size: 30px; font-weight: 700;
+    letter-spacing: 0.1em; color: var(--green-lock);
+    margin-bottom: 22px;
+  }
+  .acquired-data {
+    font-family: var(--mono); font-size: 15px;
+    color: var(--text-primary); letter-spacing: 0.08em;
+    line-height: 2; margin-bottom: 20px;
+  }
+  .acquired-data span { color: var(--gold-glow); }
+  .acquired-status {
     font-family: var(--mono); font-size: 10px;
-    color: var(--text-ghost); letter-spacing: 0.1em;
+    color: var(--green-lock); letter-spacing: 0.25em;
+    text-transform: uppercase;
   }
 
+  /* ── HUD BAR ────────────────────────────────────── */
+  .hud-bar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg-deepest);
+    border-bottom: 2px solid var(--line-strong);
+    display: flex; align-items: stretch;
+    padding-top: env(safe-area-inset-top);
+    min-height: calc(52px + env(safe-area-inset-top));
+  }
+  .hud-bar.locked { border-bottom-color: var(--green-lock); }
+  .hud-cell {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 8px 10px;
+    border-right: 1px solid var(--line-faint);
+    overflow: hidden; flex-shrink: 0;
+  }
+  .hud-cell:last-child { border-right: none; }
+  .hud-cell.brand {
+    min-width: 72px;
+    border-right: 2px solid var(--line-strong);
+    cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+  }
+  .hud-cell.brand:active { background: var(--bg-raised); }
+  .hud-cell.hc-bean { flex: 1; min-width: 0; }
+  .hud-cell.hc-sys { width: 82px; }
+  .hud-cell.hc-status { width: 84px; }
+  .hud-label {
+    font-family: var(--mono); font-size: 7px;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-ghost); margin-bottom: 3px; line-height: 1;
+  }
+  .hud-value {
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-primary); line-height: 1.1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hud-value.brand-name {
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; color: var(--amber);
+  }
+  .hud-ver {
+    font-family: var(--mono); font-size: 7px;
+    color: var(--text-ghost); letter-spacing: 0.06em; line-height: 1; margin-top: 3px;
+  }
+  .hud-value.sv-active { color: var(--amber); }
+  .hud-value.sv-locked { color: var(--green-lock); }
+  .hud-value.sv-nav { color: var(--text-muted); }
+  .hud-value.sv-hidden { color: var(--text-ghost); font-size: 10px; }
+
+  /* ── SECTIONS ───────────────────────────────────── */
   .section { padding: 12px 16px; }
   .section h2 {
     font-family: var(--mono); font-size: 10px;
     text-transform: uppercase; letter-spacing: 0.15em;
-    color: var(--text-muted); margin-bottom: 10px;
+    color: var(--text-muted); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
   }
+  .section h2::before { content: "▸"; color: var(--gold); flex-shrink: 0; }
 
-  /* card pattern */
+  /* ── CARDS ──────────────────────────────────────── */
   .card {
     position: relative;
     border: 1px solid var(--line-faint);
@@ -104,14 +202,17 @@
     padding: 18px 16px 16px;
     margin-bottom: 12px;
   }
+  .card.dashed { border-style: dashed; }
+  .card.ai-success { border-color: var(--gold-deep); }
+  .card.ai-error { border-color: var(--red-miss); }
   .card-label {
     position: absolute; top: -7px; left: 12px;
-    background: var(--bg-void);
-    padding: 0 8px;
+    background: var(--bg-void); padding: 0 8px;
     font-family: var(--mono); font-size: 9px;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted);
   }
+  .card-label.gold { color: var(--gold); }
+  .card-label.red { color: var(--red-miss); }
   .card.locked { border-color: var(--green-lock); }
   .card.locked .card-label { color: var(--green-lock); }
   .lock-marker {
@@ -121,53 +222,55 @@
   }
   .lock-marker::before { content: "◆ "; }
 
-  .bean-name {
-    font-size: 19px; font-weight: 600;
-    letter-spacing: -0.01em; margin-bottom: 4px;
+  /* ── MISSION BRIEFING ───────────────────────────── */
+  .mission-brief {
+    border: 1px solid var(--line-faint);
+    border-top: 2px solid var(--gold-deep);
+    background: var(--bg-deepest);
+    padding: 10px 12px;
   }
+  .mb-section { padding-bottom: 0; }
+  .mb-line {
+    display: flex; gap: 10px; padding: 3px 0;
+    font-family: var(--mono); font-size: 10px;
+  }
+  .mb-key {
+    color: var(--text-ghost); letter-spacing: 0.12em;
+    text-transform: uppercase; width: 72px; flex-shrink: 0;
+  }
+  .mb-val { color: var(--text-muted); line-height: 1.5; }
+
+  /* ── BEAN DISPLAY ───────────────────────────────── */
+  .bean-name { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
   .bean-meta {
     font-family: var(--mono); font-size: 10px;
-    color: var(--text-muted); text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em;
   }
   .bean-meta .sep { color: var(--text-ghost); margin: 0 6px; }
-  .bean-meta .roast-intent {
-    color: var(--gold); font-weight: 500;
-  }
+  .bean-meta .roast-intent { color: var(--gold); font-weight: 500; }
   .bean-notes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .note-chip {
-    font-family: var(--mono); font-size: 10px;
-    padding: 4px 8px; border: 1px solid var(--line-strong);
-    color: var(--text-muted); letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-family: var(--mono); font-size: 10px; padding: 4px 8px;
+    border: 1px solid var(--line-strong);
+    color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase;
   }
   .note-chip.achieved { color: var(--green-lock); border-color: var(--green-lock); }
   .note-chip.missed { color: var(--red-miss); border-color: var(--red-miss); }
 
-  /* data grid */
-  .data-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    margin-top: 12px; border-top: 1px solid var(--line-faint);
-  }
-  .data-cell {
-    padding: 12px;
-    border-bottom: 1px solid var(--line-faint);
-  }
+  /* ── DATA GRID ──────────────────────────────────── */
+  .data-grid { display: grid; grid-template-columns: 1fr 1fr; margin-top: 12px; border-top: 1px solid var(--line-faint); }
+  .data-cell { padding: 12px; border-bottom: 1px solid var(--line-faint); }
   .data-cell:nth-child(odd) { border-right: 1px solid var(--line-faint); }
   .data-cell:last-child, .data-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
   .data-cell .label {
     font-family: var(--mono); font-size: 9px;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    color: var(--text-muted); margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 4px;
   }
-  .data-cell .value {
-    font-family: var(--mono); font-size: 18px;
-    font-weight: 500;
-  }
+  .data-cell .value { font-family: var(--mono); font-size: 18px; font-weight: 500; }
   .data-cell .value.large { font-size: 24px; font-weight: 600; }
   .data-cell .value .unit { font-size: 11px; color: var(--text-muted); margin-left: 3px; }
 
-  /* pour timeline */
+  /* ── POUR TIMELINE ──────────────────────────────── */
   .pour-timeline { margin-top: 6px; }
   .pour-step {
     display: grid; grid-template-columns: 60px 1fr;
@@ -178,26 +281,18 @@
   .pour-step:last-child { border-bottom: none; }
   .pour-step::before {
     content: ""; position: absolute;
-    left: 50px; top: 0; bottom: 0; width: 1px;
-    background: var(--line-strong);
+    left: 50px; top: 0; bottom: 0; width: 1px; background: var(--line-strong);
   }
   .pour-step::after {
     content: ""; position: absolute;
     left: 47px; top: 16px; width: 7px; height: 7px;
-    border: 1px solid var(--gold); background: var(--bg-shell);
-    transform: rotate(45deg);
+    border: 1px solid var(--gold); background: var(--bg-shell); transform: rotate(45deg);
   }
-  .pour-step .time {
-    font-family: var(--mono); font-size: 12px;
-    color: var(--gold); font-weight: 500;
-  }
-  .pour-step .weight {
-    font-family: var(--mono); font-size: 14px;
-    font-weight: 500; margin-bottom: 2px;
-  }
+  .pour-step .time { font-family: var(--mono); font-size: 12px; color: var(--gold); font-weight: 500; }
+  .pour-step .weight { font-family: var(--mono); font-size: 14px; font-weight: 500; margin-bottom: 2px; }
   .pour-step .instr { font-size: 12px; color: var(--text-muted); }
 
-  /* buttons */
+  /* ── BUTTONS ────────────────────────────────────── */
   .btn {
     min-height: 48px; padding: 12px 16px;
     background: transparent; border: 1px solid var(--line-strong);
@@ -215,211 +310,267 @@
   .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
   .btn-row.three { grid-template-columns: repeat(3, 1fr); }
   .btn-stack > .btn { margin-bottom: 8px; }
+  .btn-stack > .btn:last-child { margin-bottom: 0; }
 
-  /* chips */
+  /* Protocol-select buttons */
+  .btn.protocol {
+    height: 82px; flex-direction: column; align-items: flex-start;
+    justify-content: center; gap: 5px; padding: 14px 18px;
+    border-color: var(--line-strong); background: var(--bg-shell); position: relative; overflow: hidden;
+  }
+  .btn.protocol::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--amber);
+  }
+  .btn.protocol:active { border-color: var(--amber); background: var(--bg-raised); }
+  .proto-name { font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-primary); text-align: left; }
+  .proto-sub { font-family: var(--mono); font-size: 9px; font-weight: 400; letter-spacing: 0.12em; color: var(--text-muted); text-align: left; }
+
+  /* Method-select buttons */
+  .btn.method-btn {
+    height: 72px; flex-direction: column; align-items: flex-start;
+    justify-content: center; gap: 4px; padding: 12px 16px;
+    border-color: var(--line-strong); background: var(--bg-shell); position: relative; overflow: hidden;
+  }
+  .btn.method-btn::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--gold-deep);
+  }
+  .btn.method-btn:active { border-color: var(--gold); background: var(--bg-raised); }
+  .method-name { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--gold); text-align: left; }
+  .method-sub { font-family: var(--mono); font-size: 9px; font-weight: 400; letter-spacing: 0.1em; color: var(--text-muted); text-align: left; }
+
+  /* ── CHIPS ──────────────────────────────────────── */
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
-    padding: 10px 14px;
-    border: 1px solid var(--line-faint);
-    background: var(--bg-shell);
-    font-family: var(--mono); font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text-muted);
-    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 14px; border: 1px solid var(--line-faint); background: var(--bg-shell);
+    font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;
   }
   .chip::before { content: "◇"; color: var(--text-ghost); }
-  .chip.selected {
-    border-color: var(--gold); color: var(--gold);
-    background: var(--bg-raised);
-  }
+  .chip.selected { border-color: var(--gold); color: var(--gold); background: var(--bg-raised); }
   .chip.selected::before { content: "◆"; color: var(--gold); }
   .chip.perfect {
     border-color: var(--green-lock); color: var(--green-lock);
     width: 100%; justify-content: center;
+    background: rgba(107,142,90,0.07); letter-spacing: 0.12em;
   }
-  .chip.perfect::before { content: "✓"; }
+  /* suppress the ◇ pseudo-element for perfect chip — label has its own ◆ */
+  .chip.perfect::before { content: ""; display: none; }
 
-  /* feedback grid */
-  .feedback-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
-    margin-top: 8px;
-  }
-  .feedback-grid .chip {
-    padding: 12px 10px;
-    text-align: left; justify-content: flex-start;
-  }
+  /* ── FEEDBACK GRID ──────────────────────────────── */
+  .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .feedback-grid .chip { padding: 12px 10px; text-align: left; justify-content: flex-start; }
   .feedback-grid .chip.perfect { grid-column: 1 / -1; }
 
-  /* bean grid */
-  .bean-grid {
-    display: grid; grid-template-columns: 1fr; gap: 10px;
-  }
-  .bean-grid .card {
-    padding: 14px 14px 12px;
-    cursor: pointer;
-    transition: border-color 0.15s ease;
-  }
+  /* ── BEAN GRID ──────────────────────────────────── */
+  .bean-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .bean-grid .card { padding: 14px 14px 12px; cursor: pointer; transition: border-color 0.12s ease; }
   .bean-grid .card:active { border-color: var(--gold); }
-  .bean-grid .card.custom .card-label::after {
-    content: " · CUSTOM";
-    color: var(--gold-deep);
+  .bean-grid .card.custom .card-label::after { content: " · CUSTOM"; color: var(--gold-deep); }
+
+  /* ── ARCHIVE STATUS (bean picker) ───────────────── */
+  .archive-status {
+    margin: 10px 0 4px; padding: 10px 12px;
+    font-family: var(--mono); font-size: 9px;
+    color: var(--text-ghost); letter-spacing: 0.1em;
+    border: 1px solid var(--line-faint); background: var(--bg-deepest);
+    line-height: 2;
   }
 
-  /* adjustment preview */
-  .adjustment {
-    margin-top: 14px; padding: 12px;
-    border-left: 2px solid var(--gold);
-    background: var(--bg-deepest);
-    font-family: var(--mono); font-size: 12px;
+  /* ── OPERATOR LOADOUT BOX (home screen) ─────────── */
+  .loadout-box {
+    margin-bottom: 16px; padding: 10px 12px;
+    border: 1px solid var(--line-faint); background: var(--bg-deepest);
+    font-family: var(--mono); font-size: 10px;
   }
+  .loadout-box .lb-header {
+    color: var(--amber); font-size: 9px; letter-spacing: 0.18em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .lb-row { display: flex; gap: 12px; padding: 3px 0; border-bottom: 1px solid var(--line-faint); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-key { color: var(--text-ghost); letter-spacing: 0.1em; text-transform: uppercase; width: 64px; flex-shrink: 0; }
+  .lb-val { color: var(--text-muted); }
+
+  /* ── ADJUSTMENT PREVIEW ─────────────────────────── */
+  .adjustment {
+    margin-top: 14px; padding: 12px; border-left: 2px solid var(--gold);
+    background: var(--bg-deepest); font-family: var(--mono); font-size: 12px;
+  }
+  .adjustment.chan { border-left-color: var(--red-miss); }
+  .adjustment.ai-adj { border-left-color: var(--gold-glow); }
   .adjustment .head {
     color: var(--gold); text-transform: uppercase;
     letter-spacing: 0.1em; font-size: 10px; margin-bottom: 6px;
   }
+  .adjustment.chan .head { color: var(--red-miss); }
+  .adjustment.ai-adj .head { color: var(--gold-glow); }
   .adjustment .change { line-height: 1.7; }
   .arrow { color: var(--text-ghost); margin: 0 6px; }
   .new { color: var(--gold-glow); }
-  .adjustment .why {
-    color: var(--text-muted); margin-top: 8px; font-size: 11px;
-    font-family: var(--ui); line-height: 1.5;
-  }
+  .adjustment .why { color: var(--text-muted); margin-top: 8px; font-size: 11px; font-family: var(--ui); line-height: 1.5; }
 
-  /* dev note */
+  /* ── FIELD NOTE ─────────────────────────────────── */
   .dev-note-toggle {
-    margin-top: 12px;
-    font-family: var(--mono); font-size: 10px;
-    color: var(--text-muted); letter-spacing: 0.1em;
-    text-transform: uppercase;
+    margin-top: 12px; font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase;
     background: none; border: none; padding: 6px 0;
   }
   .dev-note-toggle::before { content: "[+ "; color: var(--text-ghost); }
   .dev-note-toggle::after { content: " ]"; color: var(--text-ghost); }
   .dev-note-toggle.open::before { content: "[− "; }
-  .dev-note-area {
-    margin-top: 8px; display: none;
-  }
+  .dev-note-area { margin-top: 8px; display: none; }
   .dev-note-area.open { display: block; }
-  .dev-note-area textarea {
-    background: var(--bg-deepest);
-    border-color: var(--line-faint);
-    font-family: var(--mono); font-size: 12px;
-  }
+  .dev-note-area textarea { background: var(--bg-deepest); border-color: var(--line-faint); font-family: var(--mono); font-size: 12px; }
 
-  /* form bits */
+  /* ── FORM ───────────────────────────────────────── */
   .form-row { margin-bottom: 14px; }
   .form-row label {
     display: block; margin-bottom: 6px;
     font-family: var(--mono); font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
   }
-  .three-toggle {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
-    border: 1px solid var(--line-strong);
-  }
+  .three-toggle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--line-strong); }
   .three-toggle button {
     background: transparent; border: none; padding: 12px 4px;
-    color: var(--text-muted);
-    font-family: var(--mono); font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    border-right: 1px solid var(--line-strong);
+    color: var(--text-muted); font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.08em; border-right: 1px solid var(--line-strong);
   }
   .three-toggle button:last-child { border-right: none; }
-  .three-toggle button.selected {
-    background: var(--bg-raised); color: var(--gold);
-  }
-  .helper-text {
-    font-size: 11px; color: var(--text-muted);
-    margin-top: 6px; line-height: 1.4;
-  }
+  .three-toggle button.selected { background: var(--bg-raised); color: var(--gold); }
+  .helper-text { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
 
-  /* tab bar */
+  /* ── TAB BAR — hardware channel selector ────────── */
   .tab-bar {
     position: sticky; bottom: 0;
     background: var(--bg-deepest);
-    border-top: 1px solid var(--line-faint);
+    border-top: 2px solid var(--line-strong);
     display: grid; grid-template-columns: repeat(4, 1fr);
     padding-bottom: env(safe-area-inset-bottom);
   }
   .tab {
-    padding: 14px 0; text-align: center;
-    font-family: var(--mono); font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    color: var(--text-muted);
-    border: none; background: transparent;
+    padding: 13px 0 11px; text-align: center;
+    font-family: var(--mono); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-muted); border: none; background: transparent;
     border-top: 2px solid transparent;
   }
-  .tab.active { color: var(--gold); border-top-color: var(--gold); }
+  .tab.active { color: var(--amber); border-top-color: var(--amber); }
 
-  /* hidden version long-press for dev log */
-  .version-tap {
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  /* history entry */
-  .history-entry {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--line-faint);
-  }
-  .history-entry .head {
-    display: flex; justify-content: space-between;
-    margin-bottom: 6px; align-items: baseline;
-  }
-  .history-entry .bean { font-weight: 600; }
-  .history-entry .date {
+  /* ── SETTINGS OPTIONS PANEL ─────────────────────── */
+  .options-header {
     font-family: var(--mono); font-size: 10px;
-    color: var(--text-muted);
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold); padding: 18px 0 10px;
+    border-bottom: 1px solid var(--line-strong);
+    margin-bottom: 14px;
   }
-  .history-entry .settings {
-    font-family: var(--mono); font-size: 12px;
-    color: var(--text-muted);
+  .options-header:first-child { padding-top: 4px; }
+  .options-header.danger { color: var(--red-miss); border-bottom-color: var(--red-miss); }
+  .options-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--line-faint);
+    font-family: var(--mono); font-size: 11px;
   }
-  .history-entry .feedback {
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--text-muted);
+  .options-row:last-child { border-bottom: none; }
+  .options-key { color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .option-toggle {
+    background: none; border: 1px solid var(--line-strong);
+    padding: 8px 14px; min-height: 40px;
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
   }
+  .option-toggle.on { border-color: var(--green-lock); color: var(--green-lock); }
+  .option-toggle:active { background: var(--bg-raised); }
+  .api-status {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.08em; padding: 8px 0 4px; color: var(--text-ghost);
+  }
+  .api-status.authenticated { color: var(--green-lock); }
+
+  /* ── DIAGNOSTICS GRID ───────────────────────────── */
+  .diag-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--line-faint); margin: 10px 0;
+  }
+  .diag-cell { padding: 10px; border-bottom: 1px solid var(--line-faint); }
+  .diag-cell:nth-child(odd) { border-right: 1px solid var(--line-faint); }
+  .diag-cell:last-child, .diag-cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .diag-label { font-family: var(--mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-ghost); margin-bottom: 4px; }
+  .diag-val { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--text-primary); }
+
+  /* ── HISTORY ENTRIES ────────────────────────────── */
+  .history-entry { padding: 12px 0; border-bottom: 1px solid var(--line-faint); }
+  .history-entry .head { display: flex; justify-content: space-between; margin-bottom: 6px; align-items: baseline; }
+  .history-entry .bean { font-weight: 600; }
+  .history-entry .date { font-family: var(--mono); font-size: 10px; color: var(--text-muted); }
+  .history-entry .settings { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+  .history-entry .feedback { margin-top: 4px; font-size: 12px; color: var(--text-muted); }
   .history-entry .dev-note {
-    margin-top: 6px;
-    padding: 6px 8px;
-    background: var(--bg-deepest);
-    border-left: 2px solid var(--gold-deep);
-    font-family: var(--mono); font-size: 11px;
-    color: var(--text-primary);
+    margin-top: 6px; padding: 6px 8px; background: var(--bg-deepest);
+    border-left: 2px solid var(--gold-deep); font-family: var(--mono); font-size: 11px; color: var(--text-primary);
   }
+  @keyframes entryPulse {
+    0%   { background: rgba(107,142,90,0.12); }
+    100% { background: transparent; }
+  }
+  .entry-new { animation: entryPulse 1.8s ease-out forwards; }
 
+  /* ── EMPTY STATE ────────────────────────────────── */
   .empty-state {
-    padding: 40px 20px; text-align: center;
-    color: var(--text-muted); font-size: 13px;
+    margin: 16px 0; padding: 30px 20px;
+    text-align: left; border: 1px solid var(--line-faint); background: var(--bg-deepest);
+    font-family: var(--mono);
+  }
+  .empty-state .es-head {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--text-muted); margin-bottom: 14px;
+    border-bottom: 1px solid var(--line-faint); padding-bottom: 10px;
+  }
+  .empty-state .es-line {
+    font-size: 11px; color: var(--text-ghost); letter-spacing: 0.06em;
+    line-height: 2.2;
+  }
+  .empty-state .es-line::before { content: "> "; color: var(--text-ghost); }
+
+  /* ── VOID.LOG SCREEN ────────────────────────────── */
+  .voidlog-box {
+    font-family: var(--mono); font-size: 11px;
+    border: 1px solid var(--line-faint);
+    background: var(--bg-deepest);
+    overflow: hidden;
+  }
+  .voidlog-box .vl-header {
+    color: var(--amber); font-size: 10px; letter-spacing: 0.06em;
+    padding: 10px 12px 8px; border-bottom: 1px solid var(--line-faint);
+  }
+  .voidlog-box .vl-body { padding: 10px 12px 12px; }
+  .vl-line { color: var(--text-ghost); line-height: 2; letter-spacing: 0.04em; font-size: 11px; }
+  .vl-line.bright { color: var(--text-muted); }
+  .vl-line.amber { color: var(--amber); }
+  .vl-val { color: var(--gold-glow); }
+  .voidlog-box .vl-footer {
+    color: var(--text-ghost); font-size: 9px; letter-spacing: 0.12em;
+    padding: 8px 12px 10px; border-top: 1px solid var(--line-faint);
+    color: var(--text-ghost);
+  }
+  .proto-divider {
+    font-family: var(--mono); font-size: 9px; color: var(--text-ghost);
+    letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 0;
   }
 
-  /* toast */
+  /* ── TOAST ──────────────────────────────────────── */
   .toast {
-    position: fixed; bottom: 80px; left: 50%;
-    transform: translateX(-50%);
-    background: var(--bg-raised);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    padding: 12px 20px;
-    font-family: var(--mono); font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    z-index: 100;
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-deepest); border: 1px solid var(--amber); color: var(--amber);
+    padding: 10px 18px; font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    z-index: 100; opacity: 0; transition: opacity 0.15s; pointer-events: none; white-space: nowrap;
   }
   .toast.show { opacity: 1; }
 
-  /* loading */
-  .loading {
-    display: inline-block;
-    animation: pulse 1.4s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-  }
+  /* ── LOADING ────────────────────────────────────── */
+  .loading { display: inline-block; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -512,14 +663,11 @@ function smartDefaultsBrikka(bean) {
   const { roast = {}, origins = [] } = bean;
   const profile = weightedOriginProfile(origins);
   let clicks = 13, baseWaterTemp = "boiling";
-  let icedStyle = "straight";  // default: concentrate straight over ice
+  let icedStyle = "straight";
   let hybridHotMl = 70;
   const reasons = [];
   if (/^light\b/i.test(roast.level || "") && roast.intent !== "Espresso") {
-    clicks = 14;
-    baseWaterTemp = "95C-cool-30s";
-    icedStyle = "hybrid";       // delicate beans need hot water to open up
-    hybridHotMl = 100;
+    clicks = 14; baseWaterTemp = "95C-cool-30s"; icedStyle = "hybrid"; hybridHotMl = 100;
     reasons.push("light filter → finer + cooler base, hybrid iced style");
   }
   if (profile.density < 0.4) { clicks = 14; reasons.push("porous → finer"); }
@@ -549,8 +697,7 @@ function buildLayered(dose, ratio, iced) {
     t += pours <= 3 ? 30 : 25;
   });
   const last = steps[steps.length - 1];
-  last.add += total - last.running;
-  last.running = total;
+  last.add += total - last.running; last.running = total;
   return { steps, total, drawdown: t + 30, iced };
 }
 function buildDescending(dose, ratio, iced) {
@@ -568,8 +715,7 @@ function buildDescending(dose, ratio, iced) {
     t += 30;
   });
   const last = steps[steps.length - 1];
-  last.add += total - last.running;
-  last.running = total;
+  last.add += total - last.running; last.running = total;
   return { steps, total, drawdown: t + 30, iced };
 }
 function buildEven(dose, ratio, iced) {
@@ -616,16 +762,14 @@ function fmtTime(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")
 // ENGINE: Feedback
 // ==========================================================
 const FEEDBACK_RULES_V60 = {
-  sour: { clicks: -1, temp: +1, note: "Underextracted — finer + warmer" },
-  bitter: { clicks: +1, temp: -1, note: "Overextracted — coarser + cooler" },
-  acrid: { clicks: +1, temp: -1, note: "Harsh overextraction — coarser + cooler" },
-  thin: { clicks: -1, temp: 0, note: "Underextracted body — finer" },
-  "too-acidic": { clicks: 0, temp: +1, note: "Need more sweetness — bump temp" },
-  "flat-muddy": { clicks: +1, temp: 0, note: "Muddied flavors — coarser" },
-  "missing-notes": { clicks: -1, temp: +1, note: "Under-extracted aromatics — finer + warmer" }
+  sour:           { clicks: -1, temp: +1, note: "Underextracted — finer + warmer" },
+  bitter:         { clicks: +1, temp: -1, note: "Overextracted — coarser + cooler" },
+  acrid:          { clicks: +1, temp: -1, note: "Harsh overextraction — coarser + cooler" },
+  thin:           { clicks: -1, temp:  0, note: "Underextracted body — finer" },
+  "too-acidic":   { clicks:  0, temp: +1, note: "Need more sweetness — bump temp" },
+  "flat-muddy":   { clicks: +1, temp:  0, note: "Muddied flavors — coarser" },
+  "missing-notes":{ clicks: -1, temp: +1, note: "Under-extracted aromatics — finer + warmer" }
 };
-
-// Brikka adjustments are grind-only + technique notes (temp/heat are fixed by hardware)
 const FEEDBACK_RULES_BRIKKA = {
   sour:           { clicks: -1, note: "Underextracted — finer grind, ensure boiling water start" },
   bitter:         { clicks: +1, note: "Overextracted — coarser, pull off at first sputter" },
@@ -635,15 +779,14 @@ const FEEDBACK_RULES_BRIKKA = {
   "flat-muddy":   { clicks: +1, note: "Pulled too long — coarser, pull at first sputter not full sputter" },
   "missing-notes":{ clicks: -1, note: "Aromatics need more contact — finer grind, ensure no channelling" }
 };
-
 const CHANNELING_PAIRS = [["sour", "bitter"], ["sour", "acrid"]];
 const FEEDBACK_OPTIONS = [
-  { id: "sour", label: "Sour" },
-  { id: "bitter", label: "Bitter" },
-  { id: "acrid", label: "Acrid" },
-  { id: "thin", label: "Thin" },
-  { id: "too-acidic", label: "Too acidic" },
-  { id: "flat-muddy", label: "Flat / muddy" },
+  { id: "sour",          label: "Sour" },
+  { id: "bitter",        label: "Bitter" },
+  { id: "acrid",         label: "Acrid" },
+  { id: "thin",          label: "Thin" },
+  { id: "too-acidic",    label: "Too acidic" },
+  { id: "flat-muddy",    label: "Flat / muddy" },
   { id: "missing-notes", label: "Missing notes" }
 ];
 
@@ -651,7 +794,7 @@ function processFeedback({ currentRecipe, feedback, recipeKey }) {
   const isBrikka = recipeKey && recipeKey.startsWith("brikka");
   const rules = isBrikka ? FEEDBACK_RULES_BRIKKA : FEEDBACK_RULES_V60;
   const maxClicks = isBrikka ? 15 : 26;
-  const minClicks = isBrikka ? 12 : 12;
+  const minClicks = 12;
 
   for (const [a, b] of CHANNELING_PAIRS) {
     if (feedback.includes(a) && feedback.includes(b)) {
@@ -703,7 +846,7 @@ const EQUIPMENT_BLOCK = `EQUIPMENT:
 - Kettle: Temperature-controlled, Celsius only`;
 
 const AI_ROLES = {
-  fill: `ROLE: New bean, no dial-in yet. Generate a starting recipe. Be conservative — user will dial from here. Aim for the gentler/safer end. If espresso roast, it is MORE soluble on V60 — coarser + cooler than filter roast.`,
+  fill:   `ROLE: New bean, no dial-in yet. Generate a starting recipe. Be conservative — user will dial from here. Aim for the gentler/safer end. If espresso roast, it is MORE soluble on V60 — coarser + cooler than filter roast.`,
   adjust: `ROLE: Current recipe is not landing after multiple brews. Diagnose pattern and propose a shift. Treat current values as anchor — adjust, do not replace. Maximum 2 clicks and 2°C from current.`,
   review: `ROLE: Sanity check on current recipe. If it looks correct, say so with high confidence and propose minimal/no changes.`
 };
@@ -766,47 +909,26 @@ HARD RULES (V60):
 
 function parseAIResponse(text, recipeKey) {
   let cleaned = text.replace(/```json|```/g, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
+  const start = cleaned.indexOf("{"); const end = cleaned.lastIndexOf("}");
   if (start >= 0 && end > start) cleaned = cleaned.slice(start, end + 1);
   try {
     const p = JSON.parse(cleaned);
     const isBrikka = recipeKey && recipeKey.startsWith("brikka");
-
-    // Coerce common string-number issues (e.g. "1:15" or "15" instead of 15)
-    if (typeof p.ratio === "string") {
-      const m = p.ratio.match(/(\d+)\s*$/);
-      if (m) p.ratio = parseInt(m[1]);
-    }
+    if (typeof p.ratio === "string") { const m = p.ratio.match(/(\d+)\s*$/); if (m) p.ratio = parseInt(m[1]); }
     if (typeof p.clicks === "string") p.clicks = parseInt(p.clicks);
     if (typeof p.temp === "string") p.temp = parseInt(p.temp);
-
-    // Click range is universal (12-26 = Brikka 12-15 + V60 12-26)
-    const minClicks = isBrikka ? 11 : 12;
-    const maxClicks = isBrikka ? 16 : 26;
-    if (typeof p.clicks !== "number" || isNaN(p.clicks) || p.clicks < minClicks || p.clicks > maxClicks) {
-      throw new Error(`clicks out of range: ${p.clicks}`);
-    }
-
-    // Temp only validated for V60 (Brikka has no controlled temp)
+    const minClicks = isBrikka ? 11 : 12; const maxClicks = isBrikka ? 16 : 26;
+    if (typeof p.clicks !== "number" || isNaN(p.clicks) || p.clicks < minClicks || p.clicks > maxClicks) throw new Error(`clicks out of range: ${p.clicks}`);
     if (!isBrikka) {
-      if (typeof p.temp !== "number" || isNaN(p.temp) || p.temp < 88 || p.temp > 96) {
-        throw new Error(`temp out of range: ${p.temp}`);
-      }
-      if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) {
-        throw new Error(`bad pourStyle: ${p.pourStyle}`);
-      }
-      if (typeof p.ratio !== "number" || isNaN(p.ratio) || p.ratio < 14 || p.ratio > 17) {
-        throw new Error(`ratio out of range: ${p.ratio}`);
-      }
+      if (typeof p.temp !== "number" || isNaN(p.temp) || p.temp < 88 || p.temp > 96) throw new Error(`temp out of range: ${p.temp}`);
+      if (!["layered","descending","even","custom_even"].includes(p.pourStyle)) throw new Error(`bad pourStyle: ${p.pourStyle}`);
+      if (typeof p.ratio !== "number" || isNaN(p.ratio) || p.ratio < 14 || p.ratio > 17) throw new Error(`ratio out of range: ${p.ratio}`);
     } else {
-      // For Brikka: fill in safe defaults so applyFeedback doesn't blow up
       if (typeof p.temp !== "number" || isNaN(p.temp)) p.temp = null;
       if (typeof p.ratio !== "number" || isNaN(p.ratio)) p.ratio = null;
-      if (!["layered", "descending", "even", "custom_even"].includes(p.pourStyle)) p.pourStyle = null;
+      if (!["layered","descending","even","custom_even"].includes(p.pourStyle)) p.pourStyle = null;
     }
-
-    if (!["high", "medium", "low"].includes(p.confidence)) p.confidence = "medium";
+    if (!["high","medium","low"].includes(p.confidence)) p.confidence = "medium";
     if (typeof p.rationale !== "string") p.rationale = "";
     return { ok: true, ...p };
   } catch (e) {
@@ -817,10 +939,8 @@ function parseAIResponse(text, recipeKey) {
 async function askAdvisor({ bean, recipeKey, currentRecipe, feedbackHistory, mode, apiKey }) {
   if (!apiKey) return { ok: false, error: "No API key set. Add one in Settings." };
   if (!bean) return { ok: false, error: "No bean provided." };
-  if (!["fill", "adjust", "review"].includes(mode)) return { ok: false, error: `Bad mode: ${mode}` };
-
+  if (!["fill","adjust","review"].includes(mode)) return { ok: false, error: `Bad mode: ${mode}` };
   const prompt = buildAIPrompt({ bean, recipeKey, currentRecipe, feedbackHistory, mode });
-
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -839,10 +959,7 @@ async function askAdvisor({ bean, recipeKey, currentRecipe, feedbackHistory, mod
         ]
       })
     });
-    if (!response.ok) {
-      const err = await response.text();
-      return { ok: false, error: `API ${response.status}: ${err.slice(0, 200)}` };
-    }
+    if (!response.ok) { const err = await response.text(); return { ok: false, error: `API ${response.status}: ${err.slice(0, 200)}` }; }
     const data = await response.json();
     const text = data.content?.[0]?.text || "";
     return parseAIResponse("{" + text, recipeKey);
@@ -852,7 +969,7 @@ async function askAdvisor({ bean, recipeKey, currentRecipe, feedbackHistory, mod
 }
 
 // ==========================================================
-// PRESETS — seeded with roast.intent
+// PRESETS
 // ==========================================================
 const PRESETS = [
   {
@@ -860,55 +977,35 @@ const PRESETS = [
     origins: [{ country: "Colombia", variety: "Caturra", process: "Cofermentation", share: 100 }],
     roast: { level: "Light-Medium", intent: "Filter" },
     tastingNotes: ["Tropical fruit", "Wine", "Berry"],
-    recipes: {
-      v60_hot: { clicks: 24, temp: 93, pourStyle: "layered", ratio: 15, locked: false },
-      v60_iced: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false },
-      brikka: null
-    }
+    recipes: { v60_hot: { clicks: 24, temp: 93, pourStyle: "layered", ratio: 15, locked: false }, v60_iced: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false }, brikka: null }
   },
   {
     id: "aalamin-bm", name: "Aalamin Bener Meriah Peach", roaster: null, custom: false,
     origins: [{ country: "Indonesia", variety: "Typica", process: "Wet-hulled", share: 100 }],
     roast: { level: "Light-Medium", intent: "Filter" },
     tastingNotes: ["Peach", "Osmanthus", "Honey"],
-    recipes: {
-      v60_hot: { clicks: 26, temp: 91, pourStyle: "layered", ratio: 15, locked: false },
-      v60_iced: { clicks: 26, temp: 91, pourStyle: "descending", ratio: 15, locked: false },
-      brikka: null
-    }
+    recipes: { v60_hot: { clicks: 26, temp: 91, pourStyle: "layered", ratio: 15, locked: false }, v60_iced: { clicks: 26, temp: 91, pourStyle: "descending", ratio: 15, locked: false }, brikka: null }
   },
   {
     id: "camel-tacu", name: "Camel Step Tacu Mexico", roaster: "Camel Step", custom: false,
     origins: [{ country: "Mexico", variety: "Typica", process: "Washed", share: 100 }],
     roast: { level: "Medium", intent: "Filter" },
     tastingNotes: ["Chocolate", "Almond", "Brown sugar"],
-    recipes: {
-      v60_hot: { clicks: 24, temp: 94, pourStyle: "even", ratio: 15, locked: false },
-      v60_iced: null,
-      brikka: null
-    }
+    recipes: { v60_hot: { clicks: 24, temp: 94, pourStyle: "even", ratio: 15, locked: false }, v60_iced: null, brikka: null }
   },
   {
     id: "col-722", name: "Colombia 722", roaster: null, custom: false,
     origins: [{ country: "Colombia", variety: "Castillo", process: "Cofermentation", share: 100 }],
     roast: { level: "Light-Medium", intent: "Filter" },
     tastingNotes: ["Berry", "Lemongrass", "Caramel", "Peach"],
-    recipes: {
-      v60_hot: { clicks: 24, temp: 92, pourStyle: "descending", ratio: 15, locked: false },
-      v60_iced: { clicks: 24, temp: 92, pourStyle: "descending", ratio: 15, locked: false },
-      brikka: null
-    }
+    recipes: { v60_hot: { clicks: 24, temp: 92, pourStyle: "descending", ratio: 15, locked: false }, v60_iced: { clicks: 24, temp: 92, pourStyle: "descending", ratio: 15, locked: false }, brikka: null }
   },
   {
     id: "col-pinacolada", name: "Colombia Piña Colada", roaster: null, custom: false,
     origins: [{ country: "Colombia", variety: "Castillo", process: "Cofermentation", share: 100 }],
     roast: { level: "Light-Medium", intent: "Filter" },
     tastingNotes: ["Pineapple", "Coconut", "Tropical"],
-    recipes: {
-      v60_hot: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false },
-      v60_iced: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false },
-      brikka: null
-    }
+    recipes: { v60_hot: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false }, v60_iced: { clicks: 24, temp: 93, pourStyle: "descending", ratio: 15, locked: false }, brikka: null }
   },
   {
     id: "blend-4origin", name: "4-Origin Blend", roaster: null, custom: false,
@@ -920,103 +1017,63 @@ const PRESETS = [
     ],
     roast: { level: "Medium", intent: "Espresso" },
     tastingNotes: ["Caramel", "Chocolate", "Creamy"],
-    recipes: {
-      v60_hot: { clicks: 26, temp: 92, pourStyle: "even", ratio: 15, locked: false },
-      v60_iced: null,
-      brikka: null
-    }
+    recipes: { v60_hot: { clicks: 26, temp: 92, pourStyle: "even", ratio: 15, locked: false }, v60_iced: null, brikka: null }
   },
   {
     id: "istinye-png", name: "İstinye PNG", roaster: "İstinye", custom: false,
     origins: [{ country: "Papua New Guinea", variety: "Typica", process: "Washed", share: 100 }],
     roast: { level: "Light-Medium", intent: "Filter" },
     tastingNotes: ["Floral", "Citrus", "Honey"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: { clicks: 24, temp: 91, pourStyle: "descending", ratio: 15, locked: false },
-      brikka: null
-    }
+    recipes: { v60_hot: null, v60_iced: { clicks: 24, temp: 91, pourStyle: "descending", ratio: 15, locked: false }, brikka: null }
   },
   {
     id: "malaysia-liberica", name: "Malaysia Liberica Tobacco", roaster: null, custom: false,
     origins: [{ country: "Malaysia", variety: "Liberica", process: "Natural", share: 100 }],
     roast: { level: "Medium", intent: "Filter" },
     tastingNotes: ["Tobacco", "Dark chocolate", "Woody"],
-    recipes: {
-      v60_hot: { clicks: 24, temp: 90, pourStyle: "even", ratio: 15, locked: false },
-      v60_iced: { clicks: 24, temp: 91, pourStyle: "even", ratio: 15, locked: false },
-      brikka: { clicks: 14, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
-    }
+    recipes: { v60_hot: { clicks: 24, temp: 90, pourStyle: "even", ratio: 15, locked: false }, v60_iced: { clicks: 24, temp: 91, pourStyle: "even", ratio: 15, locked: false }, brikka: { clicks: 14, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false } }
   },
   {
     id: "indo-grapefruit", name: "Indonesia Grapefruit", roaster: null, custom: false,
     origins: [{ country: "Indonesia", variety: "Typica", process: "Wet-hulled", share: 100 }],
     roast: { level: "Light-Medium", intent: "Filter" },
     tastingNotes: ["Grapefruit", "Citrus", "Bright"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: { clicks: 24, temp: 91, pourStyle: "descending", ratio: 15, locked: false },
-      brikka: null
-    }
+    recipes: { v60_hot: null, v60_iced: { clicks: 24, temp: 91, pourStyle: "descending", ratio: 15, locked: false }, brikka: null }
   },
-  // Brikka-focused presets
   {
     id: "brazil-yellow-cat", name: "Brazil Yellow Catuai Infused", roaster: null, custom: false,
     origins: [{ country: "Brazil", variety: "Yellow Catuai", process: "Natural", share: 100 }],
     roast: { level: "Medium", intent: "Espresso" },
     tastingNotes: ["Caramel", "Apple pie", "Sweet"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: null,
-      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false },
-      brikka_iced_americano: { clicks: 13, baseWaterTemp: "boiling", icedStyle: "straight", locked: false }
-    }
+    recipes: { v60_hot: null, v60_iced: null, brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }, brikka_iced_americano: { clicks: 13, baseWaterTemp: "boiling", icedStyle: "straight", locked: false } }
   },
   {
     id: "camel-santos", name: "Camel Step Brazil Santos", roaster: "Camel Step", custom: false,
     origins: [{ country: "Brazil", variety: "Mundo Novo", process: "Natural", share: 100 }],
     roast: { level: "Medium", intent: "Espresso" },
     tastingNotes: ["Chocolate", "Hazelnut", "Caramel"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: null,
-      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }
-    }
+    recipes: { v60_hot: null, v60_iced: null, brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false } }
   },
   {
     id: "eth-chelbesa", name: "Ethiopia Chelbesa", roaster: null, custom: false,
     origins: [{ country: "Ethiopia", variety: "Heirloom", process: "Washed", share: 100 }],
     roast: { level: "Light", intent: "Filter" },
     tastingNotes: ["Floral", "Jasmine", "Citrus"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: null,
-      brikka: { clicks: 14, baseWaterTemp: "95C-cool-30s", drinkStyle: "neat", locked: false }
-    }
+    recipes: { v60_hot: null, v60_iced: null, brikka: { clicks: 14, baseWaterTemp: "95C-cool-30s", drinkStyle: "neat", locked: false } }
   },
   {
     id: "brazil-parainema", name: "Brazil Parainema", roaster: null, custom: false,
     origins: [{ country: "Brazil", variety: "Parainema", process: "Natural", share: 100 }],
     roast: { level: "Medium", intent: "Espresso" },
     tastingNotes: ["Chocolate", "Nutty", "Caramel"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: null,
-      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false },
-      brikka_iced_americano: { clicks: 13, baseWaterTemp: "boiling", icedStyle: "straight", locked: false }
-    }
+    recipes: { v60_hot: null, v60_iced: null, brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }, brikka_iced_americano: { clicks: 13, baseWaterTemp: "boiling", icedStyle: "straight", locked: false } }
   },
   {
     id: "brazil-santa-ines", name: "Brazil Santa Ines", roaster: null, custom: false,
     origins: [{ country: "Brazil", variety: "Catuai", process: "Natural", share: 100 }],
     roast: { level: "Medium", intent: "Espresso" },
     tastingNotes: ["Chocolate", "Caramel", "Smooth"],
-    recipes: {
-      v60_hot: null,
-      v60_iced: null,
-      brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false },
-      brikka_iced_americano: { clicks: 13, baseWaterTemp: "boiling", icedStyle: "hybrid", hybridHotMl: 70, locked: false }
-    }
+    recipes: { v60_hot: null, v60_iced: null, brikka: { clicks: 13, baseWaterTemp: "boiling", drinkStyle: "neat", locked: false }, brikka_iced_americano: { clicks: 13, baseWaterTemp: "boiling", icedStyle: "hybrid", hybridHotMl: 70, locked: false } }
   }
 ];
 
@@ -1032,10 +1089,8 @@ const KEYS = {
 };
 
 function load(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch { return fallback; }
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch { return fallback; }
 }
 function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
@@ -1043,21 +1098,30 @@ function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 // APP STATE
 // ==========================================================
 const state = {
-  screen: "home",          // home | method | bean | dose | recipe | feedback | history | settings | addBean
+  screen: "home",
   customBeans: load(KEYS.beans, []),
   history: load(KEYS.history, []),
-  settings: load(KEYS.settings, { defaultRatio: 15, defaultV60Dose: 16, defaultBrikkaDose: 16 }),
+  settings: (() => {
+    const s = load(KEYS.settings, {});
+    return {
+      defaultRatio:     s.defaultRatio     ?? 15,
+      defaultV60Dose:   s.defaultV60Dose   ?? 16,
+      defaultBrikkaDose:s.defaultBrikkaDose?? 16,
+      crtMode:          s.crtMode          ?? false,
+      skipBoot:         s.skipBoot         ?? false
+    };
+  })(),
   apiKey: localStorage.getItem(KEYS.apiKey) || "",
-  // current flow
-  brewType: null,          // "v60" | "brikka"
-  method: null,            // "hot" | "iced" | "neat" | "americano"
+  // operator input
+  brewType: null,
+  method: null,
   selectedBean: null,
   dose: 16,
   ratio: 15,
   recipe: null,
   recipeKey: null,
   pourSchedule: null,
-  engineMeta: null,        // captured per-brew: reasons[], aiInvoked, aiRationale, confidence
+  engineMeta: null,
   // feedback
   feedback: [],
   taggedNotes: {},
@@ -1070,13 +1134,14 @@ const state = {
   // forms
   beanDraft: null,
   // ui
-  versionTapCount: 0
+  versionTapCount: 0,
+  justLockedId: null
 };
 
 // ==========================================================
 // UTILITIES
 // ==========================================================
-function toast(msg, ms = 2000) {
+function toast(msg, ms = 2200) {
   const el = document.getElementById("toast");
   el.textContent = msg;
   el.classList.add("show");
@@ -1104,7 +1169,6 @@ function recipeKeyFor(brewType, method) {
 function getRecipeForBean(bean, recipeKey, brewType) {
   const existing = bean.recipes?.[recipeKey];
   if (existing) return { recipe: existing, basis: "preset", meta: null };
-  // fallback to smart defaults
   if (recipeKey.startsWith("v60")) {
     const sd = smartDefaultsV60(bean, recipeKey === "v60_iced" ? "iced" : "hot");
     return { recipe: sd, basis: "smart_default", meta: sd };
@@ -1116,94 +1180,235 @@ function getRecipeForBean(bean, recipeKey, brewType) {
   return null;
 }
 
+// apply / remove CRT class from body
+function applyCrtMode() {
+  document.body.classList.toggle("crt", !!state.settings.crtMode);
+}
+
+// mission briefing data generator
+function generateMissionBriefing(bean, recipe, engineMeta, brewType) {
+  let threat = "No active threats identified.";
+  if (engineMeta?.reasons?.length) {
+    const r = engineMeta.reasons;
+    if (r.some(x => /espresso roast/i.test(x)))     threat = "Espresso roast on pour-over — higher solubility; corpse water risk if dialed too fine";
+    else if (r.some(x => /fruity/i.test(x)))         threat = "Fruity origin active — acidity pull risk if extraction runs long";
+    else if (r.some(x => /delicate|fragile/i.test(x))) threat = "Delicate process — fragile aromatics; ash risk at elevated temp";
+    else if (r.some(x => /dark roast/i.test(x)))     threat = "Dark roast — low extraction ceiling; ash onset is quick";
+    else if (r.some(x => /porous/i.test(x)))         threat = "Porous origin — narrow window; channeling risk at fine settings";
+    else if (r.some(x => /dense/i.test(x)))          threat = "Dense origin — high potential; rewards fine grind";
+    else if (r.some(x => /chocolate/i.test(x)))      threat = "Chocolate-forward — integration pour required for body";
+    else                                              threat = r[0];
+  } else if (recipe.locked) {
+    threat = "Protocol dialed — all clear. Execute.";
+  } else if (engineMeta?.basis === "preset") {
+    threat = "Preset protocol loaded — engine calibrated for this bean.";
+  }
+
+  const isBrikka = brewType === "brikka";
+  const minC = Math.max(isBrikka ? 12 : 12, (recipe.clicks || 24) - 1);
+  const maxC = Math.min(isBrikka ? 15 : 26, (recipe.clicks || 24) + 1);
+  let killZone = `${minC}–${maxC} clicks`;
+  if (recipe.temp) {
+    killZone += ` · ${Math.max(88, recipe.temp - 1)}–${Math.min(96, recipe.temp + 1)}°C`;
+  }
+  return { threat, killZone };
+}
+
+// boot sequence — one per session
+function bootSequence(onComplete) {
+  if (state.settings.skipBoot || sessionStorage.getItem("bl_booted")) { onComplete(); return; }
+  sessionStorage.setItem("bl_booted", "1");
+
+  const beanCount = allBeans().length;
+  const histCount = state.history.length;
+  const lines = [
+    { text: "BREW LAB V3.6 // PHANTOM TRIAL", cls: "title" },
+    { text: "─────────────────────────────────────", cls: "dim" },
+    { text: "" },
+    { text: `> INIT EXTRACTION ENGINE..........  OK` },
+    { text: `> LOAD ORIGIN PROFILES............  OK` },
+    { text: `> LOAD BEAN ARCHIVE...............  OK  [${beanCount} ENTRIES]` },
+    { text: `> LOAD ARCHIVE....................  OK  [${histCount} PROTOCOLS]` },
+    { text: `> CALIBRATE DOSE ENGINE...........  OK` },
+    { text: `> PHANTOM TRIAL MODE..............  ACTIVE` },
+    { text: "" },
+    { text: `> STANDING BY.`, cls: "amber" },
+  ];
+
+  const overlay = document.createElement("div");
+  overlay.className = "boot-overlay";
+  overlay.innerHTML = `<div class="boot-inner"><div class="boot-lines" id="bl-lines"></div><div class="boot-skip">TAP TO SKIP</div></div>`;
+  document.body.appendChild(overlay);
+
+  const linesEl = overlay.querySelector("#bl-lines");
+  let i = 0;
+
+  const skip = () => {
+    overlay.classList.add("fade-out");
+    setTimeout(() => { overlay.remove(); onComplete(); }, 300);
+  };
+  overlay.addEventListener("click", skip);
+
+  function tick() {
+    if (i >= lines.length) {
+      setTimeout(skip, 500);
+      return;
+    }
+    const { text, cls } = lines[i++];
+    const el = document.createElement("div");
+    el.className = "boot-line" + (cls ? " " + cls : "");
+    el.textContent = text;
+    linesEl.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("on")));
+    setTimeout(tick, text === "" ? 60 : 110);
+  }
+  tick();
+}
+
+// TARGET ACQUIRED overlay — shown on perfect lock
+function showAcquiredOverlay(recipe, callback) {
+  const parts = [`[ ${recipe.clicks} CLICKS ]`];
+  if (recipe.temp)  parts.push(`[ ${recipe.temp}°C ]`);
+  if (recipe.ratio) parts.push(`[ 1:${recipe.ratio} ]`);
+
+  const overlay = document.createElement("div");
+  overlay.className = "acquired-overlay";
+  overlay.innerHTML = `
+    <div class="acquired-inner">
+      <div class="acquired-eyebrow">◆ ◆ ◆</div>
+      <div class="acquired-title">TARGET ACQUIRED</div>
+      <div class="acquired-data">${parts.map(p => `<span>${p}</span>`).join("<br>")}</div>
+      <div class="acquired-status">◆ PROTOCOL LOCKED · DIALED</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => {
+    overlay.style.transition = "opacity 0.3s ease-out";
+    overlay.style.opacity = "0";
+    setTimeout(() => { overlay.remove(); callback(); }, 300);
+  }, 1500);
+}
+
 // ==========================================================
 // RENDER ROUTER
 // ==========================================================
 function render() {
+  applyCrtMode();
   const app = document.getElementById("app");
   app.innerHTML = "";
   app.appendChild(renderStatusBar());
-  app.appendChild(renderHeader());
 
   const screens = {
-    home: renderHome,
-    method: renderMethod,
-    bean: renderBeanPicker,
-    dose: renderDose,
-    recipe: renderRecipe,
+    home:     renderHome,
+    method:   renderMethod,
+    bean:     renderBeanPicker,
+    dose:     renderDose,
+    recipe:   renderRecipe,
     feedback: renderFeedback,
-    history: renderHistory,
+    history:  renderHistory,
     settings: renderSettings,
-    addBean: renderAddBean
+    addBean:  renderAddBean,
+    voidlog:  renderVoidLog
   };
   const fn = screens[state.screen] || renderHome;
   app.appendChild(fn());
 
-  if (["home", "history", "settings"].includes(state.screen)) {
+  if (["home","history","settings"].includes(state.screen)) {
     app.appendChild(renderTabBar());
   }
   window.scrollTo(0, 0);
 }
 
+// ==========================================================
+// HUD BAR
+// ==========================================================
 function renderStatusBar() {
   const el = document.createElement("div");
-  el.className = "status-bar";
-  const parts = [];
-  parts.push(`<span class="status-dot"></span>`);
-  if (state.selectedBean) {
-    parts.push(`<span class="crumb">${state.selectedBean.name.toUpperCase()}</span>`);
-    if (state.brewType) {
-      parts.push(`<span class="sep">/</span>`);
-      parts.push(`<span>${state.brewType.toUpperCase()}${state.method ? " " + state.method.toUpperCase() : ""}</span>`);
+  el.className = "hud-bar";
+
+  // status cell
+  let statusText = "STANDBY", statusClass = "";
+  if (state.recipe?.locked)           { statusText = "DIALED";   statusClass = "sv-locked"; el.classList.add("locked"); }
+  else if (state.recipe)              { statusText = "ACTIVE";   statusClass = "sv-active"; }
+  else if (state.aiLoading)           { statusText = "COMPILING"; statusClass = "sv-active"; }
+  else if (state.screen === "history"){ statusText = "ARCHIVE";  statusClass = "sv-nav"; }
+  else if (state.screen === "settings"){ statusText = "SYSTEM";  statusClass = "sv-nav"; }
+  else if (state.screen === "addBean"){ statusText = "REGISTER"; statusClass = "sv-nav"; }
+  else if (state.screen === "voidlog"){ statusText = "VOID.LOG"; statusClass = "sv-hidden"; }
+
+  // bean + sys cells — idle state shows OPERATOR LOADOUT
+  const isIdle = state.screen === "home" && !state.selectedBean;
+  let beanLabel = "BEAN", beanVal = "—";
+  let sysLabel = "PROTOCOL", sysVal = "—";
+
+  if (isIdle) {
+    beanLabel = "OPERATOR"; beanVal = "LOADOUT";
+    sysLabel  = "GEAR";     sysVal  = "C40 · V60";
+  } else if (state.selectedBean) {
+    const raw = state.selectedBean.name.toUpperCase();
+    beanVal = raw.length > 16 ? raw.slice(0, 14) + "…" : raw;
+    if (state.brewType && state.method) {
+      sysVal = `${state.brewType.toUpperCase()} ${state.method.replace("_"," ").toUpperCase()}`;
+    } else if (state.brewType) {
+      sysVal = state.brewType.toUpperCase();
     }
-  } else {
-    parts.push(`<span class="crumb">BREW LAB</span>`);
-    parts.push(`<span class="sep">/</span>`);
-    parts.push(`<span>${state.screen.toUpperCase()}</span>`);
   }
-  if (state.recipe?.locked) {
-    el.classList.add("locked");
-    parts.push(`<span class="right" style="color: var(--green-lock);">LOCKED</span>`);
-  }
-  el.innerHTML = parts.join("");
+
+  el.innerHTML = `
+    <div class="hud-cell brand" id="version-tap">
+      <div class="hud-value brand-name">BREW LAB</div>
+      <div class="hud-ver">V3.6 // PHANTOM</div>
+    </div>
+    <div class="hud-cell hc-bean">
+      <div class="hud-label">${beanLabel}</div>
+      <div class="hud-value">${beanVal}</div>
+    </div>
+    <div class="hud-cell hc-sys">
+      <div class="hud-label">${sysLabel}</div>
+      <div class="hud-value">${sysVal}</div>
+    </div>
+    <div class="hud-cell hc-status">
+      <div class="hud-label">STATUS</div>
+      <div class="hud-value ${statusClass}">◆ ${statusText}</div>
+    </div>
+  `;
+
+  // long-press → VOID.LOG  |  short tap → 5-tap counter
+  const brand = el.querySelector("#version-tap");
+  let lpTimer = null, lpFired = false;
+  brand.addEventListener("touchstart", () => {
+    lpFired = false;
+    lpTimer = setTimeout(() => { lpFired = true; state.screen = "voidlog"; render(); }, 650);
+  }, { passive: true });
+  brand.addEventListener("touchend", () => { clearTimeout(lpTimer); lpTimer = null; });
+  brand.addEventListener("touchmove", () => { clearTimeout(lpTimer); lpTimer = null; }, { passive: true });
+  brand.addEventListener("click", () => { if (!lpFired) onVersionTap(); lpFired = false; });
+
   return el;
 }
 
-function renderHeader() {
-  const h = document.createElement("header");
-  h.className = "app-header";
-  h.innerHTML = `
-    <h1>BREW LAB</h1>
-    <span class="version version-tap" id="version-tap">V3.5 / PHANTOM</span>
-  `;
-  setTimeout(() => {
-    const tap = h.querySelector("#version-tap");
-    if (tap) {
-      tap.addEventListener("click", onVersionTap);
-    }
-  }, 0);
-  return h;
-}
-
+// ==========================================================
+// TAB BAR — hardware channel selector
+// ==========================================================
 function renderTabBar() {
   const nav = document.createElement("nav");
   nav.className = "tab-bar";
   const tabs = [
-    { id: "home", label: "Brew" },
-    { id: "history", label: "History" },
-    { id: "addBean", label: "+ Bean" },
-    { id: "settings", label: "Settings" }
+    { id: "home",    label: "BREW"    },
+    { id: "history", label: "ARCHIVE" },
+    { id: "addBean", label: "REG."    },
+    { id: "settings",label: "SYS"     }
   ];
-  nav.innerHTML = tabs.map(t =>
-    `<button class="tab ${state.screen === t.id ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`
-  ).join("");
+  nav.innerHTML = tabs.map(t => {
+    const active = state.screen === t.id;
+    const lbl = active ? `[${t.label}]` : t.label;
+    return `<button class="tab${active ? " active" : ""}" data-tab="${t.id}">${lbl}</button>`;
+  }).join("");
   nav.addEventListener("click", e => {
     const tab = e.target.dataset.tab;
     if (!tab) return;
-    state.selectedBean = null;
-    state.brewType = null;
-    state.method = null;
-    state.recipe = null;
+    state.selectedBean = null; state.brewType = null;
+    state.method = null; state.recipe = null;
     state.screen = tab;
     render();
   });
@@ -1211,55 +1416,76 @@ function renderTabBar() {
 }
 
 // ==========================================================
-// HOME — pick method
+// HOME — protocol select + operator loadout
 // ==========================================================
 function renderHome() {
   const wrap = document.createElement("div");
   wrap.className = "section";
+  const totalBrews = state.history.length;
+  const beanCount = allBeans().length;
+  const perfectKills = state.history.filter(h => h.feedback?.includes("perfect")).length;
   wrap.innerHTML = `
-    <h2>Select brewer</h2>
-    <div class="btn-stack">
-      <button class="btn primary" data-brew="v60" style="height: 80px; font-size: 14px;">◆ V60 — POUR OVER</button>
-      <button class="btn primary" data-brew="brikka" style="height: 80px; font-size: 14px;">◆ BRIKKA — MOKA POT</button>
+    <div class="loadout-box">
+      <div class="lb-header">── OPERATOR LOADOUT ──────────────────</div>
+      <div class="lb-row"><span class="lb-key">GRINDER</span><span class="lb-val">Commandante C40 · clicks 12–26</span></div>
+      <div class="lb-row"><span class="lb-key">FILTER</span><span class="lb-val">Hario V60 (paper)</span></div>
+      <div class="lb-row"><span class="lb-key">PRESSURE</span><span class="lb-val">Bialetti Brikka 4-cup</span></div>
+      <div class="lb-row"><span class="lb-key">HEAT</span><span class="lb-val">IR Burner 1600W</span></div>
+      <div class="lb-row"><span class="lb-key">ARCHIVE</span><span class="lb-val">${totalBrews} PROTOCOLS · ${perfectKills} DIALED · ${beanCount} BEANS</span></div>
     </div>
+    <div class="proto-divider">── EXTRACTION PROTOCOLS ──────────────────</div>
+    <div class="btn-stack" style="margin-top: 14px;">
+      <button class="btn protocol" data-brew="v60">
+        <div class="proto-name">◆ V60 — POUR OVER</div>
+        <div class="proto-sub">MANUAL FILTER · DIAL-IN PRECISION</div>
+      </button>
+      <button class="btn protocol" data-brew="brikka" style="margin-top: 10px;">
+        <div class="proto-name">◆ BRIKKA — MOKA POT</div>
+        <div class="proto-sub">PRESSURE EXTRACT · CONCENTRATE PULL</div>
+      </button>
+    </div>
+    <div class="proto-divider" style="margin-top: 14px; text-align: center;">◇ SELECT PROTOCOL TO CONTINUE ◇</div>
   `;
   wrap.addEventListener("click", e => {
-    const b = e.target.dataset.brew;
+    const b = e.target.closest("[data-brew]")?.dataset.brew;
     if (!b) return;
-    state.brewType = b;
-    state.screen = "method";
-    render();
+    state.brewType = b; state.screen = "method"; render();
   });
   return wrap;
 }
 
 // ==========================================================
-// METHOD — hot/iced or neat/americano
+// METHOD
 // ==========================================================
 function renderMethod() {
   const wrap = document.createElement("div");
   wrap.className = "section";
   const opts = state.brewType === "v60" ?
-    [{ id: "hot", label: "Hot" }, { id: "iced", label: "Iced (50:50)" }] :
     [
-      { id: "neat", label: "Neat (espresso shot)" },
-      { id: "americano", label: "Hot Americano" },
-      { id: "iced_americano", label: "Iced Americano" }
+      { id: "hot",  label: "◆ HOT EXTRACTION",  sub: "FULL POUR · 1:14–17 RATIO" },
+      { id: "iced", label: "◆ ICED EXTRACTION",  sub: "50:50 DILUTION · FLASH CHILL" }
+    ] : [
+      { id: "neat",         label: "◆ NEAT",           sub: "CONCENTRATE · STRAIGHT PULL" },
+      { id: "americano",    label: "◆ HOT AMERICANO",   sub: "CONCENTRATE + HOT WATER" },
+      { id: "iced_americano",label: "◆ ICED AMERICANO", sub: "OVER ICE · STRAIGHT OR HYBRID" }
     ];
   wrap.innerHTML = `
-    <h2>Method</h2>
+    <h2>SELECT METHOD</h2>
     <div class="btn-stack">
-      ${opts.map(o => `<button class="btn primary" data-method="${o.id}" style="height: 70px;">${o.label}</button>`).join("")}
+      ${opts.map(o => `
+        <button class="btn method-btn" data-method="${o.id}">
+          <div class="method-name">${o.label}</div>
+          <div class="method-sub">${o.sub}</div>
+        </button>
+      `).join("")}
       <button class="btn ghost" data-back="1" style="margin-top: 16px;">← Back</button>
     </div>
   `;
   wrap.addEventListener("click", e => {
-    if (e.target.dataset.back) { state.screen = "home"; render(); return; }
-    const m = e.target.dataset.method;
+    if (e.target.closest("[data-back]")) { state.screen = "home"; render(); return; }
+    const m = e.target.closest("[data-method]")?.dataset.method;
     if (!m) return;
-    state.method = m;
-    state.screen = "bean";
-    render();
+    state.method = m; state.screen = "bean"; render();
   });
   return wrap;
 }
@@ -1270,12 +1496,11 @@ function renderMethod() {
 function renderBeanPicker() {
   const wrap = document.createElement("div");
   wrap.className = "section";
-
-  // Filter beans relevant for this brewer
   const recipeKey = recipeKeyFor(state.brewType, state.method);
   const beans = allBeans();
+  const customCount = state.customBeans.length;
 
-  let html = `<h2>Select bean</h2><div class="bean-grid">`;
+  let html = `<h2>SELECT LOADOUT</h2><div class="bean-grid">`;
   for (const bean of beans) {
     const hasPreset = bean.recipes?.[recipeKey] != null;
     const isCustom = bean.custom;
@@ -1285,24 +1510,28 @@ function renderBeanPicker() {
         <div class="bean-name">${bean.name}</div>
         <div class="bean-meta">
           ${bean.origins[0].country}${bean.origins.length > 1 ? ` +${bean.origins.length - 1}` : ""}
-          <span class="sep">·</span>
-          ${bean.origins[0].process}
-          <span class="sep">·</span>
-          ${bean.roast.level}
+          <span class="sep">·</span>${bean.origins[0].process}
+          <span class="sep">·</span>${bean.roast.level}
         </div>
-      </div>
-    `;
+      </div>`;
   }
-  html += `</div><button class="btn ghost" data-back="1" style="margin-top: 16px;">← Back</button>`;
+  html += `</div>`;
 
+  if (customCount === 0) {
+    html += `
+      <div class="archive-status">
+        &gt; BEAN ARCHIVE: ${PRESETS.length} PRESETS LOADED. 0 CUSTOM ENTRIES.<br>
+        &gt; Tap [REG.] to expand the loadout.
+      </div>`;
+  }
+
+  html += `<button class="btn ghost" data-back="1" style="margin-top: 16px;">← Back</button>`;
   wrap.innerHTML = html;
   wrap.addEventListener("click", e => {
-    if (e.target.dataset.back) { state.screen = "method"; render(); return; }
+    if (e.target.closest("[data-back]")) { state.screen = "method"; render(); return; }
     const card = e.target.closest("[data-bean]");
     if (!card) return;
-    state.selectedBean = findBean(card.dataset.bean);
-    state.screen = "dose";
-    render();
+    state.selectedBean = findBean(card.dataset.bean); state.screen = "dose"; render();
   });
   return wrap;
 }
@@ -1320,7 +1549,7 @@ function renderDose() {
 
   wrap.innerHTML = `
     <div class="card">
-      <span class="card-label">DOSE</span>
+      <span class="card-label">DOSE CONFIG</span>
       <div class="form-row">
         <label>Coffee weight (grams)</label>
         <input type="number" id="dose-input" value="${state.dose}" min="8" max="30" step="1">
@@ -1330,37 +1559,28 @@ function renderDose() {
       <div class="form-row">
         <label>Ratio (1:X water)</label>
         <div class="three-toggle" id="ratio-toggle">
-          ${[14, 15, 16, 17].map(r =>
-            `<button data-ratio="${r}" class="${state.ratio === r ? "selected" : ""}">1:${r}</button>`
-          ).join("")}
+          ${[14,15,16,17].map(r => `<button data-ratio="${r}" class="${state.ratio===r?"selected":""}">1:${r}</button>`).join("")}
         </div>
         <div class="helper-text">Total water will be ${state.dose * state.ratio}g</div>
       </div>` : ""}
     </div>
-
-    <button class="btn primary" id="go-btn">◆ GENERATE RECIPE</button>
+    <button class="btn primary" id="go-btn">◆ COMPILE PROTOCOL</button>
     <button class="btn ghost" data-back="1" style="margin-top: 8px;">← Back</button>
   `;
 
   wrap.querySelector("#dose-input").addEventListener("input", e => {
     state.dose = parseInt(e.target.value) || defaultDose;
     if (isV60) {
-      const helper = wrap.querySelector(".helper-text:last-of-type");
-      if (helper && helper.textContent.startsWith("Total")) {
-        helper.textContent = `Total water will be ${state.dose * state.ratio}g`;
-      }
+      const h = wrap.querySelector(".helper-text:last-of-type");
+      if (h && h.textContent.startsWith("Total")) h.textContent = `Total water will be ${state.dose * state.ratio}g`;
     }
   });
-
   if (isV60) {
     wrap.querySelector("#ratio-toggle").addEventListener("click", e => {
-      const r = parseInt(e.target.dataset.ratio);
-      if (!r) return;
-      state.ratio = r;
-      render();
+      const r = parseInt(e.target.dataset.ratio); if (!r) return;
+      state.ratio = r; render();
     });
   }
-
   wrap.querySelector("#go-btn").addEventListener("click", generateRecipe);
   wrap.querySelector("[data-back]").addEventListener("click", () => { state.screen = "bean"; render(); });
   return wrap;
@@ -1385,47 +1605,28 @@ function generateRecipe() {
     aiRationale: null
   };
 
-  // Build pour schedule for V60
   if (state.brewType === "v60") {
-    const isIced = state.method === "iced";
-    state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, isIced);
+    state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, state.method === "iced");
   }
 
-  // Auto-invoke AI if smart_default confidence low and API key present
   if (result.basis === "smart_default" && result.meta?.confidence === "low" && state.apiKey) {
-    state.aiLoading = true;
-    state.screen = "recipe";
-    render();
-    askAdvisor({
-      bean,
-      recipeKey,
-      currentRecipe: state.recipe,
-      feedbackHistory: [],
-      mode: "fill",
-      apiKey: state.apiKey
-    }).then(res => {
-      state.aiLoading = false;
-      state.aiResult = res;
-      if (res.ok) {
-        state.engineMeta.aiInvoked = true;
-        state.engineMeta.aiRationale = res.rationale;
-        // Apply AI suggestion
-        state.recipe.clicks = res.clicks;
-        state.recipe.temp = res.temp;
-        state.recipe.pourStyle = res.pourStyle;
-        state.recipe.ratio = res.ratio;
-        if (state.brewType === "v60") {
-          const isIced = state.method === "iced";
-          state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, isIced);
+    state.aiLoading = true; state.screen = "recipe"; render();
+    askAdvisor({ bean, recipeKey, currentRecipe: state.recipe, feedbackHistory: [], mode: "fill", apiKey: state.apiKey })
+      .then(res => {
+        state.aiLoading = false; state.aiResult = res;
+        if (res.ok) {
+          state.engineMeta.aiInvoked = true; state.engineMeta.aiRationale = res.rationale;
+          state.recipe.clicks = res.clicks; state.recipe.temp = res.temp;
+          state.recipe.pourStyle = res.pourStyle; state.recipe.ratio = res.ratio;
+          if (state.brewType === "v60") {
+            state.pourSchedule = generatePourSchedule(state.dose, state.ratio, state.recipe.pourStyle, state.method === "iced");
+          }
         }
-      }
-      render();
-    });
+        render();
+      });
     return;
   }
-
-  state.screen = "recipe";
-  render();
+  state.screen = "recipe"; render();
 }
 
 // ==========================================================
@@ -1437,107 +1638,90 @@ function renderRecipe() {
   const bean = state.selectedBean;
   const isV60 = state.brewType === "v60";
 
+  // mission briefing — above the data card
+  if (!state.aiLoading) {
+    const { threat, killZone } = generateMissionBriefing(bean, r, state.engineMeta, state.brewType);
+    const briefEl = document.createElement("div");
+    briefEl.className = "section mb-section";
+    briefEl.innerHTML = `
+      <div class="mission-brief">
+        <div class="mb-line"><span class="mb-key">TARGET</span><span class="mb-val">${bean.name}</span></div>
+        <div class="mb-line"><span class="mb-key">THREAT</span><span class="mb-val">${threat}</span></div>
+        <div class="mb-line"><span class="mb-key">KILL ZONE</span><span class="mb-val">${killZone}</span></div>
+      </div>`;
+    wrap.appendChild(briefEl);
+  }
+
   const recipeCard = document.createElement("div");
   recipeCard.className = "section";
 
   let cardHtml = `
-    <div class="card ${r.locked ? "locked" : ""}">
+    <div class="card${r.locked ? " locked" : ""}">
       <span class="card-label">EXTRACTION ${state.method.toUpperCase()}</span>
-      ${r.locked ? `<span class="lock-marker">LOCKED</span>` : ""}
+      ${r.locked ? `<span class="lock-marker">DIALED</span>` : ""}
       <div class="bean-name">${bean.name}</div>
       <div class="bean-meta">
         <span class="roast-intent">${bean.roast.intent}</span>
-        <span class="sep">·</span>
-        ${bean.origins.map(o => o.country).join(" + ")}
-        <span class="sep">·</span>
-        ${bean.roast.level}
+        <span class="sep">·</span>${bean.origins.map(o=>o.country).join(" + ")}
+        <span class="sep">·</span>${bean.roast.level}
       </div>
-      ${bean.tastingNotes?.length ? `
-      <div class="bean-notes">
-        ${bean.tastingNotes.map(n => `<span class="note-chip">${n}</span>`).join("")}
-      </div>` : ""}
+      ${bean.tastingNotes?.length ? `<div class="bean-notes">${bean.tastingNotes.map(n=>`<span class="note-chip">${n}</span>`).join("")}</div>` : ""}
       <div class="data-grid">
         <div class="data-cell">
           <div class="label">Dose</div>
           <div class="value large">${state.dose}<span class="unit">g</span></div>
         </div>
         ${isV60 && state.method === "iced" ? `
-        <div class="data-cell">
-          <div class="label">Hot water</div>
-          <div class="value large">${Math.round(state.dose * state.ratio * 0.5 / 5) * 5}<span class="unit">g</span></div>
-        </div>
-        <div class="data-cell">
-          <div class="label">Ice (in server)</div>
-          <div class="value large" style="color: var(--blue-cool);">${Math.round(state.dose * state.ratio * 0.5 / 5) * 5}<span class="unit">g</span></div>
-        </div>
-        <div class="data-cell">
-          <div class="label">Temp</div>
-          <div class="value">${r.temp}<span class="unit">°C</span></div>
-        </div>` : isV60 ? `
-        <div class="data-cell">
-          <div class="label">Water</div>
-          <div class="value large">${state.dose * state.ratio}<span class="unit">g</span></div>
-        </div>
-        <div class="data-cell">
-          <div class="label">Temp</div>
-          <div class="value">${r.temp}<span class="unit">°C</span></div>
-        </div>` : `
-        <div class="data-cell">
-          <div class="label">Base water</div>
-          <div class="value large">150<span class="unit">g</span></div>
-        </div>
-        <div class="data-cell">
-          <div class="label">Water start</div>
-          <div class="value" style="font-size: 14px;">${r.baseWaterTemp === "boiling" ? "Boiling" : "95°C / cool 30s"}</div>
-        </div>`}
+        <div class="data-cell"><div class="label">Hot water</div><div class="value large">${Math.round(state.dose*state.ratio*0.5/5)*5}<span class="unit">g</span></div></div>
+        <div class="data-cell"><div class="label">Ice (in server)</div><div class="value large" style="color:var(--blue-cool);">${Math.round(state.dose*state.ratio*0.5/5)*5}<span class="unit">g</span></div></div>
+        <div class="data-cell"><div class="label">Temp</div><div class="value">${r.temp}<span class="unit">°C</span></div></div>
+        ` : isV60 ? `
+        <div class="data-cell"><div class="label">Water</div><div class="value large">${state.dose*state.ratio}<span class="unit">g</span></div></div>
+        <div class="data-cell"><div class="label">Temp</div><div class="value">${r.temp}<span class="unit">°C</span></div></div>
+        ` : `
+        <div class="data-cell"><div class="label">Base water</div><div class="value large">150<span class="unit">g</span></div></div>
+        <div class="data-cell"><div class="label">Water start</div><div class="value" style="font-size:14px;">${r.baseWaterTemp==="boiling"?"Boiling":"95°C / cool 30s"}</div></div>
+        `}
         <div class="data-cell">
           <div class="label">Grind / Commandante</div>
           <div class="value">${r.clicks}<span class="unit">clicks</span></div>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  // AI loading or result
   if (state.aiLoading) {
-    cardHtml += `<div class="card" style="border-style: dashed;"><span class="card-label">AI ADVISOR</span><div class="loading" style="font-family: var(--mono); font-size: 12px; color: var(--gold);">◇ Consulting Haiku…</div></div>`;
+    cardHtml += `<div class="card dashed"><span class="card-label">AI ADVISOR</span><div class="loading" style="font-family:var(--mono);font-size:12px;color:var(--gold);">◇ COMPILING ADVISORY...</div></div>`;
   } else if (state.aiResult?.ok && state.engineMeta?.aiInvoked) {
     cardHtml += `
-      <div class="card" style="border-color: var(--gold-deep);">
-        <span class="card-label" style="color: var(--gold);">AI ADVISOR · ${state.aiResult.confidence.toUpperCase()}</span>
-        <div style="font-family: var(--mono); font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-          ${state.aiResult.rationale}
-        </div>
-      </div>
-    `;
+      <div class="card ai-success">
+        <span class="card-label gold">AI ADVISOR · ${state.aiResult.confidence.toUpperCase()}</span>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);line-height:1.6;">${state.aiResult.rationale}</div>
+      </div>`;
   } else if (state.aiResult && !state.aiResult.ok) {
     cardHtml += `
-      <div class="card" style="border-color: var(--red-miss);">
-        <span class="card-label" style="color: var(--red-miss);">AI ERROR</span>
-        <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted);">${state.aiResult.error}</div>
-      </div>
-    `;
+      <div class="card ai-error">
+        <span class="card-label red">AI ERROR</span>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);">${state.aiResult.error}</div>
+      </div>`;
   }
 
-  // Engine reasoning (always visible for transparency in phantom trial)
   if (state.engineMeta?.reasons?.length) {
     cardHtml += `
       <div class="card">
-        <span class="card-label">ENGINE BASIS · ${state.engineMeta.basis.replace("_", " ").toUpperCase()}</span>
-        <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted); line-height: 1.7;">
-          ${state.engineMeta.reasons.map(r => `→ ${r}`).join("<br>")}
+        <span class="card-label">ENGINE BASIS · ${state.engineMeta.basis.replace("_"," ").toUpperCase()}</span>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);line-height:1.7;">
+          ${state.engineMeta.reasons.map(r=>`→ ${r}`).join("<br>")}
         </div>
-        <div style="font-family: var(--mono); font-size: 10px; margin-top: 8px; color: var(--text-ghost); letter-spacing: 0.1em;">
+        <div style="font-family:var(--mono);font-size:10px;margin-top:8px;color:var(--text-ghost);letter-spacing:0.1em;">
           CONFIDENCE: ${state.engineMeta.confidence.toUpperCase()}
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
   recipeCard.innerHTML = cardHtml;
   wrap.appendChild(recipeCard);
 
-  // Pour schedule for V60
+  // pour schedule (V60)
   if (isV60 && state.pourSchedule) {
     const pourCard = document.createElement("div");
     pourCard.className = "section";
@@ -1545,43 +1729,37 @@ function renderRecipe() {
     const isIced = state.method === "iced";
     pourCard.innerHTML = `
       <div class="card">
-        <span class="card-label">POUR SCHEDULE · ${r.pourStyle.toUpperCase().replace("_", " ")}${isIced ? " · ICED" : ""}</span>
+        <span class="card-label">POUR SCHEDULE · ${r.pourStyle.toUpperCase().replace("_"," ")}${isIced?" · ICED":""}</span>
         <div class="pour-timeline">
           ${isIced ? `
-          <div class="pour-step" style="border-bottom-color: var(--blue-cool);">
-            <div class="time" style="color: var(--blue-cool);">PREP</div>
-            <div>
-              <div class="weight">${iceG}g ice in server</div>
-              <div class="instr">Place ice in V60 server before brewing. Rinse filter with hot water and discard.</div>
-            </div>
+          <div class="pour-step" style="border-bottom-color:var(--blue-cool);">
+            <div class="time" style="color:var(--blue-cool);">PREP</div>
+            <div><div class="weight">${iceG}g ice in server</div>
+            <div class="instr">Place ice in V60 server before brewing. Rinse filter with hot water and discard.</div></div>
           </div>` : ""}
           ${state.pourSchedule.steps.map(s => `
             <div class="pour-step">
               <div class="time">${fmtTime(s.t)}</div>
               <div>
-                <div class="weight">+ ${s.add}g → ${s.running}g${isIced ? " <span style='color: var(--text-ghost);'>(hot water)</span>" : ""}</div>
+                <div class="weight">+ ${s.add}g → ${s.running}g${isIced?` <span style="color:var(--text-ghost);">(hot water)</span>`:""}</div>
                 <div class="instr">${s.instr}</div>
               </div>
-            </div>
-          `).join("")}
+            </div>`).join("")}
           ${isIced ? `
-          <div class="pour-step" style="border-bottom: none;">
-            <div class="time" style="color: var(--blue-cool);">SERVE</div>
-            <div>
-              <div class="weight">Swirl server, pour over fresh ice</div>
-              <div class="instr">Total beverage: ${state.dose * state.ratio}g (${iceG}g hot water + ${iceG}g ice). Let ice melt fully into the brew.</div>
-            </div>
+          <div class="pour-step" style="border-bottom:none;">
+            <div class="time" style="color:var(--blue-cool);">SERVE</div>
+            <div><div class="weight">Swirl server, pour over fresh ice</div>
+            <div class="instr">Total beverage: ${state.dose*state.ratio}g (${iceG}g hot water + ${iceG}g ice). Let ice melt fully into the brew.</div></div>
           </div>` : ""}
         </div>
-        <div style="margin-top: 10px; font-family: var(--mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.1em;">
-          TARGET DRAWDOWN: ${fmtTime(state.pourSchedule.drawdown)}${isIced ? ` · HOT WATER ${state.pourSchedule.total}g` : ""}
+        <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:0.1em;">
+          TARGET DRAWDOWN: ${fmtTime(state.pourSchedule.drawdown)}${isIced?` · HOT WATER ${state.pourSchedule.total}g`:""}
         </div>
-      </div>
-    `;
+      </div>`;
     wrap.appendChild(pourCard);
   }
 
-  // Brikka steps for Brikka
+  // brikka steps
   if (!isV60) {
     const brikkaSteps = document.createElement("div");
     brikkaSteps.className = "section";
@@ -1589,57 +1767,44 @@ function renderRecipe() {
       <div class="card">
         <span class="card-label">BRIKKA PROTOCOL</span>
         <div class="pour-timeline">
-          <div class="pour-step"><div class="time">0:00</div><div><div class="weight">Boil 150ml</div><div class="instr">Pour ${r.baseWaterTemp === "boiling" ? "boiling" : "95°C (cool 30s)"} water into Brikka base.</div></div></div>
+          <div class="pour-step"><div class="time">0:00</div><div><div class="weight">Boil 150ml</div><div class="instr">Pour ${r.baseWaterTemp==="boiling"?"boiling":"95°C (cool 30s)"} water into Brikka base.</div></div></div>
           <div class="pour-step"><div class="time">0:30</div><div><div class="weight">Grind ${state.dose}g · ${r.clicks} clicks</div><div class="instr">Fill basket. Level with finger. NO TAMPING.</div></div></div>
           <div class="pour-step"><div class="time">0:45</div><div><div class="weight">Assemble</div><div class="instr">Towel on hot base. Screw firmly.</div></div></div>
           <div class="pour-step"><div class="time">1:00</div><div><div class="weight">Ignite 1600W IR</div><div class="instr">Let it rip. ~5–6 min total.</div></div></div>
-          ${state.method === "americano" ? `
+          ${state.method==="americano"?`
           <div class="pour-step"><div class="time">5:00</div><div><div class="weight">Pre-heat cup</div><div class="instr">Boiling water in serving cup. Discard before pour.</div></div></div>
-          <div class="pour-step"><div class="time">6:00</div><div><div class="weight">Pour concentrate + 110ml at 87°C</div><div class="instr">Concentrate first, then hot water.</div></div></div>` : ""}
-          ${state.method === "iced_americano" ? (r.icedStyle === "hybrid" ? `
+          <div class="pour-step"><div class="time">6:00</div><div><div class="weight">Pour concentrate + 110ml at 87°C</div><div class="instr">Concentrate first, then hot water.</div></div></div>`:""}
+          ${state.method==="iced_americano"?(r.icedStyle==="hybrid"?`
           <div class="pour-step"><div class="time">5:00</div><div><div class="weight">Prep ice glass</div><div class="instr">Fill tall glass with 150-170g ice.</div></div></div>
-          <div class="pour-step"><div class="time">5:30</div><div><div class="weight">Pour ${r.hybridHotMl || 70}ml hot water (85-90°C) over ice</div><div class="instr">Hot water first opens up the bean's body before concentrate.</div></div></div>
-          <div class="pour-step"><div class="time">6:00</div><div><div class="weight">Pour concentrate on top</div><div class="instr">Brikka concentrate straight onto the diluted ice. Sip immediately.</div></div></div>` : `
+          <div class="pour-step"><div class="time">5:30</div><div><div class="weight">Pour ${r.hybridHotMl||70}ml hot water (85-90°C) over ice</div><div class="instr">Hot water first opens up the bean's body before concentrate.</div></div></div>
+          <div class="pour-step"><div class="time">6:00</div><div><div class="weight">Pour concentrate on top</div><div class="instr">Brikka concentrate straight onto the diluted ice. Sip immediately.</div></div></div>`:`
           <div class="pour-step"><div class="time">5:00</div><div><div class="weight">Prep ice glass</div><div class="instr">Fill tall glass with 150-170g ice.</div></div></div>
           <div class="pour-step"><div class="time">6:00</div><div><div class="weight">Pour concentrate straight over ice</div><div class="instr">Brikka concentrate hits ice, hisses, chills instantly. No water added.</div></div></div>
-          <div class="pour-step"><div class="time">6:30</div><div><div class="weight">Optional dilution</div><div class="instr">If too dense or flat, add 30-50ml cold water. Most Brazilian naturals don't need it.</div></div></div>`) : ""}
+          <div class="pour-step"><div class="time">6:30</div><div><div class="weight">Optional dilution</div><div class="instr">If too dense or flat, add 30-50ml cold water. Most Brazilian naturals don't need it.</div></div></div>`):""}
         </div>
-      </div>
-    `;
+      </div>`;
     wrap.appendChild(brikkaSteps);
   }
 
-  // Actions
+  // operator input handlers
   const actions = document.createElement("div");
   actions.className = "section";
   actions.innerHTML = `
     <div class="btn-stack">
-      <button class="btn primary" id="rate-btn">◆ RATE THIS BREW</button>
+      <button class="btn primary" id="rate-btn">◆ FILE REPORT</button>
       <button class="btn ghost" id="newbrew-btn">← New brew</button>
-    </div>
-  `;
+    </div>`;
   actions.querySelector("#rate-btn").addEventListener("click", () => {
-    state.feedback = [];
-    state.taggedNotes = {};
-    state.adjustment = null;
-    state.aiAdjustment = null;
-    state.pendingDevNote = "";
-    state.screen = "feedback";
-    render();
+    state.feedback = []; state.taggedNotes = {}; state.adjustment = null;
+    state.aiAdjustment = null; state.pendingDevNote = "";
+    state.screen = "feedback"; render();
   });
   actions.querySelector("#newbrew-btn").addEventListener("click", () => {
-    state.selectedBean = null;
-    state.brewType = null;
-    state.method = null;
-    state.recipe = null;
-    state.engineMeta = null;
-    state.aiResult = null;
-    state.pourSchedule = null;
-    state.screen = "home";
-    render();
+    state.selectedBean = null; state.brewType = null; state.method = null;
+    state.recipe = null; state.engineMeta = null; state.aiResult = null;
+    state.pourSchedule = null; state.screen = "home"; render();
   });
   wrap.appendChild(actions);
-
   return wrap;
 }
 
@@ -1649,53 +1814,38 @@ function renderRecipe() {
 function renderFeedback() {
   const wrap = document.createElement("div");
   const r = state.recipe;
-
   const card = document.createElement("div");
   card.className = "section";
 
   let html = `
     <div class="card">
-      <span class="card-label">TASTE REPORT</span>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">How did this cup land?</p>
+      <span class="card-label">THREAT ASSESSMENT</span>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Assess this extraction:</p>
       <div class="feedback-grid" id="fb-grid">
         ${FEEDBACK_OPTIONS.map(o => `
-          <button class="chip ${state.feedback.includes(o.id) ? "selected" : ""}" data-fb="${o.id}">${o.label}</button>
+          <button class="chip${state.feedback.includes(o.id)?" selected":""}" data-fb="${o.id}">${o.label}</button>
         `).join("")}
-        <button class="chip perfect" data-fb="perfect">Perfect — lock recipe</button>
-      </div>
-  `;
+        <button class="chip perfect" data-fb="perfect">◆ KILL ZONE — LOCK PROTOCOL</button>
+      </div>`;
 
-  // Tasting notes verification
   if (state.selectedBean.tastingNotes?.length) {
     html += `
-      <div style="margin-top: 18px;">
-        <div style="font-family: var(--mono); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Tasting notes (tap to mark)</div>
+      <div style="margin-top:18px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Tasting notes (tap to mark)</div>
         <div class="bean-notes" id="notes-row">
           ${state.selectedBean.tastingNotes.map(n => {
-            const status = state.taggedNotes[n];
-            return `<span class="note-chip ${status === "achieved" ? "achieved" : status === "missed" ? "missed" : ""}" data-note="${n}">${n}</span>`;
+            const s = state.taggedNotes[n];
+            return `<span class="note-chip${s==="achieved"?" achieved":s==="missed"?" missed":""}" data-note="${n}">${n}</span>`;
           }).join("")}
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
-  // Adjustment preview
   if (state.adjustment) {
     if (state.adjustment.type === "channeling") {
-      html += `
-        <div class="adjustment" style="border-left-color: var(--red-miss);">
-          <div class="head" style="color: var(--red-miss);">CHANNELING DETECTED</div>
-          <div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action}</div>
-        </div>
-      `;
+      html += `<div class="adjustment chan"><div class="head">CHANNELING DETECTED</div><div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action}</div></div>`;
     } else if (state.adjustment.type === "no-change") {
-      html += `
-        <div class="adjustment">
-          <div class="head">NO CHANGE</div>
-          <div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action || ""}</div>
-        </div>
-      `;
+      html += `<div class="adjustment"><div class="head">NO CLEAR DIRECTION</div><div class="why">${state.adjustment.diagnosis}<br><br>${state.adjustment.action||""}</div></div>`;
     } else if (state.adjustment.type === "adjustment") {
       const adj = state.adjustment.adjustment;
       html += `
@@ -1703,165 +1853,120 @@ function renderFeedback() {
           <div class="head">PROPOSED ADJUSTMENT</div>
           <div class="change">
             Clicks <span class="arrow">${r.clicks}</span><span class="arrow">→</span><span class="new">${adj.clicks}</span>
-            ${adj.temp !== null ? `<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${adj.temp}°C</span>` : ""}
+            ${adj.temp!==null?`<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${adj.temp}°C</span>`:""}
           </div>
           <div class="why">${state.adjustment.diagnosis}</div>
-        </div>
-      `;
+        </div>`;
     }
   }
 
-  // AI adjustment result (if user asked AI on this feedback)
   if (state.aiAdjustment) {
     if (state.aiAdjustment.ok) {
-      const showTemp = state.aiAdjustment.temp != null && state.aiAdjustment.temp !== r.temp;
-      const showPour = state.aiAdjustment.pourStyle != null && state.aiAdjustment.pourStyle !== r.pourStyle;
+      const showTemp = state.aiAdjustment.temp!=null && state.aiAdjustment.temp!==r.temp;
+      const showPour = state.aiAdjustment.pourStyle!=null && state.aiAdjustment.pourStyle!==r.pourStyle;
       html += `
-        <div class="adjustment" style="border-left-color: var(--gold-glow);">
-          <div class="head" style="color: var(--gold-glow);">AI ADVISOR · ${state.aiAdjustment.confidence.toUpperCase()}</div>
+        <div class="adjustment ai-adj">
+          <div class="head">AI ADVISOR · ${state.aiAdjustment.confidence.toUpperCase()}</div>
           <div class="change">
             Clicks <span class="arrow">${r.clicks}</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.clicks}</span>
-            ${showTemp ? `<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.temp}°C</span>` : ""}
-            ${showPour ? `<br>Pour <span class="arrow">${r.pourStyle}</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.pourStyle}</span>` : ""}
-            ${state.aiAdjustment.clicks === r.clicks && !showTemp && !showPour ? `<br><span style="color: var(--text-muted); font-style: italic;">No change suggested — current looks right.</span>` : ""}
+            ${showTemp?`<br>Temp <span class="arrow">${r.temp}°C</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.temp}°C</span>`:""}
+            ${showPour?`<br>Pour <span class="arrow">${r.pourStyle}</span><span class="arrow">→</span><span class="new">${state.aiAdjustment.pourStyle}</span>`:""}
+            ${state.aiAdjustment.clicks===r.clicks&&!showTemp&&!showPour?`<br><span style="color:var(--text-muted);font-style:italic;">No change suggested — current looks right.</span>`:""}
           </div>
           <div class="why">${state.aiAdjustment.rationale}</div>
-        </div>
-      `;
+        </div>`;
     } else {
-      html += `<div class="adjustment" style="border-left-color: var(--red-miss);"><div class="head" style="color: var(--red-miss);">AI ERROR</div><div class="why">${state.aiAdjustment.error}</div></div>`;
+      html += `<div class="adjustment chan"><div class="head">AI ERROR</div><div class="why">${state.aiAdjustment.error}</div></div>`;
     }
   }
 
-  // Dev note
   html += `
-    <button class="dev-note-toggle ${state.pendingDevNote ? "open" : ""}" id="dev-toggle">dev note</button>
-    <div class="dev-note-area ${state.pendingDevNote ? "open" : ""}" id="dev-area">
+    <button class="dev-note-toggle${state.pendingDevNote?" open":""}" id="dev-toggle">field note</button>
+    <div class="dev-note-area${state.pendingDevNote?" open":""}" id="dev-area">
       <textarea id="dev-note-input" placeholder="What surprised you? Was the engine off? Calibration notes..." rows="3">${state.pendingDevNote}</textarea>
     </div>
-  `;
+  </div>`;
 
-  html += `</div>`;
+  const showAskAI = state.feedback.length>0 && !state.feedback.includes("perfect") && state.apiKey;
+  const applyLabel = state.feedback.includes("perfect") ? "LOCK & FILE"
+    : state.aiAdjustment?.ok ? "APPLY AI · FILE" : "APPLY & FILE";
 
-  // Actions
-  const showAskAI = state.feedback.length > 0 && !state.feedback.includes("perfect") && state.apiKey;
   html += `
-    <div class="btn-row" style="margin-top: 14px;">
-      <button class="btn" id="discard-btn">Cancel</button>
-      <button class="btn primary" id="apply-btn">${state.feedback.includes("perfect") ? "Lock & save" : (state.aiAdjustment?.ok ? "Apply AI & save" : "Apply & save")}</button>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn ghost" id="discard-btn">DISCARD</button>
+      <button class="btn primary" id="apply-btn">${applyLabel}</button>
     </div>
-    ${showAskAI ? `<button class="btn ghost" id="ask-ai-btn" style="margin-top: 8px;">${state.aiLoading ? "◇ Asking…" : "◇ Ask AI for sanity check"}</button>` : ""}
-    ${!state.apiKey && state.feedback.length > 0 && !state.feedback.includes("perfect") ? `<div class="helper-text" style="margin-top: 8px; text-align: center;">Set API key in Settings to enable AI advisor</div>` : ""}
+    ${showAskAI?`<button class="btn ghost" id="ask-ai-btn" style="margin-top:8px;">${state.aiLoading?"◇ COMPILING...":"◇ AI SANITY CHECK"}</button>`:""}
+    ${!state.apiKey&&state.feedback.length>0&&!state.feedback.includes("perfect")?`<div class="helper-text" style="margin-top:8px;text-align:center;">Set API key in SYS to enable AI advisor</div>`:""}
   `;
 
   card.innerHTML = html;
   wrap.appendChild(card);
 
-  // Feedback chip handlers
   card.querySelector("#fb-grid").addEventListener("click", e => {
-    const fb = e.target.dataset.fb;
-    if (!fb) return;
-    state.aiAdjustment = null;  // clear AI result if user changes feedback
+    const fb = e.target.dataset.fb; if (!fb) return;
+    state.aiAdjustment = null;
     if (fb === "perfect") {
-      state.feedback = ["perfect"];
-      state.adjustment = null;
+      state.feedback = ["perfect"]; state.adjustment = null;
     } else {
       state.feedback = state.feedback.filter(f => f !== "perfect");
-      if (state.feedback.includes(fb)) {
-        state.feedback = state.feedback.filter(f => f !== fb);
-      } else {
-        state.feedback.push(fb);
-      }
-      state.adjustment = state.feedback.length ? processFeedback({ currentRecipe: r, feedback: state.feedback, recipeKey: state.recipeKey }) : null;
+      state.feedback.includes(fb) ? state.feedback.splice(state.feedback.indexOf(fb),1) : state.feedback.push(fb);
+      state.adjustment = state.feedback.length ? processFeedback({ currentRecipe:r, feedback:state.feedback, recipeKey:state.recipeKey }) : null;
     }
     render();
   });
 
-  // Note tap cycle
   const notesRow = card.querySelector("#notes-row");
   if (notesRow) {
     notesRow.addEventListener("click", e => {
-      const note = e.target.dataset.note;
-      if (!note) return;
+      const note = e.target.dataset.note; if (!note) return;
       const cur = state.taggedNotes[note];
-      state.taggedNotes[note] = cur === "achieved" ? "missed" : cur === "missed" ? undefined : "achieved";
+      state.taggedNotes[note] = cur==="achieved" ? "missed" : cur==="missed" ? undefined : "achieved";
       render();
     });
   }
 
-  // Dev note toggle
   card.querySelector("#dev-toggle").addEventListener("click", () => {
-    const area = card.querySelector("#dev-area");
-    const tog = card.querySelector("#dev-toggle");
-    area.classList.toggle("open");
-    tog.classList.toggle("open");
-    if (area.classList.contains("open")) {
-      card.querySelector("#dev-note-input").focus();
-    }
+    const area = card.querySelector("#dev-area"); const tog = card.querySelector("#dev-toggle");
+    area.classList.toggle("open"); tog.classList.toggle("open");
+    if (area.classList.contains("open")) card.querySelector("#dev-note-input").focus();
   });
-  card.querySelector("#dev-note-input").addEventListener("input", e => {
-    state.pendingDevNote = e.target.value;
-  });
-
-  // Apply / discard
-  card.querySelector("#discard-btn").addEventListener("click", () => {
-    state.screen = "recipe";
-    render();
-  });
+  card.querySelector("#dev-note-input").addEventListener("input", e => { state.pendingDevNote = e.target.value; });
+  card.querySelector("#discard-btn").addEventListener("click", () => { state.screen = "recipe"; render(); });
   card.querySelector("#apply-btn").addEventListener("click", applyFeedback);
 
-  // Ask AI button
   const askBtn = card.querySelector("#ask-ai-btn");
   if (askBtn) {
     askBtn.addEventListener("click", async () => {
       if (state.aiLoading) return;
-      state.aiLoading = true;
-      render();
-      // Build a synthetic feedback history entry for current brew
-      const fbEntry = { settings: { clicks: r.clicks, temp: r.temp }, feedback: state.feedback };
-      const res = await askAdvisor({
-        bean: state.selectedBean,
-        recipeKey: state.recipeKey,
-        currentRecipe: r,
-        feedbackHistory: [fbEntry],
-        mode: "adjust",
-        apiKey: state.apiKey
-      });
-      state.aiLoading = false;
-      state.aiAdjustment = res;
-      // Capture into engineMeta for log export
-      if (res.ok) {
-        state.engineMeta = state.engineMeta || {};
-        state.engineMeta.aiInvoked = true;
-        state.engineMeta.aiRationale = res.rationale;
-      }
+      state.aiLoading = true; render();
+      const fbEntry = { settings: { clicks:r.clicks, temp:r.temp }, feedback: state.feedback };
+      const res = await askAdvisor({ bean:state.selectedBean, recipeKey:state.recipeKey, currentRecipe:r, feedbackHistory:[fbEntry], mode:"adjust", apiKey:state.apiKey });
+      state.aiLoading = false; state.aiAdjustment = res;
+      if (res.ok) { state.engineMeta = state.engineMeta||{}; state.engineMeta.aiInvoked = true; state.engineMeta.aiRationale = res.rationale; }
       render();
     });
   }
-
   return wrap;
 }
 
+// ==========================================================
+// APPLY FEEDBACK — archive write
+// ==========================================================
 function applyFeedback() {
   const r = state.recipe;
   const bean = state.selectedBean;
   const isPerfect = state.feedback.includes("perfect");
   const useAI = state.aiAdjustment?.ok;
 
-  // Decide what to write
-  let finalClicks = r.clicks;
-  let finalTemp = r.temp;
-  let finalPourStyle = r.pourStyle;
-  let appliedSource = null;
+  let finalClicks = r.clicks, finalTemp = r.temp, finalPourStyle = r.pourStyle, appliedSource = null;
 
   if (isPerfect) {
-    // Lock current
     appliedSource = "locked";
   } else if (useAI) {
     finalClicks = state.aiAdjustment.clicks;
-    // For Brikka, AI returns null for temp/pourStyle — keep current
-    finalTemp = state.aiAdjustment.temp != null ? state.aiAdjustment.temp : r.temp;
-    finalPourStyle = state.aiAdjustment.pourStyle != null ? state.aiAdjustment.pourStyle : r.pourStyle;
+    finalTemp = state.aiAdjustment.temp!=null ? state.aiAdjustment.temp : r.temp;
+    finalPourStyle = state.aiAdjustment.pourStyle!=null ? state.aiAdjustment.pourStyle : r.pourStyle;
     appliedSource = "ai";
   } else if (state.adjustment?.type === "adjustment") {
     finalClicks = state.adjustment.adjustment.clicks;
@@ -1869,29 +1974,24 @@ function applyFeedback() {
     appliedSource = "local";
   }
 
-  // Build history entry
   const entry = {
     id: "brew-" + Date.now(),
     date: new Date().toISOString(),
-    beanId: bean.id,
-    beanName: bean.name,
+    beanId: bean.id, beanName: bean.name,
     recipeKey: state.recipeKey,
-    dose: state.dose,
-    ratio: state.ratio,
-    settings: { clicks: r.clicks, temp: r.temp, pourStyle: r.pourStyle },
+    dose: state.dose, ratio: state.ratio,
+    settings: { clicks:r.clicks, temp:r.temp, pourStyle:r.pourStyle },
     feedback: state.feedback,
     notes: { ...state.taggedNotes },
-    adjustment: appliedSource === "ai"
-      ? { clicks: finalClicks, temp: finalTemp, pourStyle: finalPourStyle, source: "ai" }
-      : (state.adjustment?.adjustment ? { ...state.adjustment.adjustment, source: "local" } : null),
-    adjustmentApplied: appliedSource === "ai" || appliedSource === "local",
+    adjustment: appliedSource==="ai"
+      ? { clicks:finalClicks, temp:finalTemp, pourStyle:finalPourStyle, source:"ai" }
+      : (state.adjustment?.adjustment ? { ...state.adjustment.adjustment, source:"local" } : null),
+    adjustmentApplied: appliedSource==="ai" || appliedSource==="local",
     engineMeta: state.engineMeta,
     aiAdjustment: useAI ? {
-      clicks: state.aiAdjustment.clicks,
-      temp: state.aiAdjustment.temp,
-      pourStyle: state.aiAdjustment.pourStyle,
-      rationale: state.aiAdjustment.rationale,
-      confidence: state.aiAdjustment.confidence
+      clicks:state.aiAdjustment.clicks, temp:state.aiAdjustment.temp,
+      pourStyle:state.aiAdjustment.pourStyle, rationale:state.aiAdjustment.rationale,
+      confidence:state.aiAdjustment.confidence
     } : null,
     devNote: state.pendingDevNote || null
   };
@@ -1899,167 +1999,204 @@ function applyFeedback() {
   if (state.history.length > 100) state.history.length = 100;
   save(KEYS.history, state.history);
 
-  // Update the bean's recipe slot
-  if (isPerfect) {
-    persistBeanRecipe(bean, state.recipeKey, { ...r, locked: true });
-    toast("Recipe locked.");
-  } else if (appliedSource === "ai") {
-    persistBeanRecipe(bean, state.recipeKey, { ...r, clicks: finalClicks, temp: finalTemp, pourStyle: finalPourStyle });
-    toast(`AI applied: ${finalClicks}c, ${finalTemp}°C`);
-  } else if (appliedSource === "local") {
-    persistBeanRecipe(bean, state.recipeKey, { ...r, clicks: finalClicks, temp: finalTemp });
-    toast(`Saved: ${finalClicks}c, ${finalTemp}°C`);
-  } else {
-    toast("Saved to history.");
-  }
+  // persist recipe changes
+  if (isPerfect)           persistBeanRecipe(bean, state.recipeKey, { ...r, locked: true });
+  else if (appliedSource==="ai")    persistBeanRecipe(bean, state.recipeKey, { ...r, clicks:finalClicks, temp:finalTemp, pourStyle:finalPourStyle });
+  else if (appliedSource==="local") persistBeanRecipe(bean, state.recipeKey, { ...r, clicks:finalClicks, temp:finalTemp });
 
-  state.screen = "history";
-  state.feedback = [];
-  state.taggedNotes = {};
-  state.adjustment = null;
-  state.aiAdjustment = null;
-  state.pendingDevNote = "";
-  state.recipe = null;
-  state.selectedBean = null;
-  state.brewType = null;
-  state.method = null;
-  render();
+  // reset state
+  state.feedback = []; state.taggedNotes = {}; state.adjustment = null;
+  state.aiAdjustment = null; state.pendingDevNote = "";
+  state.recipe = null; state.selectedBean = null;
+  state.brewType = null; state.method = null;
+
+  if (isPerfect) {
+    state.justLockedId = entry.id;
+    showAcquiredOverlay(entry.settings, () => {
+      toast("◆ DIALED. PROTOCOL LOCKED.");
+      state.screen = "history"; render();
+    });
+  } else {
+    if (appliedSource==="ai")     toast(`AI APPLIED: ${finalClicks}c${finalTemp?", "+finalTemp+"°C":""}`);
+    else if (appliedSource==="local") toast(`FILED: ${finalClicks}c${finalTemp?", "+finalTemp+"°C":""}`);
+    else                              toast("FILED.");
+    state.screen = "history"; render();
+  }
 }
 
 function persistBeanRecipe(bean, recipeKey, recipe) {
-  // If preset, store the customisation in customBeans as a copy
   const existing = state.customBeans.find(b => b.id === bean.id);
   if (existing) {
-    existing.recipes = existing.recipes || {};
-    existing.recipes[recipeKey] = recipe;
-    save(KEYS.beans, state.customBeans);
+    existing.recipes = existing.recipes || {}; existing.recipes[recipeKey] = recipe; save(KEYS.beans, state.customBeans);
   } else if (!bean.custom) {
-    // Clone preset into customBeans to record the override
     const clone = JSON.parse(JSON.stringify(bean));
-    clone.recipes = clone.recipes || {};
-    clone.recipes[recipeKey] = recipe;
-    clone.id = bean.id; // keep same id, customBeans takes precedence in findBean via PRESET fallback
-    // Mark to prefer custom version: store under same id
-    // Replace PRESET-matched id in state.customBeans
-    state.customBeans.push(clone);
-    save(KEYS.beans, state.customBeans);
+    clone.recipes = clone.recipes || {}; clone.recipes[recipeKey] = recipe; clone.id = bean.id;
+    state.customBeans.push(clone); save(KEYS.beans, state.customBeans);
   } else {
-    // Already custom
-    bean.recipes = bean.recipes || {};
-    bean.recipes[recipeKey] = recipe;
-    save(KEYS.beans, state.customBeans);
+    bean.recipes = bean.recipes || {}; bean.recipes[recipeKey] = recipe; save(KEYS.beans, state.customBeans);
   }
 }
 
-// allBeans needs to prefer customBeans over presets when ids collide
 function allBeansResolved() {
   const customIds = new Set(state.customBeans.map(b => b.id));
-  const presetsFiltered = PRESETS.filter(p => !customIds.has(p.id));
-  return [...presetsFiltered, ...state.customBeans];
+  return [...PRESETS.filter(p => !customIds.has(p.id)), ...state.customBeans];
 }
-// override
 allBeans = allBeansResolved;
 
 // ==========================================================
-// HISTORY
+// ARCHIVE (history)
 // ==========================================================
 function renderHistory() {
   const wrap = document.createElement("div");
   wrap.className = "section";
+
   if (!state.history.length) {
-    wrap.innerHTML = `<div class="empty-state">No brews logged yet.<br>Brew, then rate to start your history.</div>`;
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <div class="es-head">[ ARCHIVE EMPTY ]</div>
+        <div class="es-line">No extractions recorded.</div>
+        <div class="es-line">Engage the protocol to begin logging.</div>
+      </div>`;
     return wrap;
   }
-  let html = `<h2>Recent brews · ${state.history.length}</h2>`;
+
+  let html = `<h2>ARCHIVE · ${state.history.length} PROTOCOLS</h2>`;
   for (const h of state.history.slice(0, 30)) {
+    const isNew = h.id === state.justLockedId;
     html += `
-      <div class="history-entry">
+      <div class="history-entry${isNew?" entry-new":""}">
         <div class="head">
           <div>
             <span class="bean">${h.beanName}</span>
-            <span style="color: var(--text-muted); font-size: 11px; font-family: var(--mono); margin-left: 6px;">${h.recipeKey.toUpperCase().replace("_", " ")}</span>
+            <span style="color:var(--text-muted);font-size:11px;font-family:var(--mono);margin-left:6px;">${h.recipeKey.toUpperCase().replace("_"," ")}</span>
           </div>
           <div class="date">${fmtDate(h.date)}</div>
         </div>
-        <div class="settings">${h.dose}g · ${h.settings.clicks}c · ${h.settings.temp || "—"}°C · ${h.settings.pourStyle || "—"}</div>
-        <div class="feedback">${h.feedback.length ? h.feedback.join(", ") : "—"}</div>
-        ${h.devNote ? `<div class="dev-note">${h.devNote}</div>` : ""}
-      </div>
-    `;
+        <div class="settings">${h.dose}g · ${h.settings.clicks}c · ${h.settings.temp||"—"}°C · ${h.settings.pourStyle||"—"}</div>
+        <div class="feedback">${h.feedback.length?h.feedback.join(", "):"—"}</div>
+        ${h.devNote?`<div class="dev-note">${h.devNote}</div>`:""}
+      </div>`;
   }
+
   wrap.innerHTML = html;
+  // clear justLockedId after the pulse completes
+  if (state.justLockedId) setTimeout(() => { state.justLockedId = null; }, 2000);
   return wrap;
 }
 
 // ==========================================================
-// SETTINGS
+// SETTINGS (SYSTEM)
 // ==========================================================
 function renderSettings() {
   const wrap = document.createElement("div");
   wrap.className = "section";
+
+  const totalBrews = state.history.length;
+  const perfectKills = state.history.filter(h => h.feedback?.includes("perfect")).length;
+  const aiCount = state.history.filter(h => h.engineMeta?.aiInvoked).length;
+  const warCrimes = state.history.filter(h =>
+    h.feedback?.includes("acrid") || (h.feedback?.includes("sour") && h.feedback?.includes("bitter"))
+  ).length;
+  const storageEst = (() => {
+    try {
+      let sz = 0;
+      for (const k of Object.values(KEYS)) sz += (localStorage.getItem(k)||"").length;
+      return (sz / 1024).toFixed(1);
+    } catch { return "?"; }
+  })();
+
   wrap.innerHTML = `
-    <div class="card">
-      <span class="card-label">ANTHROPIC API KEY</span>
-      <div class="form-row">
-        <input type="password" id="apikey-input" value="${state.apiKey}" placeholder="sk-ant-...">
-        <div class="helper-text">Used for AI advisor (Haiku 4.5). Stored on this device only.</div>
-      </div>
-      <button class="btn" id="save-key">Save key</button>
+    <div class="options-header">┤ CREDENTIALS ├</div>
+    <div class="form-row">
+      <input type="password" id="apikey-input" value="${state.apiKey}" placeholder="sk-ant-...">
+      <div class="helper-text">Used for AI advisor (Claude Haiku 4.5). Stored on this device only.</div>
+    </div>
+    <div class="api-status${state.apiKey?" authenticated":""}" id="api-status">
+      ${state.apiKey?"◆ AI ADVISOR: AUTHENTICATED":"◇ AI ADVISOR: OFFLINE"}
+    </div>
+    <button class="btn" id="save-key" style="margin-bottom:8px;">Save key</button>
+
+    <div class="options-header">┤ VOID.LOG ├</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Export VOID.LOG as markdown. Feed to AI for next-session calibration.</div>
+    <button class="btn primary" id="export-log" style="margin-bottom:8px;">◆ EXPORT VOID.LOG</button>
+    <button class="btn ghost" id="clear-history">PURGE ARCHIVE</button>
+
+    <div class="options-header">┤ LOADOUT DEFAULTS ├</div>
+    <div class="form-row">
+      <label>V60 default dose (g)</label>
+      <input type="number" id="def-v60" value="${state.settings.defaultV60Dose}" min="8" max="30">
+    </div>
+    <div class="form-row">
+      <label>Brikka default dose (g)</label>
+      <input type="number" id="def-brikka" value="${state.settings.defaultBrikkaDose}" min="10" max="20">
+    </div>
+    <div class="form-row">
+      <label>Default ratio</label>
+      <select id="def-ratio">
+        ${[14,15,16,17].map(r=>`<option value="${r}"${state.settings.defaultRatio===r?" selected":""}>1:${r}</option>`).join("")}
+      </select>
+    </div>
+    <button class="btn" id="save-defaults" style="margin-bottom:8px;">Save defaults</button>
+
+    <div class="options-header">┤ DIAGNOSTICS ├</div>
+    <div class="diag-grid">
+      <div class="diag-cell"><div class="diag-label">TOTAL BREWS</div><div class="diag-val">${totalBrews}</div></div>
+      <div class="diag-cell"><div class="diag-label">PERFECT KILLS</div><div class="diag-val">${perfectKills}</div></div>
+      <div class="diag-cell"><div class="diag-label">AI INVOCATIONS</div><div class="diag-val">${aiCount}</div></div>
+      <div class="diag-cell"><div class="diag-label">WAR CRIMES</div><div class="diag-val">${warCrimes}</div></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--text-ghost);letter-spacing:0.1em;margin:6px 0 12px;">
+      STORAGE: ${storageEst}KB · BEANS: ${allBeans().length} LOADED
     </div>
 
-    <div class="card">
-      <span class="card-label">DEV LOG</span>
-      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-        Export your brews + dev notes as markdown. Paste into chat for next-session calibration.
-      </div>
-      <button class="btn primary" id="export-log">◆ Copy dev log to clipboard</button>
-      <button class="btn ghost" id="clear-history" style="margin-top: 8px;">Clear all history</button>
+    <div class="options-header">┤ DISPLAY ├</div>
+    <div class="options-row">
+      <span class="options-key">CRT MODE</span>
+      <button class="option-toggle${state.settings.crtMode?" on":""}" id="crt-toggle">
+        ${state.settings.crtMode?"◆ ON":"◇ OFF"}
+      </button>
+    </div>
+    <div class="options-row">
+      <span class="options-key">BOOT SEQUENCE</span>
+      <button class="option-toggle${!state.settings.skipBoot?" on":""}" id="boot-toggle">
+        ${state.settings.skipBoot?"◇ SKIP":"◆ ENABLED"}
+      </button>
     </div>
 
-    <div class="card">
-      <span class="card-label">DEFAULTS</span>
-      <div class="form-row">
-        <label>V60 default dose (g)</label>
-        <input type="number" id="def-v60" value="${state.settings.defaultV60Dose}" min="8" max="30">
-      </div>
-      <div class="form-row">
-        <label>Brikka default dose (g)</label>
-        <input type="number" id="def-brikka" value="${state.settings.defaultBrikkaDose}" min="10" max="20">
-      </div>
-      <div class="form-row">
-        <label>Default ratio</label>
-        <select id="def-ratio">
-          ${[14, 15, 16, 17].map(r => `<option value="${r}" ${state.settings.defaultRatio === r ? "selected" : ""}>1:${r}</option>`).join("")}
-        </select>
-      </div>
-      <button class="btn" id="save-defaults">Save defaults</button>
+    <div class="options-header danger" style="margin-top:8px;">┤ PURGE ZONE ├</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--red-miss);letter-spacing:0.1em;margin-bottom:10px;">
+      ⚠  IRREVERSIBLE. CONFIRM TWICE.
     </div>
-
-    <div class="card">
-      <span class="card-label">DANGER ZONE</span>
-      <button class="btn danger" id="clear-all">Erase everything (beans, history, key)</button>
-    </div>
+    <button class="btn danger" id="clear-all">◆ SYSTEM PURGE — ERASE ALL DATA</button>
   `;
+
   wrap.querySelector("#save-key").addEventListener("click", () => {
     state.apiKey = wrap.querySelector("#apikey-input").value.trim();
     localStorage.setItem(KEYS.apiKey, state.apiKey);
-    toast("API key saved");
+    toast("KEY STORED");
+    const el = wrap.querySelector("#api-status");
+    if (el) { el.className = "api-status" + (state.apiKey?" authenticated":""); el.textContent = state.apiKey?"◆ AI ADVISOR: AUTHENTICATED":"◇ AI ADVISOR: OFFLINE"; }
   });
   wrap.querySelector("#save-defaults").addEventListener("click", () => {
-    state.settings.defaultV60Dose = parseInt(wrap.querySelector("#def-v60").value) || 16;
-    state.settings.defaultBrikkaDose = parseInt(wrap.querySelector("#def-brikka").value) || 16;
-    state.settings.defaultRatio = parseInt(wrap.querySelector("#def-ratio").value) || 15;
-    save(KEYS.settings, state.settings);
-    toast("Defaults saved");
+    state.settings.defaultV60Dose    = parseInt(wrap.querySelector("#def-v60").value)||16;
+    state.settings.defaultBrikkaDose = parseInt(wrap.querySelector("#def-brikka").value)||16;
+    state.settings.defaultRatio      = parseInt(wrap.querySelector("#def-ratio").value)||15;
+    save(KEYS.settings, state.settings); toast("DEFAULTS UPDATED");
   });
   wrap.querySelector("#export-log").addEventListener("click", exportDevLog);
   wrap.querySelector("#clear-history").addEventListener("click", () => {
-    if (confirm("Clear all brew history?")) {
-      state.history = [];
-      save(KEYS.history, state.history);
-      render();
-      toast("History cleared");
+    if (confirm("Purge all brew history?")) {
+      state.history = []; save(KEYS.history, state.history); render(); toast("ARCHIVE PURGED");
     }
+  });
+  wrap.querySelector("#crt-toggle").addEventListener("click", () => {
+    state.settings.crtMode = !state.settings.crtMode;
+    save(KEYS.settings, state.settings); render();
+  });
+  wrap.querySelector("#boot-toggle").addEventListener("click", () => {
+    state.settings.skipBoot = !state.settings.skipBoot;
+    if (!state.settings.skipBoot) sessionStorage.removeItem("bl_booted"); // allow next load to show boot
+    save(KEYS.settings, state.settings); render();
   });
   wrap.querySelector("#clear-all").addEventListener("click", () => {
     if (confirm("Erase ALL data (beans, history, API key)? Cannot undo.")) {
@@ -2071,93 +2208,67 @@ function renderSettings() {
   return wrap;
 }
 
+// ==========================================================
+// VOID.LOG EXPORT
+// ==========================================================
 function exportDevLog() {
   const lines = [];
-  lines.push(`BREW LAB DEV LOG`);
+  lines.push("BREW LAB — VOID.LOG");
   lines.push(`Exported: ${new Date().toISOString()}`);
-  lines.push(`Brews logged: ${state.history.length}`);
-  lines.push(`==========================================`);
+  lines.push(`Protocols filed: ${state.history.length}`);
+  lines.push("==========================================");
   lines.push("");
   for (const h of state.history) {
     lines.push(`# ${h.beanName} · ${h.recipeKey} · ${fmtDate(h.date)}`);
-    lines.push(`Recipe: ${h.dose}g · ${h.settings.clicks} clicks · ${h.settings.temp || "—"}°C · ${h.settings.pourStyle || "—"} · 1:${h.ratio}`);
+    lines.push(`Recipe: ${h.dose}g · ${h.settings.clicks} clicks · ${h.settings.temp||"—"}°C · ${h.settings.pourStyle||"—"} · 1:${h.ratio}`);
     if (h.engineMeta) {
       lines.push(`Basis: ${h.engineMeta.basis} (confidence: ${h.engineMeta.confidence})`);
-      if (h.engineMeta.reasons?.length) {
-        lines.push(`  Reasons:`);
-        h.engineMeta.reasons.forEach(r => lines.push(`    → ${r}`));
-      }
-      if (h.engineMeta.aiInvoked) {
-        lines.push(`  AI rationale: ${h.engineMeta.aiRationale || "—"}`);
-      }
+      if (h.engineMeta.reasons?.length) { lines.push("  Reasons:"); h.engineMeta.reasons.forEach(r => lines.push(`    → ${r}`)); }
+      if (h.engineMeta.aiInvoked) lines.push(`  AI rationale: ${h.engineMeta.aiRationale||"—"}`);
     }
-    const tagged = Object.entries(h.notes || {}).filter(([k, v]) => v);
-    if (tagged.length) {
-      lines.push(`Tasting notes: ${tagged.map(([k, v]) => `${k}=${v}`).join(", ")}`);
-    }
-    lines.push(`Feedback: ${h.feedback?.length ? h.feedback.join(", ") : "—"}`);
+    const tagged = Object.entries(h.notes||{}).filter(([,v])=>v);
+    if (tagged.length) lines.push(`Tasting notes: ${tagged.map(([k,v])=>`${k}=${v}`).join(", ")}`);
+    lines.push(`Feedback: ${h.feedback?.length?h.feedback.join(", "):"—"}`);
     if (h.adjustment) {
-      const src = h.adjustment.source || "local";
-      lines.push(`Adjustment applied (${src}): ${h.adjustment.clicks} clicks${h.adjustment.temp ? ", " + h.adjustment.temp + "°C" : ""}${h.adjustment.pourStyle ? ", " + h.adjustment.pourStyle : ""}`);
+      const src = h.adjustment.source||"local";
+      lines.push(`Adjustment applied (${src}): ${h.adjustment.clicks} clicks${h.adjustment.temp?", "+h.adjustment.temp+"°C":""}${h.adjustment.pourStyle?", "+h.adjustment.pourStyle:""}`);
     }
     if (h.aiAdjustment) {
       lines.push(`AI adjustment: ${h.aiAdjustment.clicks}c, ${h.aiAdjustment.temp}°C, ${h.aiAdjustment.pourStyle} (${h.aiAdjustment.confidence})`);
       lines.push(`  AI rationale: ${h.aiAdjustment.rationale}`);
     }
-    if (h.devNote) {
-      lines.push(`DEV NOTE: ${h.devNote}`);
-    }
+    if (h.devNote) lines.push(`FIELD NOTE: ${h.devNote}`);
     lines.push("");
   }
   const text = lines.join("\n");
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(
-      () => toast("Dev log copied!"),
-      () => fallbackCopy(text)
-    );
-  } else {
-    fallbackCopy(text);
-  }
+    navigator.clipboard.writeText(text).then(()=>toast("VOID.LOG EXPORTED"), ()=>fallbackCopy(text));
+  } else { fallbackCopy(text); }
 }
 
 function fallbackCopy(text) {
   const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.style.position = "fixed";
-  ta.style.opacity = "0";
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand("copy"); toast("Dev log copied!"); }
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); toast("VOID.LOG EXPORTED"); }
   catch { toast("Copy failed — try again"); }
   document.body.removeChild(ta);
 }
 
 // ==========================================================
-// ADD / EDIT BEAN
+// REGISTER BEAN
 // ==========================================================
 function renderAddBean() {
   const wrap = document.createElement("div");
   wrap.className = "section";
-
-  // Persistent draft lives on state, survives re-renders
   if (!state.beanDraft) {
-    state.beanDraft = {
-      name: "",
-      roaster: "",
-      origins: [{ country: "", variety: "", process: "Washed", share: 100 }],
-      roast: { level: "Medium", intent: "Filter" },
-      tastingNotes: ""
-    };
+    state.beanDraft = { name:"", roaster:"", origins:[{ country:"", variety:"", process:"Washed", share:100 }], roast:{ level:"Medium", intent:"Filter" }, tastingNotes:"" };
   }
   const d = state.beanDraft;
 
-  // Helper: capture all current input values into draft before re-render
-  // (so user typing isn't lost when they tap intent buttons)
   function syncDraftFromInputs() {
-    const nameEl = wrap.querySelector("#b-name");
-    if (!nameEl) return;
-    d.name = nameEl.value;
-    d.roaster = wrap.querySelector("#b-roaster").value;
+    const nameEl = wrap.querySelector("#b-name"); if (!nameEl) return;
+    d.name = nameEl.value; d.roaster = wrap.querySelector("#b-roaster").value;
     d.origins[0].country = wrap.querySelector("#b-country").value;
     d.origins[0].variety = wrap.querySelector("#b-variety").value;
     d.origins[0].process = wrap.querySelector("#b-process").value;
@@ -2167,132 +2278,136 @@ function renderAddBean() {
 
   wrap.innerHTML = `
     <div class="card">
-      <span class="card-label">ADD CUSTOM BEAN</span>
-
-      <div class="form-row">
-        <label>Bean name</label>
-        <input id="b-name" value="${d.name}" placeholder="e.g. Ethiopia Yirgacheffe">
-      </div>
-      <div class="form-row">
-        <label>Roaster (optional)</label>
-        <input id="b-roaster" value="${d.roaster}" placeholder="e.g. Pirates of Coffee">
-      </div>
-
-      <div class="form-row">
-        <label>Origin country</label>
-        <input id="b-country" value="${d.origins[0].country}" placeholder="e.g. Colombia">
-      </div>
-      <div class="form-row">
-        <label>Variety</label>
-        <input id="b-variety" value="${d.origins[0].variety}" placeholder="e.g. Castillo, Heirloom, Caturra (leave blank if unknown)">
-      </div>
+      <span class="card-label">REGISTER NEW BEAN</span>
+      <div class="form-row"><label>Bean name</label><input id="b-name" value="${d.name}" placeholder="e.g. Ethiopia Yirgacheffe"></div>
+      <div class="form-row"><label>Roaster (optional)</label><input id="b-roaster" value="${d.roaster}" placeholder="e.g. Pirates of Coffee"></div>
+      <div class="form-row"><label>Origin country</label><input id="b-country" value="${d.origins[0].country}" placeholder="e.g. Colombia"></div>
+      <div class="form-row"><label>Variety</label><input id="b-variety" value="${d.origins[0].variety}" placeholder="e.g. Castillo, Heirloom, Caturra (leave blank if unknown)"></div>
       <div class="form-row">
         <label>Process</label>
         <select id="b-process">
-          ${["Washed", "Natural", "Honey", "Cofermentation", "Anaerobic", "Wet-hulled", "Experimental"].map(p =>
-            `<option value="${p}" ${d.origins[0].process === p ? "selected" : ""}>${p}</option>`
-          ).join("")}
+          ${["Washed","Natural","Honey","Cofermentation","Anaerobic","Wet-hulled","Experimental"].map(p=>`<option value="${p}"${d.origins[0].process===p?" selected":""}>${p}</option>`).join("")}
         </select>
       </div>
-
       <div class="form-row">
         <label>Roast level</label>
         <select id="b-level">
-          ${["Light", "Light-Medium", "Medium", "Medium-Dark", "Dark"].map(l =>
-            `<option value="${l}" ${d.roast.level === l ? "selected" : ""}>${l}</option>`
-          ).join("")}
+          ${["Light","Light-Medium","Medium","Medium-Dark","Dark"].map(l=>`<option value="${l}"${d.roast.level===l?" selected":""}>${l}</option>`).join("")}
         </select>
       </div>
-
       <div class="form-row">
-        <label>Roast intent &nbsp;<span style="color: var(--gold); font-family: var(--mono); font-size: 9px;">[ ${d.roast.intent.toUpperCase()} ]</span></label>
+        <label>Roast intent &nbsp;<span style="color:var(--gold);font-family:var(--mono);font-size:9px;">[ ${d.roast.intent.toUpperCase()} ]</span></label>
         <div class="three-toggle" id="b-intent">
-          <button type="button" data-intent="Filter" class="${d.roast.intent === "Filter" ? "selected" : ""}">Filter</button>
-          <button type="button" data-intent="Espresso" class="${d.roast.intent === "Espresso" ? "selected" : ""}">Espresso</button>
-          <button type="button" data-intent="Omni" class="${d.roast.intent === "Omni" ? "selected" : ""}">Omni</button>
+          <button type="button" data-intent="Filter" class="${d.roast.intent==="Filter"?"selected":""}">Filter</button>
+          <button type="button" data-intent="Espresso" class="${d.roast.intent==="Espresso"?"selected":""}">Espresso</button>
+          <button type="button" data-intent="Omni" class="${d.roast.intent==="Omni"?"selected":""}">Omni</button>
         </div>
         <div class="helper-text">
-          <strong style="color: var(--gold);">Filter</strong>: roasted for V60 / Chemex. Standard.<br>
-          <strong style="color: var(--gold);">Espresso</strong>: roasted darker for pressure. <em>More soluble on V60 — engine will go coarser + cooler.</em><br>
-          <strong style="color: var(--gold);">Omni</strong>: designed for both. Treated as Filter unless context overrides.
+          <strong style="color:var(--gold);">Filter</strong>: roasted for V60 / Chemex. Standard protocol.<br>
+          <strong style="color:var(--gold);">Espresso</strong>: darker roast for pressure. <em>More soluble on V60 — engine compensates.</em><br>
+          <strong style="color:var(--gold);">Omni</strong>: designed for both. Treated as Filter unless context overrides.
         </div>
       </div>
-
-      <div class="form-row">
-        <label>Tasting notes (comma-separated)</label>
-        <input id="b-notes" value="${d.tastingNotes}" placeholder="berry, lemongrass, caramel — or leave blank if unknown">
-      </div>
-
-      <button class="btn primary" id="save-bean">◆ Save bean</button>
-      <button class="btn ghost" id="cancel-bean" style="margin-top: 8px;">Cancel</button>
+      <div class="form-row"><label>Tasting notes (comma-separated)</label><input id="b-notes" value="${d.tastingNotes}" placeholder="berry, lemongrass, caramel — or leave blank if unknown"></div>
+      <button class="btn primary" id="save-bean">◆ REGISTER BEAN</button>
+      <button class="btn ghost" id="cancel-bean" style="margin-top:8px;">ABORT</button>
     </div>
   `;
 
-  // Roast intent toggle — sync inputs before re-render so they don't reset
   wrap.querySelector("#b-intent").addEventListener("click", e => {
-    const btn = e.target.closest("[data-intent]");
-    if (!btn) return;
-    syncDraftFromInputs();
-    d.roast.intent = btn.dataset.intent;
-    render();
+    const btn = e.target.closest("[data-intent]"); if (!btn) return;
+    syncDraftFromInputs(); d.roast.intent = btn.dataset.intent; render();
   });
-
   wrap.querySelector("#save-bean").addEventListener("click", () => {
     syncDraftFromInputs();
-    const name = d.name.trim();
-    const country = d.origins[0].country.trim();
-    if (!name || !country) { toast("Name and origin country required"); return; }
+    const name = d.name.trim(); const country = d.origins[0].country.trim();
+    if (!name||!country) { toast("Name and origin country required"); return; }
     const bean = {
-      id: "custom-" + uid(),
-      name,
-      roaster: d.roaster.trim() || null,
-      custom: true,
-      origins: [{
-        country,
-        variety: d.origins[0].variety.trim() || "",
-        process: d.origins[0].process,
-        share: 100
-      }],
-      roast: {
-        level: d.roast.level,
-        intent: d.roast.intent
-      },
-      tastingNotes: d.tastingNotes.split(",").map(s => s.trim()).filter(Boolean),
-      recipes: { v60_hot: null, v60_iced: null, brikka: null }
+      id: "custom-"+uid(), name, roaster: d.roaster.trim()||null, custom: true,
+      origins: [{ country, variety:d.origins[0].variety.trim()||"", process:d.origins[0].process, share:100 }],
+      roast: { level:d.roast.level, intent:d.roast.intent },
+      tastingNotes: d.tastingNotes.split(",").map(s=>s.trim()).filter(Boolean),
+      recipes: { v60_hot:null, v60_iced:null, brikka:null }
     };
-    state.customBeans.push(bean);
-    save(KEYS.beans, state.customBeans);
-    state.beanDraft = null;  // reset for next time
-    toast("Bean added");
-    state.screen = "home";
-    render();
+    state.customBeans.push(bean); save(KEYS.beans, state.customBeans);
+    state.beanDraft = null; toast("BEAN REGISTERED"); state.screen = "home"; render();
   });
-  wrap.querySelector("#cancel-bean").addEventListener("click", () => {
-    state.beanDraft = null;  // reset for next time
-    state.screen = "home";
-    render();
-  });
-
+  wrap.querySelector("#cancel-bean").addEventListener("click", () => { state.beanDraft = null; state.screen = "home"; render(); });
   return wrap;
 }
 
 // ==========================================================
-// VERSION TAP HANDLER (long press for dev log export shortcut)
+// VOID.LOG SCREEN (hidden — long-press brand cell)
 // ==========================================================
-let versionPressTimer = null;
+function renderVoidLog() {
+  const wrap = document.createElement("div");
+  wrap.className = "section";
+
+  const total = state.history.length;
+  const perfect = state.history.filter(h => h.feedback?.includes("perfect")).length;
+  const warCrimes = state.history.filter(h =>
+    h.feedback?.includes("acrid") || (h.feedback?.includes("sour") && h.feedback?.includes("bitter"))
+  ).length;
+  const aiCount = state.history.filter(h => h.engineMeta?.aiInvoked).length;
+  let streak = 0;
+  for (const h of state.history) { if (h.feedback?.includes("perfect")) streak++; else break; }
+
+  const now = new Date();
+  const ts = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+
+  wrap.innerHTML = `
+    <div class="voidlog-box">
+      <div class="vl-header">╔═ VOID.LOG ════════════════════════════╗</div>
+      <div class="vl-body">
+        <div class="vl-line">// ${ts}</div>
+        <div class="vl-line">// operator session loaded.</div>
+        <div class="vl-line"> </div>
+        <div class="vl-line bright">// total extractions......... <span class="vl-val">${total}</span></div>
+        <div class="vl-line bright">// perfect kills (dialed)..... <span class="vl-val">${perfect}</span></div>
+        <div class="vl-line bright">// war crimes (harsh pulls)... <span class="vl-val">${warCrimes}</span></div>
+        <div class="vl-line bright">// ai invocations............. <span class="vl-val">${aiCount}</span></div>
+        <div class="vl-line bright">// current streak............. <span class="vl-val">${streak}</span></div>
+        <div class="vl-line"> </div>
+        <div class="vl-line">// bean archive contains <span class="vl-val">${allBeans().length}</span> entries.</div>
+        ${perfect>0?`<div class="vl-line">// operator has dialed <span class="vl-val">${perfect}</span> perfect extraction${perfect!==1?"s":""}.</div>`:""}
+        ${warCrimes>0?`<div class="vl-line">// <span class="vl-val">${warCrimes}</span> dead cup${warCrimes!==1?"s":""} logged as war crime${warCrimes!==1?"s":""}.</div>`:""}
+        <div class="vl-line">// the extraction engine listens.</div>
+        <div class="vl-line">// the kill zone narrows.</div>
+        <div class="vl-line"> </div>
+        <div class="vl-line amber">// SC2K13 // dedicated to the creatures of the night</div>
+      </div>
+      <div class="vl-footer">╚═══════════════════════════════════════╝</div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <button class="btn danger" id="burn-archive">◆ BURN ARCHIVE — ERASE HISTORY</button>
+      <button class="btn ghost" id="vl-back" style="margin-top:8px;">← RETURN</button>
+    </div>
+  `;
+
+  wrap.querySelector("#burn-archive").addEventListener("click", () => {
+    if (confirm("Burn the archive? All brew history will be erased. Cannot undo.")) {
+      state.history = []; save(KEYS.history, state.history); toast("ARCHIVE BURNED"); state.screen = "home"; render();
+    }
+  });
+  wrap.querySelector("#vl-back").addEventListener("click", () => { state.screen = "home"; render(); });
+  return wrap;
+}
+
+// ==========================================================
+// VERSION TAP (5 taps = VOID.LOG export  |  long-press = VOID.LOG screen)
+// ==========================================================
 function onVersionTap() {
   state.versionTapCount++;
-  if (state.versionTapCount >= 5) {
-    state.versionTapCount = 0;
-    exportDevLog();
-  }
-  setTimeout(() => state.versionTapCount = 0, 2000);
+  if (state.versionTapCount >= 5) { state.versionTapCount = 0; exportDevLog(); }
+  setTimeout(() => { state.versionTapCount = 0; }, 2000);
 }
 
 // ==========================================================
 // BOOT
 // ==========================================================
-render();
+applyCrtMode();
+bootSequence(render);
 </script>
 </body>
 </html>
