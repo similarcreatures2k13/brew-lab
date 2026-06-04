@@ -2498,7 +2498,10 @@ function onVersionTap() {
 );
 // universal tap sound — capture phase fires before target handlers
 document.addEventListener("click", e => {
-  if (e.target.closest(".btn, .chip, .tab, .three-toggle button, .note-chip")) SoundEngine.playFile('MONITOR.wav', 0.35);
+  if (e.target.closest(".btn, .chip, .tab, .three-toggle button, .note-chip")) {
+    console.log('handler fired | playFile type:', typeof SoundEngine.playFile);
+    SoundEngine.playFile('MONITOR.wav', 0.35);
+  }
 }, true);
 
 applyCrtMode();
