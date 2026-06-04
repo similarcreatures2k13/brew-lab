@@ -738,7 +738,7 @@
     font-size:12px; color:var(--text-dim); line-height:1.7; margin:12px 0;
   }
   .duke-credits { text-align:center; font-family:var(--mono); font-size:9px; color:var(--text-ghost); letter-spacing:.2em; margin-top:16px; padding-bottom:4px; }
-  .duke-sprite { image-rendering: pixelated; pointer-events: none; }
+  .duke-sprite { image-rendering: pixelated; pointer-events: none; max-width: 100%; }
   /* expanded LED hit-area for 10-tap easter egg */
   .status-led { cursor:pointer; }
   .status-led::before { content:""; position:absolute; top:-12px; right:-12px; bottom:-12px; left:-12px; }
@@ -1600,6 +1600,7 @@ function renderStatusBar() {
   el.innerHTML = `
     <div class="hud-cell brand" id="version-tap">
       <div class="hud-brand-row">
+        <img id="duke-hud-face" src="assets/duke3d/sprites/duke-face-neutral.png" alt="Duke Face" class="duke-sprite" style="width:40px;height:40px;vertical-align:middle;margin-right:8px;" onerror="this.style.display='none'">
         <div class="status-led ${ledClass}"></div>
         <div class="hud-value brand-name">BREW LAB</div>
       </div>
@@ -2411,14 +2412,8 @@ function renderDuke() {
     <div class="card duke-card">
       <span class="card-label duke-label">┤ CLASSIFIED // OPERATOR SC2K13 ├</span>
       <div class="duke-logo-wrap">
-        <img
-          class="duke-sprite"
-          src="assets/duke3d/sprites/duke-logo-top.png"
-          alt="BREW LAB 3D"
-          id="duke-sprite-logo"
-          onerror="this.style.display='none';document.getElementById('duke-logo-ascii').style.display=''"
-        />
-        <div id="duke-logo-ascii" style="display:none">
+        <img src="assets/duke3d/sprites/duke-title.png" alt="Duke 3D" class="duke-sprite" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div style="display:none">
           <div class="duke-logo-row">BREW</div>
           <div class="duke-logo-row">LAB 3D</div>
         </div>
