@@ -17,14 +17,15 @@ Brew Lab is a **self-evolving coffee recipe engine** built by a madman who refus
 
 It started as a conversation. A man. A V60. A Commandante grinder. And a relentless need to understand why his Sumatran peach coferment tasted like dirt at the wrong temperature. Hundreds of brews later, the knowledge became a system. The system became an app. The app became... **this**.
 
-```
+
    CURRENT LOADOUT
    ├── Hario V60 ──────── Filter Ops
    ├── Bialetti Brikka ── Pressure Ops  
    ├── Commandante C40 ── Particle Control
    ├── Infrared Burner ── Thermal Platform
    └── Claude AI ──────── Neural Advisory
-```
+   └── Duke Nukem 3D ──── Audio/Visual Ops
+
 
 ---
 
@@ -39,7 +40,7 @@ Every bean has a kill zone — a narrow window where temperature, grind, and pou
 ### `FEEDBACK LOOP` 
 The machine learns. After every brew, you report:
 
-```
+
 ┌─────────────────────────────────────┐
 │  HOW WAS IT?                        │
 │                                     │
@@ -54,7 +55,7 @@ The machine learns. After every brew, you report:
 │  Brew again.                        │
 │  Repeat until perfection.           │
 └─────────────────────────────────────┘
-```
+
 
 Contradictions are detected. Sour + bitter = channeling. The app doesn't change your grind — it tells you your bed prep is wrong. It knows.
 
@@ -70,7 +71,7 @@ When the local rules engine can't figure it out — when you've got some unholy 
 
 Every bean below has been tested, adjusted, re-brewed, and locked through the feedback loop.
 
-```
+
 BEAN                            TEMP    CLICKS   METHOD          STATUS
 ─────────────────────────────────────────────────────────────────────────
 Colombia Coferment              93°C    24       V60 Layered     ██████████ LOCKED
@@ -86,13 +87,13 @@ Ethiopia Chelbesa                —      14       Brikka          ████�
 Brazil Parainema                 —      13       Brikka          ██████████ LOCKED
 Brazil Santa Ines                —      13       Brikka          ██████████ LOCKED
 Liberica Tobacco                 —      14       Brikka          ██████████ LOCKED
-```
+
 
 ---
 
 ## 🧬 THE PHILOSOPHY
 
-```
+
                     ┌──────────────┐
                     │   NEW BEAN   │
                     └──────┬───────┘
@@ -124,23 +125,25 @@ Liberica Tobacco                 —      14       Brikka          ████�
                                          │
                                     (repeat until
                                      perfection)
-```
+
 
 ---
 
 ## 🛸 FUTURE TRANSMISSIONS
 
-This is V3. The architecture is designed to scale beyond one grinder, one brewer, one human.
+This is V4. The architecture is designed to scale beyond one grinder, one brewer, one human.
 
-```
+
 ROADMAP
-├── v4 ── AI in feedback loop, not just recipe screen
-├── v5 ── Multi-grinder support (Commandante, Sage, EK43, whatever you bring)
-├── v6 ── Multi-brewer support (espresso machines, AeroPress, French press, Chemex)
-├── v7 ── Bean library with community-sourced profiles
-├── v8 ── Flavor wheel integration — map your cup against SCA standards
+├── v4 ── Duke Nukem 3D asset integration (CURRENT)
+├── v5 ── AI in feedback loop, not just recipe screen
+├── v6 ── Multi-grinder support (Commandante, Sage, EK43, whatever you bring)
+├── v7 ── Multi-brewer support (espresso machines, AeroPress, French press, Chemex)
+├── v8 ── Bean library with community-sourced profiles
+├── v9 ── Flavor wheel integration — map your cup against SCA standards
 └── v∞ ── The perfect cup. Every time. Any bean. Any setup. Anywhere.
-```
+
+
 
 > _"I used to think coffee was a beverage. Now I understand it's an extraction problem with a delicious solution."_
 
@@ -148,41 +151,67 @@ ROADMAP
 
 ## ⚡ INSTALLATION
 
+### Prerequisites
+- Node.js (for asset extraction)
+- A legally owned copy of Duke Nukem 3D (Steam, GOG, etc.)
+- A modern web browser (Chrome, Safari, Firefox)
+
+### Setup
+
 ```bash
-# There is no installation. There is only deployment.
 
-1. Clone this repo
-2. Open index.html in Safari on your iPhone
-3. Share → Add to Home Screen
-4. Enter your Anthropic API key in Settings
-5. Select a bean
-6. Brew
-7. Feed back
-8. Repeat until you achieve transcendence
+# 1. Clone this repo
+git clone https://github.com/similarcreatures2k13/brew-lab.git
+cd brew-lab
+
+# 2. Install dependencies (for asset extraction)
+npm install
+
+# 3. Copy your DUKE3D.GRP file to the project root
+#    (Find it in your Steam/GOG installation folder)
+cp "/path/to/DUKE3D.GRP" .
+
+# 4. Extract the assets
+node extract-duke.js
+
+# 5. Open index.html in your browser
+#    Or deploy to GitHub Pages, Netlify, etc.
+
+Mobile Installation (PWA)
+Open the deployed URL in Safari (iOS) or Chrome (Android)
+Share → Add to Home Screen
+Enter your Anthropic API key in Settings
+Select a bean
+Brew
+Feed back
+Repeat until you achieve transcendence
+
 ```
-
----
-
 ## 🔧 TECH STACK
 
-No frameworks. No build tools. No node_modules black hole. Just:
+FRONTEND
+├── index.html ──────────── Main app (single-file SPA)
+├── duke-loader.js ──────── Asset preloader & fallback system
+└── assets/
+    └── duke3d/
+        ├── sounds/ ─────── 331 extracted VOC→WAV files
+        └── sprites/ ────── 1570 extracted ART→PNG tiles
 
-- **One HTML file.** That's it. That's the app.
-- **Vanilla JS.** The engine runs on raw JavaScript and localStorage.
-- **Anthropic Claude API.** For when the local brain isn't enough.
-- **PWA manifest.** So it lives on your home screen like it belongs there.
+BUILD TOOLS
+├── extract-duke.js ─────── BUILD engine .GRP parser & converter
+├── package.json ────────── Node dependencies (sharp, wav)
+└── node_modules/ ───────── (gitignored)
 
-```
-Total dependencies: 0
-Bundle size: one file
-Build step: what build step
-```
+EXTERNAL SERVICES
+└── Anthropic Claude API ── Neural advisory for complex beans
+
+Total runtime dependencies: 0 (pure vanilla JS + Web Audio API)
+Build dependencies: sharp (image conversion), wav (audio conversion)
+Bundle size: One HTML file + extracted assets
 
 ---
 
 ## ☕ THE BEANS SPEAK
-
-```
 "The Liberica doesn't taste like coffee. It tastes like 
 jackfruit and leather had a baby in a tobacco field, and 
 that baby grew up to have a bourbon aftertaste."
@@ -194,9 +223,9 @@ payload that the pure Arabicas couldn't match."
 "91 degrees. That's where the osmanthus lives. 
 One degree higher and it's gone. One degree lower 
 and you're drinking grass."
-```
 
 ---
+
 
 ## Legal & Copyright Disclaimer
 
@@ -208,15 +237,21 @@ and you're drinking grass."
 
 ### DMCA / Takedown Notice
 If you are a rights holder... please open a private issue on this repository or contact the repository owner directly via GitHub. I will respond promptly to resolve any concerns.
+---
 
-<p align="center">
-  <strong>BREW LAB v3.0</strong><br>
-  <em>Extraction Protocol Active</em><br>
-  <code>[ GRINDING // HEATING // EXTRACTING // PERFECTING ]</code>
-</p>
+<div align="center">
+
+**BREW LAB v4.0**
+*Extraction Protocol Active*
+
+`[ GRINDING // HEATING // EXTRACTING // PERFECTING ]`
+
+</div>
 
 ---
 
-<p align="center">
-  <sub>Built with obsession, caffeine, and Claude. No beans were harmed. Many beans were perfected.</sub>
-</p>
+<div align="center">
+
+*Built with obsession, caffeine, Claude, and Duke Nukem. No beans were harmed. Many beans were perfected.*
+
+</div>
