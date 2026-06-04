@@ -867,9 +867,7 @@ const SoundEngine = (() => {
     tap() {
       if (!_enabled || !ctx) return;
       if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
-        DukeLoader.playSound('engage-shrinker'); // Use the correct mapped sound name
-        console.log('🔊 Duke SFX: tap');
-        return;
+        if (DukeLoader.playSound('engage-shrinker')) { console.log('🔊 Duke SFX: tap'); return; }
       }
       const now = ctx.currentTime;
       _noise({ dur:.04, gain:.22, fType:"highpass", fFreq:1500, now });
@@ -880,9 +878,7 @@ const SoundEngine = (() => {
     engage() {
       if (!_enabled || !ctx) return;
       if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
-        DukeLoader.playSound('engage-charge');
-        console.log('🔊 Duke SFX: engage');
-        return;
+        if (DukeLoader.playSound('engage-charge')) { console.log('🔊 Duke SFX: engage'); return; }
       }
       const now = ctx.currentTime, rvIn = _rv(.25, .4, 3);
       _fat({ freq:220, type:"sawtooth", dur:.22, gain:.45, det:12, now, dist:60, end:rvIn });
@@ -899,9 +895,7 @@ const SoundEngine = (() => {
     targetAcquired() {
       if (!_enabled || !ctx) return;
       if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
-        DukeLoader.playSound('target-score');
-        console.log('🔊 Duke SFX: targetAcquired');
-        return;
+        if (DukeLoader.playSound('target-score')) { console.log('🔊 Duke SFX: targetAcquired'); return; }
       }
       const r = _rm(), now = ctx.currentTime;
       [262,330,392,494].forEach((freq,i) => _at(i*(r?55:100), () => {
@@ -954,9 +948,7 @@ const SoundEngine = (() => {
     dukeHail() {
       if (!_enabled || !ctx) return;
       if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
-        DukeLoader.playSound('duke-hail');
-        console.log('🔊 Duke SFX: dukeHail');
-        return;
+        if (DukeLoader.playSound('duke-hail')) { console.log('🔊 Duke SFX: dukeHail'); return; }
       }
       if (_rm()) {
         const now=ctx.currentTime; _sub({ freq:80, dur:.4, gain:.4, now, slide:25 });
