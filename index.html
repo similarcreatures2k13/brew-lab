@@ -854,14 +854,40 @@ const SoundEngine = (() => {
   const _at = (ms, fn) => setTimeout(fn, ms);
   const _rm = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e) { return false; } };
 
+  // ── Duke raw-file playback ────────────────────────────────
+  // Fetches, decodes and caches a file from assets/duke3d/audio/ on first use.
+  // Plays through the master gain bus. Fails silently on 404 or any error.
+  let _launched = false;
+  const _fileCache = {};
+  function _playFile(filename, gainVal) {
+    if (!_enabled || !ctx) return;
+    const vol = gainVal != null ? gainVal : 0.7;
+    function _play(buf) {
+      try {
+        const src = ctx.createBufferSource(), g = ctx.createGain();
+        g.gain.value = vol;
+        src.buffer = buf; src.connect(g); g.connect(master); src.start();
+        src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };
+      } catch(e) {}
+    }
+    if (_fileCache[filename]) { _play(_fileCache[filename]); return; }
+    fetch('assets/duke3d/audio/' + filename, { cache: 'force-cache' })
+      .then(r => { if (!r.ok) throw new Error(); return r.arrayBuffer(); })
+      .then(arr => ctx.decodeAudioData(arr))
+      .then(buf => { _fileCache[filename] = buf; _play(buf); })
+      .catch(() => {});
+  }
+
   return {
     unlock() {
       _init();
       if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
       if (typeof DukeLoader !== 'undefined' && DukeLoader.preload) DukeLoader.preload(ctx);
+      if (!_launched) { _launched = true; _playFile('JETPAKON.wav', 0.7); }
     },
     setEnabled(v) { _enabled = !!v; localStorage.setItem("bl_sound_enabled", _enabled ? "true" : "false"); },
     isEnabled() { return _enabled; },
+    playFile(filename, gainVal) { _playFile(filename, gainVal); },
 
     // Beefy mechanical click: HP-filtered noise clack + descending sine thump
     tap() {
@@ -1617,7 +1643,7 @@ function renderStatusBar() {
   // long-press (650ms) → VOID.LOG screen  |  short tap → 5-tap counter
   const brand = el.querySelector("#version-tap");
   let lpTimer = null, lpFired = false;
-  brand.addEventListener("touchstart", () => { lpFired=false; lpTimer=setTimeout(() => { lpFired=true; state.screen="voidlog"; render(); }, 650); }, { passive:true });
+  brand.addEventListener("touchstart", () => { lpFired=false; lpTimer=setTimeout(() => { lpFired=true; state.screen="voidlog"; render(); }, 650); setTimeout(() => { if (lpFired) SoundEngine.playFile('SECRET.wav'); }, 800); }, { passive:true });
   brand.addEventListener("touchend",   () => { clearTimeout(lpTimer); lpTimer=null; });
   brand.addEventListener("touchmove",  () => { clearTimeout(lpTimer); lpTimer=null; }, { passive:true });
   brand.addEventListener("click",      () => { if (!lpFired) onVersionTap(); lpFired=false; });
@@ -1631,7 +1657,7 @@ function renderStatusBar() {
       clearTimeout(state.dukeResetTimer);
       if (state.dukeTaps >= 10) {
         state.dukeTaps = 0;
-        SoundEngine.dukeHail();
+        if (Math.random() < 0.5) SoundEngine.playFile('GETSOM1A.wav'); else SoundEngine.dukeHail();
         state.dukeQuoteIdx = Math.floor(Math.random() * DUKE_QUOTES.length);
         state.screen = "duke"; render(); return;
       }
@@ -1655,6 +1681,7 @@ function renderTabBar() {
   }).join("");
   nav.addEventListener("click", e => {
     const tab = e.target.dataset.tab; if (!tab) return;
+    if (tab === 'history' || tab === 'settings') SoundEngine.playFile('OPENDOOR.wav');
     state.selectedBean=null; state.brewType=null; state.method=null; state.recipe=null;
     state.screen=tab; render();
   });
@@ -1692,6 +1719,7 @@ function renderHome() {
     <div class="proto-divider" style="margin-top:14px;text-align:center;">◇ SELECT PROTOCOL TO CONTINUE ◇</div>`;
   wrap.addEventListener("click", e => {
     const b = e.target.closest("[data-brew]")?.dataset.brew; if (!b) return;
+    SoundEngine.playFile('SHAKE2A.wav');
     state.brewType=b; state.screen="method"; render();
   });
   return wrap;
@@ -1715,6 +1743,7 @@ function renderMethod() {
   wrap.addEventListener("click", e => {
     if (e.target.closest("[data-back]")) { state.screen="home"; render(); return; }
     const m = e.target.closest("[data-method]")?.dataset.method; if (!m) return;
+    SoundEngine.playFile('LETSRK03.wav');
     state.method=m; state.screen="bean"; render();
   });
   return wrap;
@@ -2008,6 +2037,7 @@ function renderFeedback() {
     state.aiAdjustment=null;
     if (fb==="perfect") { state.feedback=["perfect"]; state.adjustment=null; }
     else {
+      SoundEngine.playFile('THSUK13A.wav');
       state.feedback=state.feedback.filter(f=>f!=="perfect");
       state.feedback.includes(fb)?state.feedback.splice(state.feedback.indexOf(fb),1):state.feedback.push(fb);
       state.adjustment=state.feedback.length?processFeedback({currentRecipe:r,feedback:state.feedback,recipeKey:state.recipeKey}):null;
@@ -2080,6 +2110,8 @@ function applyFeedback() {
 
   if (isPerfect) {
     SoundEngine.targetAcquired();
+    SoundEngine.playFile('NEEDED03.wav');
+    SoundEngine.playFile(Math.random() < 0.5 ? 'IMGOOD12.wav' : 'AHMUCH03.wav');
     state.justLockedId=entry.id;
     showAcquiredOverlay(entry.settings, () => { toast("◆ DIALED. PROTOCOL LOCKED."); state.screen="history"; render(); });
   } else {
@@ -2219,7 +2251,7 @@ function renderSettings() {
     if (confirm("Purge all brew history?")) { state.history=[]; save(KEYS.history,state.history); render(); toast("ARCHIVE PURGED"); }
   });
   wrap.querySelector("#crt-toggle").addEventListener("click", () => {
-    state.settings.crtMode=!state.settings.crtMode; save(KEYS.settings,state.settings); SoundEngine.toggle(); render();
+    state.settings.crtMode=!state.settings.crtMode; save(KEYS.settings,state.settings); SoundEngine.toggle(); SoundEngine.playFile('OPENDOOR.wav'); render();
   });
   wrap.querySelector("#boot-toggle").addEventListener("click", () => {
     state.settings.skipBoot=!state.settings.skipBoot;
@@ -2230,6 +2262,7 @@ function renderSettings() {
     const was = SoundEngine.isEnabled();
     SoundEngine.setEnabled(!was);
     if (!was) SoundEngine.engage(); // confirmation on enable
+    SoundEngine.playFile('OPENDOOR.wav');
     render();
   });
   wrap.querySelector("#clear-all").addEventListener("click", () => {
@@ -2436,12 +2469,12 @@ function renderDuke() {
   `;
 
   wrap.querySelector("#duke-quote").addEventListener("click", () => {
-    SoundEngine.tap();
+    SoundEngine.playFile('MONITOR.wav', 0.35);
     let n; do { n = Math.floor(Math.random() * DUKE_QUOTES.length); } while (n === state.dukeQuoteIdx);
     state.dukeQuoteIdx = n; render();
   });
   wrap.querySelector("#duke-return").addEventListener("click", () => {
-    SoundEngine.tap(); state.screen = "home"; render();
+    state.screen = "home"; render(); // tap sound handled by universal handler
   });
   return wrap;
 }
@@ -2464,7 +2497,7 @@ function onVersionTap() {
 );
 // universal tap sound — capture phase fires before target handlers
 document.addEventListener("click", e => {
-  if (e.target.closest(".btn, .chip, .tab, .three-toggle button, .note-chip")) SoundEngine.tap();
+  if (e.target.closest(".btn, .chip, .tab, .three-toggle button, .note-chip")) SoundEngine.playFile('MONITOR.wav', 0.35);
 }, true);
 
 applyCrtMode();
