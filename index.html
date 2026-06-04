@@ -860,6 +860,7 @@ const SoundEngine = (() => {
   let _launched = false;
   const _fileCache = {};
   function _playFile(filename, gainVal) {
+    console.log('_playFile called:', filename);
     if (!_enabled || !ctx) return;
     const vol = gainVal != null ? gainVal : 0.7;
     function _play(buf) {
