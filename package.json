@@ -1,0 +1,20 @@
+{
+  "name": "brew-lab-tools",
+  "version": "1.0.0",
+  "description": "Asset extraction utilities for Brew Lab (Duke Nukem 3D GRP extractor)",
+  "private": true,
+  "scripts": {
+    "extract": "node extract-duke.js",
+    "extract:grp": "node extract-duke.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "notes": {
+    "wav": "WAV output is written manually (pure Node.js, no npm package needed)",
+    "legal": "This tool extracts assets from files YOU own. Duke Nukem 3D assets are copyright 3D Realms/Gearbox. For personal use only."
+  }
+}
