@@ -741,28 +741,11 @@
   /* expanded LED hit-area for 10-tap easter egg */
   .status-led { cursor:pointer; }
   .status-led::before { content:""; position:absolute; top:-12px; right:-12px; bottom:-12px; left:-12px; }
-
-  /* ── DUKE3D SPRITE ASSETS ─────────────────────────────── */
-  .hud-face-wrap { position:relative; display:flex; align-items:center; flex-shrink:0; }
-  .hud-face-sprite {
-    width:26px; height:26px; flex-shrink:0; object-fit:contain;
-    image-rendering:pixelated; image-rendering:-webkit-optimize-contrast;
-    -webkit-image-rendering:pixelated;
-    display:none; /* shown by setHudFace() when sprite loaded */
-  }
-  .duke-sprite-logo { text-align:center; padding:14px 0 8px; }
-  .duke-sprite-img {
-    display:block; max-width:100%; width:100%; height:auto; margin:2px auto 0;
-    image-rendering:pixelated; image-rendering:-webkit-optimize-contrast;
-    -webkit-image-rendering:pixelated;
-  }
 </style>
 </head>
 <body>
   <div id="app"></div>
   <div id="toast" class="toast"></div>
-
-<script src="duke-loader.js"></script>
 
 <script>
 "use strict";
@@ -869,44 +852,14 @@ const SoundEngine = (() => {
   const _at = (ms, fn) => setTimeout(fn, ms);
   const _rm = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e) { return false; } };
 
-  // Play a decoded AudioBuffer through the same DSP chain as the synth primitives
-  function _playBuf(buf, { gain = 0.5, dist = 0, revWet = 0, revDur = 0.3, revDec = 2 } = {}) {
-    if (!buf || !ctx || !_enabled) return;
-    try {
-      const now = ctx.currentTime;
-      const src = ctx.createBufferSource(), g = ctx.createGain();
-      src.buffer = buf;
-      let ep = master;
-      if (revWet > 0) ep = _rv(revWet, revDur, revDec);
-      if (dist > 0)   { const d = _dist(dist); d.connect(ep); ep = d; setTimeout(() => { try { d.disconnect(); } catch(e){} }, (revDur + 1) * 1000); }
-      g.gain.setValueAtTime(gain, now);
-      src.connect(g); g.connect(ep); src.start(now);
-      src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };
-    } catch(e) {}
-  }
-
-  // Check Duke assets first; if found play and return true, else return false (use synth)
-  function _dukeCheck(name, dspOpts) {
-    if (typeof state === 'undefined' || !state.settings.useDukeAssets) return false;
-    if (typeof DukeLoader === 'undefined' || !DukeLoader.hasAudio(name)) return false;
-    _playBuf(DukeLoader.getBuffer(name), dspOpts);
-    return true;
-  }
-
   return {
-    unlock() {
-      _init();
-      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
-      // Kick off Duke3D asset preload on first user gesture
-      if (typeof DukeLoader !== 'undefined') DukeLoader.preload(ctx).catch(() => {});
-    },
+    unlock() { _init(); if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {}); },
     setEnabled(v) { _enabled = !!v; localStorage.setItem("bl_sound_enabled", _enabled ? "true" : "false"); },
     isEnabled() { return _enabled; },
 
     // Beefy mechanical click: HP-filtered noise clack + descending sine thump
     tap() {
       if (!_enabled || !ctx) return;
-      if (_dukeCheck('tap', { gain:0.5 })) return;
       const now = ctx.currentTime;
       _noise({ dur:.04, gain:.22, fType:"highpass", fFreq:1500, now });
       _sub({ freq:160, dur:.08, gain:.45, now, slide:60 });
@@ -915,7 +868,6 @@ const SoundEngine = (() => {
     // Weighty power-up: 3-layer detuned sawtooth sweep + sub bass + heavy dist
     engage() {
       if (!_enabled || !ctx) return;
-      if (_dukeCheck('engage', { gain:0.6, revWet:0.2, revDur:0.4, revDec:3 })) return;
       const now = ctx.currentTime, rvIn = _rv(.25, .4, 3);
       _fat({ freq:220, type:"sawtooth", dur:.22, gain:.45, det:12, now, dist:60, end:rvIn });
       _fat({ freq:280, type:"square",   dur:.2,  gain:.35, det:8,  now, dist:40, end:rvIn });
@@ -930,8 +882,6 @@ const SoundEngine = (() => {
     // Ceremonial: square wave C-E-G-B arpeggio + interval sustain
     targetAcquired() {
       if (!_enabled || !ctx) return;
-      if (typeof setHudFace === 'function') setHudFace('smile', 2500);
-      if (_dukeCheck('targetAcquired', { gain:0.55, revWet:0.25, revDur:0.4, revDec:2 })) return;
       const r = _rm(), now = ctx.currentTime;
       [262,330,392,494].forEach((freq,i) => _at(i*(r?55:100), () => {
         const t = ctx.currentTime;
@@ -947,8 +897,6 @@ const SoundEngine = (() => {
     // Denied: distorted square buzz + sub bass (dry, aggressive)
     denied() {
       if (!_enabled || !ctx) return;
-      if (typeof setHudFace === 'function') setHudFace('hurt', 1500);
-      if (_dukeCheck('denied', { gain:0.55, dist:30 })) return;
       const now = ctx.currentTime;
       _fat({ freq:110, type:"square", dur:.2, gain:.4, det:20, now, dist:80 });
       _sub({ freq:55, dur:.25, gain:.4, now });
@@ -970,7 +918,6 @@ const SoundEngine = (() => {
     // Physical switch click (high-pass noise)
     toggle() {
       if (!_enabled || !ctx) return;
-      if (_dukeCheck('toggle', { gain:0.4 })) return;
       const now = ctx.currentTime;
       _noise({ dur:.015, gain:.28, fType:"highpass", fFreq:4000, now });
       _at(35, () => { const t=ctx.currentTime; _noise({ dur:.02, gain:.22, fType:"highpass", fFreq:3500, now:t }); });
@@ -978,25 +925,13 @@ const SoundEngine = (() => {
 
     select() {
       if (!_enabled || !ctx) return;
-      if (_dukeCheck('select', { gain:0.35 })) return;
       const now = ctx.currentTime;
       _fat({ freq:1500, type:"sine", dur:.03, gain:.15, det:2, now });
     },
 
-    // CINEMATIC Duke reveal: real voice (if loaded) + synth bass, or full synth
+    // CINEMATIC Duke reveal: massive sub drop + sawtooth chord + reverb boom (~2s)
     dukeHail() {
       if (!_enabled || !ctx) return;
-      // Hybrid mode: real Duke voice line + synthesised sub-bass foundation
-      if (typeof state !== 'undefined' && state.settings.useDukeAssets &&
-          typeof DukeLoader !== 'undefined' && DukeLoader.hasAudio('dukeHail')) {
-        _playBuf(DukeLoader.getBuffer('dukeHail'), { gain:0.7, revWet:0.2, revDur:0.8, revDec:3 });
-        if (!_rm()) {
-          const now = ctx.currentTime;
-          _sub({ freq:60, dur:0.5, gain:0.4, now, slide:25 });
-          _at(200, () => { const t=ctx.currentTime; _fat({ freq:80, type:"sawtooth", dur:.4, gain:.25, det:10, now:t, dist:40 }); });
-        }
-        return;
-      }
       if (_rm()) {
         const now=ctx.currentTime; _sub({ freq:80, dur:.4, gain:.4, now, slide:25 });
         _at(50,  () => { const t=ctx.currentTime; _fat({ freq:140, type:"sawtooth", dur:.3, gain:.3, now:t, dist:50 }); });
@@ -1430,8 +1365,7 @@ const state = {
       defaultV60Dose:    s.defaultV60Dose    ?? 16,
       defaultBrikkaDose: s.defaultBrikkaDose ?? 16,
       crtMode:           s.crtMode           ?? true,   // default ON
-      skipBoot:          s.skipBoot          ?? false,
-      useDukeAssets:     s.useDukeAssets     ?? false
+      skipBoot:          s.skipBoot          ?? false
     };
   })(),
   apiKey: localStorage.getItem(KEYS.apiKey) || "",
@@ -1441,8 +1375,7 @@ const state = {
   feedback: [], taggedNotes: {}, adjustment: null, pendingDevNote: "",
   aiLoading: false, aiResult: null, aiAdjustment: null,
   beanDraft: null, versionTapCount: 0, justLockedId: null,
-  dukeTaps: 0, dukeResetTimer: null, dukeQuoteIdx: 0,
-  hudFace: 'neutral', hudFaceTimer: null
+  dukeTaps: 0, dukeResetTimer: null, dukeQuoteIdx: 0
 };
 
 // ==========================================================
@@ -1588,45 +1521,6 @@ function showAcquiredOverlay(recipe, callback) {
 // old playSound removed — replaced by SoundEngine
 
 // ==========================================================
-// ==========================================================
-// DUKE HUD FACE — sprite swapping + CSS LED fallback
-// ==========================================================
-function setHudFace(face, resetAfterMs) {
-  // Track in state so re-renders stay in sync
-  if (typeof state !== 'undefined') {
-    state.hudFace = face;
-    clearTimeout(state.hudFaceTimer);
-  }
-  // Direct DOM update — no full re-render needed
-  const img = document.getElementById('hud-face-img');
-  const led = document.getElementById('hud-led');
-  if (!img || !led) return; // DOM not ready yet
-
-  let usedSprite = false;
-  if (typeof DukeLoader !== 'undefined' && typeof state !== 'undefined' &&
-      state.settings && state.settings.useDukeAssets && DukeLoader.isReady()) {
-    const sprite = DukeLoader.getSprite('hud-' + face);
-    if (sprite) {
-      img.src = sprite.src; img.style.display = 'block'; led.style.display = 'none';
-      usedSprite = true;
-    }
-  }
-  if (!usedSprite) {
-    img.style.display = 'none'; led.style.display = 'block';
-    // Restore correct LED class for app state, tinted by face emotion
-    const base = typeof state !== 'undefined'
-      ? (state.recipe?.locked   ? ' locked'
-       : (state.recipe || state.aiLoading) ? ' active' : '')
-      : '';
-    const emotion = face === 'smile' ? ' locked' : face === 'hurt' ? ' warn' : base;
-    led.className = 'status-led' + emotion;
-  }
-
-  if (resetAfterMs && typeof state !== 'undefined') {
-    state.hudFaceTimer = setTimeout(() => setHudFace('neutral'), resetAfterMs);
-  }
-}
-
 // RENDER ROUTER
 // ==========================================================
 function render() {
@@ -1648,8 +1542,6 @@ function render() {
 
   if (["home","history","settings"].includes(state.screen)) app.appendChild(renderTabBar());
   window.scrollTo(0, 0);
-  // Re-sync HUD face sprite with current state after DOM rebuild
-  setTimeout(() => setHudFace(state.hudFace || 'neutral'), 0);
 }
 
 // ==========================================================
@@ -1682,11 +1574,7 @@ function renderStatusBar() {
   el.innerHTML = `
     <div class="hud-cell brand" id="version-tap">
       <div class="hud-brand-row">
-        <div class="hud-face-wrap">
-          <div class="status-led ${ledClass}" id="hud-led"></div>
-          <img id="hud-face-img" class="hud-face-sprite" src="" alt=""
-               onerror="this.style.display='none';var l=document.getElementById('hud-led');if(l)l.style.display='block';">
-        </div>
+        <div class="status-led ${ledClass}"></div>
         <div class="hud-value brand-name">BREW LAB</div>
       </div>
       <div class="hud-ver">V4.0 // PHANTOM</div>
@@ -1715,10 +1603,10 @@ function renderStatusBar() {
   brand.addEventListener("touchmove",  () => { clearTimeout(lpTimer); lpTimer=null; }, { passive:true });
   brand.addEventListener("click",      () => { if (!lpFired) onVersionTap(); lpFired=false; });
 
-  // 10-tap on face wrap (covers LED + sprite) → Duke easter egg
-  const faceWrap = el.querySelector(".hud-face-wrap");
-  if (faceWrap) {
-    faceWrap.addEventListener("click", e => {
+  // 10-tap LED → Duke easter egg
+  const led = el.querySelector(".status-led");
+  if (led) {
+    led.addEventListener("click", e => {
       e.stopPropagation();
       state.dukeTaps = (state.dukeTaps || 0) + 1;
       clearTimeout(state.dukeResetTimer);
@@ -2288,17 +2176,6 @@ function renderSettings() {
       <span class="options-key">BOOT SEQUENCE</span>
       <button class="option-toggle${!state.settings.skipBoot?" on":""}" id="boot-toggle">${state.settings.skipBoot?"SKIP":"ENABLED"}</button>
     </div>
-    <div class="options-row">
-      <span class="options-key">DUKE ASSETS</span>
-      <button class="option-toggle${state.settings.useDukeAssets?" on":""}" id="duke-assets-toggle" style="min-width:72px;">${state.settings.useDukeAssets?"◆ REAL":"◇ SYNTH"}</button>
-    </div>
-    <div style="font-family:var(--ui);font-size:11px;color:var(--text-ghost);margin:-6px 0 8px;line-height:1.5;">${(() => {
-      if (typeof DukeLoader === 'undefined') return '> Run extract-duke.js then commit assets/duke3d/';
-      if (!state.settings.useDukeAssets) return '> Synthesised sounds active.';
-      if (!DukeLoader.isReady()) return '> Enable sound → first tap preloads assets.';
-      const s = DukeLoader.getStatus();
-      return \`> \${s.loaded}/\${s.total} sounds · \${s.sprites}/\${s.spritesTotal} sprites loaded\`;
-    })()}</div>
 
     <div class="hazard-tape"></div>
     <div class="options-header danger">╤ PURGE ZONE ╤</div>
@@ -2334,15 +2211,6 @@ function renderSettings() {
     const was = SoundEngine.isEnabled();
     SoundEngine.setEnabled(!was);
     if (!was) SoundEngine.engage(); // confirmation on enable
-    render();
-  });
-  wrap.querySelector("#duke-assets-toggle").addEventListener("click", () => {
-    state.settings.useDukeAssets = !state.settings.useDukeAssets;
-    save(KEYS.settings, state.settings);
-    // If enabling: trigger preload (idempotent — safe to call again)
-    if (state.settings.useDukeAssets && typeof DukeLoader !== 'undefined') {
-      SoundEngine.unlock(); // ensures ctx is initialised + calls DukeLoader.preload
-    }
     render();
   });
   wrap.querySelector("#clear-all").addEventListener("click", () => {
@@ -2513,27 +2381,15 @@ function renderDuke() {
   const quote = DUKE_QUOTES[state.dukeQuoteIdx % DUKE_QUOTES.length];
 
   
-  // Logo: real extracted sprites (if loaded) or CSS block-char fallback
-  const logoHtml = (function() {
-    if (typeof DukeLoader !== 'undefined' && typeof state !== 'undefined' &&
-        state.settings && state.settings.useDukeAssets && DukeLoader.isReady()) {
-      var lt = DukeLoader.getSprite('logo-top'), lb = DukeLoader.getSprite('logo-bottom');
-      if (lt || lb) {
-        return '<div class="duke-sprite-logo">' +
-          (lt ? '<img src="' + lt.src + '" class="duke-sprite-img" alt="DUKE NUKEM 3D">' : '') +
-          (lb ? '<img src="' + lb.src + '" class="duke-sprite-img" alt="">' : '') +
-          '<div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div></div>';
-      }
-    }
-    return '<div class="duke-logo-wrap"><div class="duke-logo-row">BREW</div>' +
-      '<div class="duke-logo-row">LAB 3D</div><div class="duke-logo-accent"></div>' +
-      '<div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div></div>';
-  })();
-
   wrap.innerHTML = `
     <div class="card duke-card">
       <span class="card-label duke-label">┤ CLASSIFIED // OPERATOR SC2K13 ├</span>
-      ${logoHtml}
+      <div class="duke-logo-wrap">
+        <div class="duke-logo-row">BREW</div>
+        <div class="duke-logo-row">LAB 3D</div>
+        <div class="duke-logo-accent"></div>
+        <div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div>
+      </div>
 
       <div class="duke-quote" id="duke-quote">
         <div class="duke-quote-text">"${quote}"</div>
