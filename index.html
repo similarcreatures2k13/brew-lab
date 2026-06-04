@@ -738,10 +738,12 @@
     font-size:12px; color:var(--text-dim); line-height:1.7; margin:12px 0;
   }
   .duke-credits { text-align:center; font-family:var(--mono); font-size:9px; color:var(--text-ghost); letter-spacing:.2em; margin-top:16px; padding-bottom:4px; }
+  .duke-sprite { image-rendering: pixelated; pointer-events: none; }
   /* expanded LED hit-area for 10-tap easter egg */
   .status-led { cursor:pointer; }
   .status-led::before { content:""; position:absolute; top:-12px; right:-12px; bottom:-12px; left:-12px; }
 </style>
+<script src="duke-loader.js" defer></script>
 </head>
 <body>
   <div id="app"></div>
@@ -853,13 +855,22 @@ const SoundEngine = (() => {
   const _rm = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e) { return false; } };
 
   return {
-    unlock() { _init(); if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {}); },
+    unlock() {
+      _init();
+      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+      if (typeof DukeLoader !== 'undefined' && DukeLoader.preload) DukeLoader.preload(ctx);
+    },
     setEnabled(v) { _enabled = !!v; localStorage.setItem("bl_sound_enabled", _enabled ? "true" : "false"); },
     isEnabled() { return _enabled; },
 
     // Beefy mechanical click: HP-filtered noise clack + descending sine thump
     tap() {
       if (!_enabled || !ctx) return;
+      if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
+        DukeLoader.playSound('engage-shrinker'); // Use the correct mapped sound name
+        console.log('🔊 Duke SFX: tap');
+        return;
+      }
       const now = ctx.currentTime;
       _noise({ dur:.04, gain:.22, fType:"highpass", fFreq:1500, now });
       _sub({ freq:160, dur:.08, gain:.45, now, slide:60 });
@@ -868,6 +879,11 @@ const SoundEngine = (() => {
     // Weighty power-up: 3-layer detuned sawtooth sweep + sub bass + heavy dist
     engage() {
       if (!_enabled || !ctx) return;
+      if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
+        DukeLoader.playSound('engage-charge');
+        console.log('🔊 Duke SFX: engage');
+        return;
+      }
       const now = ctx.currentTime, rvIn = _rv(.25, .4, 3);
       _fat({ freq:220, type:"sawtooth", dur:.22, gain:.45, det:12, now, dist:60, end:rvIn });
       _fat({ freq:280, type:"square",   dur:.2,  gain:.35, det:8,  now, dist:40, end:rvIn });
@@ -882,6 +898,11 @@ const SoundEngine = (() => {
     // Ceremonial: square wave C-E-G-B arpeggio + interval sustain
     targetAcquired() {
       if (!_enabled || !ctx) return;
+      if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
+        DukeLoader.playSound('target-score');
+        console.log('🔊 Duke SFX: targetAcquired');
+        return;
+      }
       const r = _rm(), now = ctx.currentTime;
       [262,330,392,494].forEach((freq,i) => _at(i*(r?55:100), () => {
         const t = ctx.currentTime;
@@ -932,6 +953,11 @@ const SoundEngine = (() => {
     // CINEMATIC Duke reveal: massive sub drop + sawtooth chord + reverb boom (~2s)
     dukeHail() {
       if (!_enabled || !ctx) return;
+      if (typeof DukeLoader !== 'undefined' && DukeLoader.isReady && DukeLoader.isReady()) {
+        DukeLoader.playSound('duke-hail');
+        console.log('🔊 Duke SFX: dukeHail');
+        return;
+      }
       if (_rm()) {
         const now=ctx.currentTime; _sub({ freq:80, dur:.4, gain:.4, now, slide:25 });
         _at(50,  () => { const t=ctx.currentTime; _fat({ freq:140, type:"sawtooth", dur:.3, gain:.3, now:t, dist:50 }); });
@@ -2385,8 +2411,17 @@ function renderDuke() {
     <div class="card duke-card">
       <span class="card-label duke-label">┤ CLASSIFIED // OPERATOR SC2K13 ├</span>
       <div class="duke-logo-wrap">
-        <div class="duke-logo-row">BREW</div>
-        <div class="duke-logo-row">LAB 3D</div>
+        <img
+          class="duke-sprite"
+          src="assets/duke3d/sprites/duke-logo-top.png"
+          alt="BREW LAB 3D"
+          id="duke-sprite-logo"
+          onerror="this.style.display='none';document.getElementById('duke-logo-ascii').style.display=''"
+        />
+        <div id="duke-logo-ascii" style="display:none">
+          <div class="duke-logo-row">BREW</div>
+          <div class="duke-logo-row">LAB 3D</div>
+        </div>
         <div class="duke-logo-accent"></div>
         <div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div>
       </div>

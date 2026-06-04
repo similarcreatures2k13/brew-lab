@@ -43,6 +43,12 @@ const DukeLoader = (() => {
     select:         ['ui-click-01.wav'],
     dukeHail:       ['duke-hail-01.wav', 'duke-attitude-01.wav', 'duke-taunt-01.wav', 'duke-voice-01.wav'],
     // boot intentionally omitted — synthesised CRT power-on has no good Duke equivalent
+
+    // Named aliases used by the SoundEngine defensive wrappers
+    'engage-shrinker': ['engage-shrinker-01.wav'],
+    'engage-charge':   ['engage-charge-01.wav'],
+    'target-score':    ['target-pickup-01.wav', 'target-beep-01.wav'],
+    'duke-hail':       ['duke-hail-01.wav', 'duke-attitude-01.wav'],
   };
 
   const SPRITE_MAP = {
@@ -150,6 +156,33 @@ const DukeLoader = (() => {
      * @returns {HTMLImageElement|null}
      */
     getSprite(key) { return _sprites[key] || null; },
+
+    /**
+     * Play a preloaded sound by AUDIO_MAP key name.
+     * Connects directly to _ctx.destination — call only from within SoundEngine
+     * after verifying _enabled and ctx, so master gain is already applied.
+     * Returns true if the buffer was found and playback started, false otherwise.
+     * @param {string} name   — AUDIO_MAP key (e.g. 'duke-hail', 'engage-charge')
+     * @param {number} [gainVal=0.5]
+     * @returns {boolean}
+     */
+    playSound(name, gainVal) {
+      const buf = _buffers[name];
+      if (!_ctx || !buf) return false;
+      try {
+        const src = _ctx.createBufferSource();
+        const g   = _ctx.createGain();
+        g.gain.value = gainVal != null ? gainVal : 0.5;
+        src.buffer = buf;
+        src.connect(g);
+        g.connect(_ctx.destination);
+        src.start();
+        src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e){} };
+        return true;
+      } catch(e) {
+        return false;
+      }
+    },
 
     /** Load counts for settings status display. */
     getStatus() {
