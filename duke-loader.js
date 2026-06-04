@@ -35,19 +35,19 @@ const DukeLoader = (() => {
   const SPRITES_BASE = 'assets/duke3d/sprites/';
 
   const AUDIO_MAP = {
-    tap:            ['ui-click-01.wav', 'ui-click-02.wav', 'ui-move-01.wav'],
-    engage:         ['engage-shrinker-01.wav', 'engage-pipebomb-01.wav', 'engage-rpg-01.wav', 'engage-charge-01.wav'],
-    targetAcquired: ['target-lock-01.wav', 'target-beep-01.wav', 'target-pickup-01.wav'],
-    denied:         ['explosion-small-01.wav', 'player-pain-01.wav', 'explosion-large-01.wav'],
-    toggle:         ['ui-click-01.wav', 'ui-click-02.wav'],
-    select:         ['ui-click-01.wav'],
-    dukeHail:       ['duke-hail-01.wav', 'duke-attitude-01.wav', 'duke-taunt-01.wav', 'duke-voice-01.wav'],
+    tap:            ['ricochet-01.wav'],                                                          // no ui-click file exists; ricochet is closest short SFX
+    engage:         ['engage-shrinker-01.wav', 'engage-rpg-01.wav', 'engage-charge-01.wav'],
+    targetAcquired: ['target-score-01.wav', 'target-pickup-01.wav'],
+    denied:         ['explosion-small-01.wav', 'player-pain-01.wav'],
+    toggle:         ['ricochet-01.wav'],
+    select:         ['ricochet-01.wav'],
+    dukeHail:       ['duke-hail-01.wav', 'duke-attitude-01.wav'],
     // boot intentionally omitted — synthesised CRT power-on has no good Duke equivalent
 
     // Named aliases used by the SoundEngine defensive wrappers
     'engage-shrinker': ['engage-shrinker-01.wav'],
     'engage-charge':   ['engage-charge-01.wav'],
-    'target-score':    ['target-pickup-01.wav', 'target-beep-01.wav'],
+    'target-score':    ['target-score-01.wav', 'target-score-02.wav'],
     'duke-hail':       ['duke-hail-01.wav', 'duke-attitude-01.wav'],
   };
 
