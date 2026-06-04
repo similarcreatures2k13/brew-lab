@@ -741,6 +741,21 @@
   /* expanded LED hit-area for 10-tap easter egg */
   .status-led { cursor:pointer; }
   .status-led::before { content:""; position:absolute; top:-12px; right:-12px; bottom:-12px; left:-12px; }
+
+  /* ── DUKE3D SPRITE ASSETS ─────────────────────────────── */
+  .hud-face-wrap { position:relative; display:flex; align-items:center; flex-shrink:0; }
+  .hud-face-sprite {
+    width:26px; height:26px; flex-shrink:0; object-fit:contain;
+    image-rendering:pixelated; image-rendering:-webkit-optimize-contrast;
+    -webkit-image-rendering:pixelated;
+    display:none; /* shown by setHudFace() when sprite loaded */
+  }
+  .duke-sprite-logo { text-align:center; padding:14px 0 8px; }
+  .duke-sprite-img {
+    display:block; max-width:100%; width:100%; height:auto; margin:2px auto 0;
+    image-rendering:pixelated; image-rendering:-webkit-optimize-contrast;
+    -webkit-image-rendering:pixelated;
+  }
 </style>
 </head>
 <body>
@@ -915,6 +930,7 @@ const SoundEngine = (() => {
     // Ceremonial: square wave C-E-G-B arpeggio + interval sustain
     targetAcquired() {
       if (!_enabled || !ctx) return;
+      if (typeof setHudFace === 'function') setHudFace('smile', 2500);
       if (_dukeCheck('targetAcquired', { gain:0.55, revWet:0.25, revDur:0.4, revDec:2 })) return;
       const r = _rm(), now = ctx.currentTime;
       [262,330,392,494].forEach((freq,i) => _at(i*(r?55:100), () => {
@@ -931,6 +947,7 @@ const SoundEngine = (() => {
     // Denied: distorted square buzz + sub bass (dry, aggressive)
     denied() {
       if (!_enabled || !ctx) return;
+      if (typeof setHudFace === 'function') setHudFace('hurt', 1500);
       if (_dukeCheck('denied', { gain:0.55, dist:30 })) return;
       const now = ctx.currentTime;
       _fat({ freq:110, type:"square", dur:.2, gain:.4, det:20, now, dist:80 });
@@ -1424,7 +1441,8 @@ const state = {
   feedback: [], taggedNotes: {}, adjustment: null, pendingDevNote: "",
   aiLoading: false, aiResult: null, aiAdjustment: null,
   beanDraft: null, versionTapCount: 0, justLockedId: null,
-  dukeTaps: 0, dukeResetTimer: null, dukeQuoteIdx: 0
+  dukeTaps: 0, dukeResetTimer: null, dukeQuoteIdx: 0,
+  hudFace: 'neutral', hudFaceTimer: null
 };
 
 // ==========================================================
@@ -1570,6 +1588,45 @@ function showAcquiredOverlay(recipe, callback) {
 // old playSound removed — replaced by SoundEngine
 
 // ==========================================================
+// ==========================================================
+// DUKE HUD FACE — sprite swapping + CSS LED fallback
+// ==========================================================
+function setHudFace(face, resetAfterMs) {
+  // Track in state so re-renders stay in sync
+  if (typeof state !== 'undefined') {
+    state.hudFace = face;
+    clearTimeout(state.hudFaceTimer);
+  }
+  // Direct DOM update — no full re-render needed
+  const img = document.getElementById('hud-face-img');
+  const led = document.getElementById('hud-led');
+  if (!img || !led) return; // DOM not ready yet
+
+  let usedSprite = false;
+  if (typeof DukeLoader !== 'undefined' && typeof state !== 'undefined' &&
+      state.settings && state.settings.useDukeAssets && DukeLoader.isReady()) {
+    const sprite = DukeLoader.getSprite('hud-' + face);
+    if (sprite) {
+      img.src = sprite.src; img.style.display = 'block'; led.style.display = 'none';
+      usedSprite = true;
+    }
+  }
+  if (!usedSprite) {
+    img.style.display = 'none'; led.style.display = 'block';
+    // Restore correct LED class for app state, tinted by face emotion
+    const base = typeof state !== 'undefined'
+      ? (state.recipe?.locked   ? ' locked'
+       : (state.recipe || state.aiLoading) ? ' active' : '')
+      : '';
+    const emotion = face === 'smile' ? ' locked' : face === 'hurt' ? ' warn' : base;
+    led.className = 'status-led' + emotion;
+  }
+
+  if (resetAfterMs && typeof state !== 'undefined') {
+    state.hudFaceTimer = setTimeout(() => setHudFace('neutral'), resetAfterMs);
+  }
+}
+
 // RENDER ROUTER
 // ==========================================================
 function render() {
@@ -1591,6 +1648,8 @@ function render() {
 
   if (["home","history","settings"].includes(state.screen)) app.appendChild(renderTabBar());
   window.scrollTo(0, 0);
+  // Re-sync HUD face sprite with current state after DOM rebuild
+  setTimeout(() => setHudFace(state.hudFace || 'neutral'), 0);
 }
 
 // ==========================================================
@@ -1623,7 +1682,11 @@ function renderStatusBar() {
   el.innerHTML = `
     <div class="hud-cell brand" id="version-tap">
       <div class="hud-brand-row">
-        <div class="status-led ${ledClass}"></div>
+        <div class="hud-face-wrap">
+          <div class="status-led ${ledClass}" id="hud-led"></div>
+          <img id="hud-face-img" class="hud-face-sprite" src="" alt=""
+               onerror="this.style.display='none';var l=document.getElementById('hud-led');if(l)l.style.display='block';">
+        </div>
         <div class="hud-value brand-name">BREW LAB</div>
       </div>
       <div class="hud-ver">V4.0 // PHANTOM</div>
@@ -1652,10 +1715,10 @@ function renderStatusBar() {
   brand.addEventListener("touchmove",  () => { clearTimeout(lpTimer); lpTimer=null; }, { passive:true });
   brand.addEventListener("click",      () => { if (!lpFired) onVersionTap(); lpFired=false; });
 
-  // 10-tap LED → Duke easter egg
-  const led = el.querySelector(".status-led");
-  if (led) {
-    led.addEventListener("click", e => {
+  // 10-tap on face wrap (covers LED + sprite) → Duke easter egg
+  const faceWrap = el.querySelector(".hud-face-wrap");
+  if (faceWrap) {
+    faceWrap.addEventListener("click", e => {
       e.stopPropagation();
       state.dukeTaps = (state.dukeTaps || 0) + 1;
       clearTimeout(state.dukeResetTimer);
@@ -2450,15 +2513,27 @@ function renderDuke() {
   const quote = DUKE_QUOTES[state.dukeQuoteIdx % DUKE_QUOTES.length];
 
   
+  // Logo: real extracted sprites (if loaded) or CSS block-char fallback
+  const logoHtml = (function() {
+    if (typeof DukeLoader !== 'undefined' && typeof state !== 'undefined' &&
+        state.settings && state.settings.useDukeAssets && DukeLoader.isReady()) {
+      var lt = DukeLoader.getSprite('logo-top'), lb = DukeLoader.getSprite('logo-bottom');
+      if (lt || lb) {
+        return '<div class="duke-sprite-logo">' +
+          (lt ? '<img src="' + lt.src + '" class="duke-sprite-img" alt="DUKE NUKEM 3D">' : '') +
+          (lb ? '<img src="' + lb.src + '" class="duke-sprite-img" alt="">' : '') +
+          '<div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div></div>';
+      }
+    }
+    return '<div class="duke-logo-wrap"><div class="duke-logo-row">BREW</div>' +
+      '<div class="duke-logo-row">LAB 3D</div><div class="duke-logo-accent"></div>' +
+      '<div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div></div>';
+  })();
+
   wrap.innerHTML = `
     <div class="card duke-card">
       <span class="card-label duke-label">┤ CLASSIFIED // OPERATOR SC2K13 ├</span>
-      <div class="duke-logo-wrap">
-        <div class="duke-logo-row">BREW</div>
-        <div class="duke-logo-row">LAB 3D</div>
-        <div class="duke-logo-accent"></div>
-        <div class="duke-logo-sub">EXTRACTION PROTOCOL // SC2K13</div>
-      </div>
+      ${logoHtml}
 
       <div class="duke-quote" id="duke-quote">
         <div class="duke-quote-text">"${quote}"</div>
