@@ -198,6 +198,17 @@ and you're drinking grass."
 
 ---
 
+## Legal & Copyright Disclaimer
+
+**This project is an unofficial, non-commercial fan project and is not affiliated with, endorsed by, or sponsored by Gearbox Software, 3D Realms, or Apogee Software.**
+
+*Duke Nukem 3D* and all associated assets, including but not limited to sprites, sound effects, music, and character likenesses, are copyrighted and trademarked properties of their respective owners. This project is developed purely for educational, personal, and archival purposes under the concept of fair use and fan homage.
+
+**No copyright infringement is intended.** I do not claim ownership of any Duke Nukem 3D assets. If you wish to use this application, you must legally own a copy of Duke Nukem 3D and provide your own game files (`DUKE3D.GRP`). This repository does not distribute, host, or link to any copyrighted game assets. All audio and visual assets are generated locally by the end-user via the provided extraction scripts.
+
+### DMCA / Takedown Notice
+If you are a rights holder... please open a private issue on this repository or contact the repository owner directly via GitHub. I will respond promptly to resolve any concerns.
+
 <p align="center">
   <strong>BREW LAB v3.0</strong><br>
   <em>Extraction Protocol Active</em><br>
